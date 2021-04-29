@@ -1,0 +1,19 @@
+radiances:
+  - name: amsua_n19
+    fullname: AMSU-A NOAA-19
+  - name: amsua_metop-a
+    fullname: AMSU-A MetOP-A
+  - name: amsua_metop-b
+    fullname: AMSU-A MetOP-B
+  - name: amsua_metop-c
+    fullname: AMSU-A MetOP-C
+  - name: cris_npp
+    fullname: CrIS NPP
+  - name: abi_g16
+    fullname: ABI GOES-16
+
+html_out: /Users/corymartin/Desktop/DAWeb/stage
+html_in: /Users/corymartin/Desktop/DAWeb/html
+css_in: /Users/corymartin/Desktop/DAWeb/css
+js_in: /Users/corymartin/Desktop/DAWeb/js
+root_fig: /Users/corymartin/Desktop/DAWeb/stage/figs

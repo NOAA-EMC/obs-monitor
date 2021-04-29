@@ -1,0 +1,28 @@
+<!-- Sidebar/menu -->
+<nav class="w3-sidebar w3-collapse w3-white w3-animate-left" style="z-index:3;width:250px;" id="mySidebar"><br>
+  <div class="w3-container">
+    <a href="#" onclick="w3_close()" class="w3-hide-large w3-right w3-xlarge w3-padding w3-hover-grey" title="close menu">
+      <i class="fa fa-remove"></i>
+    </a>
+    <a class="w3-left" href="http://noaa.gov">
+<img src="https://oceanservice.noaa.gov/bootstrap/img/noaa_logo_circle_72x72.svg" alt="National Oceanic and Atmospheric Administration logo" width="100" height="100"></a>
+<a class="w3-right" href="http://weather.gov">
+<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/ff/US-NationalWeatherService-Logo.svg/1200px-US-NationalWeatherService-Logo.svg.png" alt="National Weather Service logo" width="100" height="100">
+</a>
+    <br><br><br><br><br>
+    <h4><b>NCEP Data Assimilation Monitoring Dashboard</b></h4>
+    <p class="w3-text-grey">GDAS</p>
+  </div>
+  <div class="w3-bar-block">
+    <a href="{{ROOTPATH}}index.html" onclick="w3_close()" class="w3-bar-item w3-button w3-padding w3-text-blue"><i class="fa fa-home fa-fw w3-margin-right"></i>HOME</a>
+    <a href="{{ROOTPATH}}min/index.html" onclick="w3_close()" class="w3-bar-item w3-button w3-padding"><i class="fa fa-sort-amount-desc fa-fw w3-margin-right"></i>MINIMIZATION</a>
+    <a href="{{ROOTPATH}}anl/index.html" onclick="w3_close()" class="w3-bar-item w3-button w3-padding"><i class="fa fa-globe fa-fw w3-margin-right"></i>ANALYSIS INCREMENTS</a>
+    <a href="{{ROOTPATH}}rad/index.html" onclick="w3_close()" class="w3-bar-item w3-button w3-padding"><i class="fa fa-wifi fa-fw w3-margin-right"></i>RADIANCE OBS</a>
+    <a href="{{ROOTPATH}}conv/index.html" onclick="w3_close()" class="w3-bar-item w3-button w3-padding"><i class="fa fa-thermometer-4 fa-fw w3-margin-right"></i>CONVENTIONAL OBS</a>
+    <a href="{{ROOTPATH}}oz/index.html" onclick="w3_close()" class="w3-bar-item w3-button w3-padding"><i class="fa fa-sun-o fa-fw w3-margin-right"></i>OZONE OBS</a>
+  </div>
+</nav>
+
+<!-- Overlay effect when opening sidebar on small screens -->
+<div class="w3-overlay w3-hide-large w3-animate-opacity" onclick="w3_close()" style="cursor:pointer" title="close side menu" id="myOverlay"></div>
+<!-- End Sidebar/menu -->
