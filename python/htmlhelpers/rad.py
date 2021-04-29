@@ -24,6 +24,16 @@ def gen_rad_home_lists(radlist):
         btnstr = btnstr + f'<button class="btn w3-white" onclick="filterSelection(\'{type}\')">{name}</button>'
     return btnstr, linkstr
 
+def proc_figlist(htmlstr, figlist, figrelpath, type=''):
+    # loop through radiance figures and return modified HTML
+    for ifig in figlist:
+        ifig_name = ''.join(os.path.basename(ifig).split('_')[2:-1])
+        ifig_name = ifig_name.replace('brightness temperature', 'channel')
+        link = figrelpath + os.path.basename(ifig) # replace later with correct URL for args
+        imgsrc = figrelpath + os.path.basename(ifig)
+        htmlstr = htmlstr + f'<div class="btnimg filterDiv {type}"><a href="{link}"class="w3-bar-item w3-button w3-padding">{ifig_name}<img src="{imgsrc}"></a></div>\n'
+    return htmlstr
+
 def gen_sensor_html(rad, config):
     # generate HTML strings based off of available figures for this sensor
     imgstr = ''
@@ -39,26 +49,12 @@ def gen_sensor_html(rad, config):
     # TODO sort by channel, maybe easier to save figure with leading zeros?
     # TODO put below loops into a function since most is repeated
     figrelpath = f'../../figs/{cycle}/{rad["name"]}/'
-    for sfig in scatterfigs:
-        # get name
-        # TODO fix this later when figure names change
-        sfig_name = ' '.join(os.path.basename(sfig).split('_')[2:-1])
-        sfig_name = sfig_name.replace('brightness temperature', 'channel')
-        link = figrelpath + os.path.basename(sfig) # replace later with next page but with POST for channel, cycle, etc.
-        imgsrc = figrelpath + os.path.basename(sfig)
-        imgstr = imgstr + f'<div class="btnimg filterDiv scatter"><a href="{link}"class="w3-bar-item w3-button w3-padding">{sfig_name}<img src="{imgsrc}"></a></div>\n'
+    proc_figlist(imgstr, scatterfigs, figrelpath, type='scatter')
     # non timeseries line plots
     btnstr = btnstr + f'<button class="btn w3-white" onclick="filterSelection(\'lineplt\')">Line</button>'
     linefigs = glob.glob(os.path.join(cycledir, rad['name'], '*_line.png'))
     # TODO sort by channel, maybe easier to save figure with leading zeros?
-    for lfig in linefigs:
-        # get name
-        # TODO fix this later when figure names change
-        lfig_name = ' '.join(os.path.basename(lfig).split('_')[2:-1])
-        lfig_name = lfig_name.replace('brightness temperature', 'channel')
-        link = figrelpath + os.path.basename(lfig) # replace later with next page but with POST for channel, cycle, etc.
-        imgsrc = figrelpath + os.path.basename(lfig)
-        imgstr = imgstr + f'<div class="btnimg filterDiv lineplt"><a href="{link}"class="w3-bar-item w3-button w3-padding">{lfig_name}<img src="{imgsrc}"></a></div>\n'
+    proc_figlist(imgstr, linefigs, figrelpath, type='lineplt')
     return btnstr, imgstr
 
 def get_includes_rad(roothref):
