@@ -24,7 +24,7 @@ def gen_rad_home_lists(radlist):
         btnstr = btnstr + f'<button class="btn w3-white" onclick="filterSelection(\'{type}\')">{name}</button>'
     return btnstr, linkstr
 
-def proc_figlist(htmlstr, figlist, figrelpath, type=''):
+def proc_figlist_btnimg(htmlstr, figlist, figrelpath, type=''):
     # loop through radiance figures and return modified HTML
     for ifig in figlist:
         ifig_name = ''.join(os.path.basename(ifig).split('_')[2:-1])
@@ -49,12 +49,12 @@ def gen_sensor_html(rad, config):
     # TODO sort by channel, maybe easier to save figure with leading zeros?
     # TODO put below loops into a function since most is repeated
     figrelpath = f'../../figs/{cycle}/{rad["name"]}/'
-    proc_figlist(imgstr, scatterfigs, figrelpath, type='scatter')
+    proc_figlist_btnimg(imgstr, scatterfigs, figrelpath, type='scatter')
     # non timeseries line plots
     btnstr = btnstr + f'<button class="btn w3-white" onclick="filterSelection(\'lineplt\')">Line</button>'
     linefigs = glob.glob(os.path.join(cycledir, rad['name'], '*_line.png'))
     # TODO sort by channel, maybe easier to save figure with leading zeros?
-    proc_figlist(imgstr, linefigs, figrelpath, type='lineplt')
+    proc_figlist_btnimg(imgstr, linefigs, figrelpath, type='lineplt')
     return btnstr, imgstr
 
 def get_includes_rad(roothref):
@@ -63,22 +63,71 @@ def get_includes_rad(roothref):
     jsstr = f'<script type="text/javascript" src="{roothref}js/rad.js"></script>'
     return cssstr, jsstr
 
+def gen_sensor_view_menu(rad, config):
+    # return HTML strings for the list of cycles, channels, and plots
+    # for the specified sensor
+    cychtml = ''
+    chhtml = ''
+    figshtml = ''
+    # get list of cycles
+    cycledirs = sorted(glob.glob(os.path.join(config.root_fig, '20*')))
+    cycles = [os.path.basename(cycle) for cycle in cycledirs]
+    for cycle in cycles:
+        cyclelink = '#' # TODO fix this with javascript
+        cychtml = cychtml + f'<a href="{cyclelink}">{cycle}</a>\n'
+    # get list of channels
+    matchfile = '*_*_hofx_scatter.png'
+    pngfiles = sorted(glob.glob(os.path.join(config.root_fig,
+                                             cycles[-1],
+                                             rad['name'],
+                                             matchfile)))
+    chlist0 = [os.path.basename(p).split('_')[-3] for p in pngfiles]
+    chlist = []
+    for ch in chlist0:
+        try:
+            chlist.append(int(ch))
+        except:
+            chlist.append(0)
+    chlist = sorted(chlist)
+    for ch in chlist:
+        chlink = '#' # TODO fix this with javacript
+        chstr = 'all' if ch == 0 else str(ch)
+        chhtml = chhtml + f'<a href="{chlink}">{chstr}</a>\n'
+    # get list of figures
+    figlist = []
+    matchfile = '*_1_*.png'
+    allfigs = glob.glob(os.path.join(config.root_fig,
+                                     cycles[-1],
+                                     rad['name'],
+                                     matchfile))
+    figlist0 = [os.path.basename(p).split('_')[-2:] for p in allfigs]
+    figlist1 = [p[0]+'_'+p[1].split('.')[0] for p in figlist0]
+    for png in figlist1:
+        if png not in figlist:
+            figlist.append(png)
+    for png in figlist:
+        figlink = '#' # TODO fix this with javascript
+        pngname = png.replace('_',' ')
+        figshtml = figshtml + f'<a href="{figlink}">{pngname}</a>\n'
+    return cychtml, chhtml, figshtml
+
 def gen_sensor_view(rad, config):
     # generate landing page for each sensor/platform combination
     # output html path
     htmldir = os.path.join(config.html_out, 'rad', rad['name'])
     mkdir(htmldir)
     htmlpath = os.path.join(htmldir, 'view.html')
-    # get HTML of buttons and images to display
-    sensorbtn, sensorimg = gen_sensor_html(rad, config)
+    # get HTML of dropdown menus
+    sensorcyc, sensorch, sensorfigs = gen_sensor_view_menu(rad, config)
     # get relative path for links
     roothref = htmlc.get_rootpath(config, htmlpath)
     # get includes of CSS and javascript
     cssstr, jsstr = get_includes_rad(roothref)
     strs = {}
     strs['{{PAGETITLE}}'] = rad['fullname']
-    strs['{{FIGBTNLIST}}'] = sensorbtn
-    strs['{{FIGLIST}}'] = sensorimg
+    strs['{{CYCLEMENU}}'] = sensorcyc
+    strs['{{CHANNELMENU}}'] = sensorch
+    strs['{{PLOTMENU}}'] = sensorfigs
     strs['{{ROOTPATH}}'] = roothref
     strs['{{CSSINCLUDE}}'] = cssstr
     strs['{{JSINCLUDE}}'] = jsstr

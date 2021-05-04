@@ -13,7 +13,7 @@ radiances:
     fullname: ABI GOES-16
 
 html_out: /Users/corymartin/Desktop/DAWeb/stage
-html_in: /Users/corymartin/Desktop/DAWeb/html
-css_in: /Users/corymartin/Desktop/DAWeb/css
-js_in: /Users/corymartin/Desktop/DAWeb/js
+html_in: /Users/corymartin/Documents/GitHub/obs-monitor/html
+css_in: /Users/corymartin/Documents/GitHub/obs-monitor/css
+js_in: /Users/corymartin/Documents/GitHub/obs-monitor/js
 root_fig: /Users/corymartin/Desktop/DAWeb/stage/figs

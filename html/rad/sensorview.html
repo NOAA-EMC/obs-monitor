@@ -7,11 +7,26 @@
     <span class="w3-button w3-hide-large w3-xxlarge w3-hover-text-grey" onclick="w3_open()"><i class="fa fa-bars"></i></span>
     <div class="w3-container">
     <h1><b>{{PAGETITLE}}</b></h1>
-    <div id="myBtnContainer" class="w3-section w3-bottombar w3-padding-16">
+    <div class="w3-section w3-bottombar w3-padding-16">
       <span class="w3-margin-right">Select Figure:</span>
-      <button class="btn active w3-white">Cycle</button>
-      <button class="btn active w3-white">Channel</button>
-      <button class="btn active w3-white">Data / Plot Type</button>
+        <div class="dropdown">
+          <button class="dropbtn w3-white">Cycle</button>
+          <div class="dropdown-content">
+{{CYCLEMENU}}
+          </div>
+        </div>
+        <div class="dropdown">
+          <button class="dropbtn w3-white">Channel</button>
+          <div class="dropdown-content">
+{{CHANNELMENU}}
+          </div>
+        </div>
+        <div class="dropdown">
+        <button class="dropbtn w3-white">Data / Plot Type</button>
+        <div class="dropdown-content">
+{{PLOTMENU}}
+        </div>
+        </div>
     </div>
     </div>
   </header>
