@@ -147,7 +147,6 @@ datasets:
     regions: &regions 1
     groups:
       - name: GsiIeee
-#        variables: ['count', 'cycle', 'total', 'omgbc', 'penalty', 'channel', 'chan_yaxis_100', 'chan_yaxis_n1p5', 'chan_yaxis_np05', 'chan_nassim', 'chan_assim']
 
 transforms:
   - transform: accept where
@@ -287,6 +286,24 @@ transforms:
     for:
       variable: [none]
 
+  - transform: arithmetic
+    new name: summary::GsiIeee::yaxis_100  
+    equals: summary::GsiIeee::chan_yaxis_z + 100.0
+    for:
+      variable: [none]
+
+  - transform: arithmetic
+    new name: summary::GsiIeee::yaxis_n1p5  
+    equals: summary::GsiIeee::chan_yaxis_z + -1.5
+    for:
+      variable: [none]
+
+  - transform: arithmetic
+    new name: summary::GsiIeee::yaxis_np05  
+    equals: summary::GsiIeee::chan_yaxis_z + -0.05
+    for:
+      variable: [none]
+
 graphics:
 
     - figure:
@@ -352,7 +369,7 @@ graphics:
             x:
               variable: summary::GsiIeee::assim
             y: 
-              variable: summary::GsiIeee::chan_yaxis_100
+              variable: summary::GsiIeee::yaxis_100
             color: 'green'
             label: 'chan assim'
             linestyle: ''
@@ -363,7 +380,7 @@ graphics:
             x:
               variable: summary::GsiIeee::nassim
             y: 
-              variable: summary::GsiIeee::chan_yaxis_100
+              variable: summary::GsiIeee::yaxis_100
             color: 'red'
             label: 'chan not assim'
             linestyle: ''
@@ -415,7 +432,7 @@ graphics:
             x:
               variable: summary::GsiIeee::assim
             y: 
-              variable: summary::GsiIeee::chan_yaxis_n1p5
+              variable: summary::GsiIeee::yaxis_n1p5
             color: 'green'
             label: 'chan assim'
             linestyle: ''
@@ -426,7 +443,7 @@ graphics:
             x:
               variable: summary::GsiIeee::nassim
             y: 
-              variable: summary::GsiIeee::chan_yaxis_n1p5
+              variable: summary::GsiIeee::yaxis_n1p5
             color: 'red'
             label: 'chan not assim'
             linestyle: ''
@@ -474,7 +491,7 @@ graphics:
             x:
               variable: summary::GsiIeee::assim
             y: 
-              variable: summary::GsiIeee::chan_yaxis_np05
+              variable: summary::GsiIeee::yaxis_np05
             color: 'green'
             label: 'chan assim'
             linestyle: ''
@@ -485,7 +502,7 @@ graphics:
             x:
               variable: summary::GsiIeee::nassim
             y: 
-              variable: summary::GsiIeee::chan_yaxis_np05
+              variable: summary::GsiIeee::yaxis_np05
             color: 'red'
             label: 'chan not assim'
             linestyle: ''
@@ -535,7 +552,7 @@ graphics:
             x:
               variable: summary::GsiIeee::assim
             y: 
-              variable: summary::GsiIeee::chan_yaxis_np05
+              variable: summary::GsiIeee::yaxis_np05
             color: 'green'
             label: 'chan assim'
             linestyle: ''
@@ -546,7 +563,7 @@ graphics:
             x:
               variable: summary::GsiIeee::nassim
             y: 
-              variable: summary::GsiIeee::chan_yaxis_np05
+              variable: summary::GsiIeee::yaxis_np05
             color: 'red'
             label: 'chan not assim'
             linestyle: ''

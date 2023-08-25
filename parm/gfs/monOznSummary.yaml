@@ -193,6 +193,22 @@ transforms:
     for:
       variable: [none]
 
+#  # Note that total is the total bias correction for a given
+#  # channel/region.  To find the average divide total by count.
+#  - transform: arithmetic
+#    new name: summary::GsiIeee::total_avg
+#    equals: summary::GsiIeee::total/summary::GsiIeee::count
+#    for:
+#      variable: [none]
+#
+#  # Note that omgbc is the total omgbc for a given
+#  # channel/region.  To find the average divide omgbc by count.
+#  - transform: arithmetic
+#    new name: summary::GsiIeee::omgbc_avg
+#    equals: summary::GsiIeee::omgbc/summary::GsiIeee::count
+#    for:
+#      variable: [none]
+#
   # Single avg obs - ges
   - transform: select time
     new name: summary::GsiIeee::avgomg_1
@@ -271,6 +287,68 @@ transforms:
     for:
       variable: [none]
 
+  - transform: arithmetic
+    new name: summary::GsiIeee::yaxis_100
+    equals: summary::GsiIeee::level_yaxis_z + 100.0
+    for:
+      variable: [none]
+    
+  - transform: arithmetic
+    new name: summary::GsiIeee::yaxis_np5
+    equals: summary::GsiIeee::level_yaxis_z + -1.5
+    for:
+      variable: [none]
+    
+  - transform: arithmetic
+    new name: summary::GsiIeee::yaxis_n5
+    equals: summary::GsiIeee::level_yaxis_z + -5.0
+    for:
+      variable: [none]
+    
+
+#  # 30 day omgbc using time/slice
+#  - transform: select time
+#    new name: summary::GsiIeee::omgbc_30d
+#    starting field: summary::GsiIeee::omgbc_avg
+#    start cycle: 2023070218
+#    end cycle: 2023060300
+#    for:
+#      variable: [none]
+#
+#  # Note that penalty is the total penalty for a given
+#  # channel/region.  To find the average divide penalty by count.
+#  - transform: arithmetic
+#    new name: summary::GsiIeee::penalty_avg
+#    equals: summary::GsiIeee::penalty/summary::GsiIeee::count
+#    for:
+#      variable: [none]
+#
+#  # 1 cycle penalty using time/slice
+#  - transform: select time
+#    new name: summary::GsiIeee::penalty_1c
+#    starting field: summary::GsiIeee::penalty_avg
+#    cycle: 2023070218
+#    for:
+#      variable: [none]
+#
+#  # 1 day penalty using time/slice
+#  - transform: select time
+#    new name: summary::GsiIeee::penalty_1d
+#    starting field: summary::GsiIeee::penalty_avg
+#    start cycle: 2023070218
+#    end cycle: 2023070200
+#    for:
+#      variable: [none]
+#
+#  # 30 day penalty using time/slice
+#  - transform: select time
+#    new name: summary::GsiIeee::penalty_30d
+#    starting field: summary::GsiIeee::penalty_avg
+#    start cycle: 2023070218
+#    end cycle: 2023060300
+#    for:
+#      variable: [none]
+#
 graphics:
 
     - figure:
@@ -337,7 +415,7 @@ graphics:
             x:
               variable: summary::GsiIeee::assim
             y: 
-              variable: summary::GsiIeee::level_yaxis_100
+              variable: summary::GsiIeee::yaxis_100
             color: 'green'
             label: 'level assim'
             linestyle: ''
@@ -348,7 +426,7 @@ graphics:
             x:
               variable: summary::GsiIeee::nassim
             y: 
-              variable: summary::GsiIeee::level_yaxis_100
+              variable: summary::GsiIeee::yaxis_100
             color: 'red'
             label: 'chan not assim'
             linestyle: ''
@@ -423,7 +501,7 @@ graphics:
             x:
               variable: summary::GsiIeee::assim
             y: 
-              variable: summary::GsiIeee::level_yaxis_n5
+              variable: summary::GsiIeee::yaxis_n5
             color: 'green'
             label: 'chan assim'
             linestyle: ''
@@ -434,7 +512,7 @@ graphics:
             x:
               variable: summary::GsiIeee::nassim
             y: 
-              variable: summary::GsiIeee::level_yaxis_n5
+              variable: summary::GsiIeee::yaxis_n5
             color: 'red'
             label: 'chan not assim'
             linestyle: ''
@@ -491,7 +569,7 @@ graphics:
             x:
               variable: summary::GsiIeee::assim
             y: 
-              variable: summary::GsiIeee::level_yaxis_np5
+              variable: summary::GsiIeee::yaxis_np5
             color: 'green'
             label: 'chan assim'
             linestyle: ''
@@ -502,7 +580,7 @@ graphics:
             x:
               variable: summary::GsiIeee::nassim
             y: 
-              variable: summary::GsiIeee::level_yaxis_np5
+              variable: summary::GsiIeee::yaxis_np5
             color: 'red'
             label: 'chan not assim'
             linestyle: ''
