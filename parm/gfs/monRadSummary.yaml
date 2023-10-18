@@ -306,6 +306,9 @@ transforms:
 
 graphics:
 
+  plotting_backend: Emcpy
+  figure_list:
+
     - figure:
         layout: [4,1]
         figure size: [20,18]
@@ -314,7 +317,7 @@ graphics:
         output name: lineplots/abi_g16/summary.abi_g16.png
         plot logo:
           which: 'noaa/nws'
-          loc: 'center left'
+          loc: 'upper center'
           subplot_orientation: 'first'
       plots:
         # Obs counts, last 4 cycles

@@ -348,8 +348,11 @@ transforms:
 #    end cycle: 2023060300
 #    for:
 #      variable: [none]
-#
+
 graphics:
+
+  plotting_backend: Emcpy
+  figure_list:
 
     - figure:
         layout: [3,1]
