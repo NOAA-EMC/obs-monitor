@@ -1,0 +1,216 @@
+datasets:
+  - name: horiz
+    type: MonDataSpace
+    satellite: {{SAT}}
+    sensor: {{SENSOR}}
+    run: {{RUN}}
+
+    type: MonDataSpace
+    control_file:
+      - {{DATA}}/ozn_data/horiz/ompsnp_npp.ges.ctl
+    filenames:
+      - {{DATA}}/ozn_data/horiz/{{SENSOR}}_{{SAT}}.{{RUN}}.{{ PDATE | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/horiz/ompsnp_npp.ges.{{ PDATEm6 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/horiz/ompsnp_npp.ges.{{ PDATEm12 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/horiz/ompsnp_npp.ges.{{ PDATEm18 | to_YMDH }}.ieee_d
+    levels: {{LEVELS}}
+    groups:
+      - name: GsiIeee
+        variables: &variables [obs]
+
+transforms:
+  - transform: select time
+    new name: horiz::GsiIeee::obs1
+    starting field: horiz::GsiIeee::obs
+    cycle: {{ PDATE | to_YMDH }}
+    for:
+      variable: [none]
+
+  - transform: select time
+    new name: horiz::GsiIeee::lat1
+    starting field: horiz::GsiIeee::lat
+    cycle: {{ PDATE | to_YMDH }}
+    for:
+      variable: [none]
+
+  - transform: select time
+    new name: horiz::GsiIeee::lon1
+    starting field: horiz::GsiIeee::lon
+    cycle: {{ PDATE | to_YMDH }}
+    for:
+      variable: [none]
+
+  - transform: select time
+    new name: horiz::GsiIeee::obs2
+    starting field: horiz::GsiIeee::obs
+    cycle: {{ PDATEm6 | to_YMDH }}
+    for:
+      variable: [none]
+
+  - transform: select time
+    new name: horiz::GsiIeee::lat2
+    starting field: horiz::GsiIeee::lat
+    cycle: {{ PDATEm6 | to_YMDH }}
+    for:
+      variable: [none]
+
+  - transform: select time
+    new name: horiz::GsiIeee::lon2
+    starting field: horiz::GsiIeee::lon
+    cycle: {{ PDATEm6 | to_YMDH }}
+    for:
+      variable: [none]
+
+  - transform: select time
+    new name: horiz::GsiIeee::obs3
+    starting field: horiz::GsiIeee::obs
+    cycle: {{ PDATEm12 | to_YMDH }}
+    for:
+      variable: [none]
+
+  - transform: select time
+    new name: horiz::GsiIeee::lat3
+    starting field: horiz::GsiIeee::lat
+    cycle: {{ PDATEm12 | to_YMDH }}
+    for:
+      variable: [none]
+
+  - transform: select time
+    new name: horiz::GsiIeee::lon3
+    starting field: horiz::GsiIeee::lon
+    cycle: {{ PDATEm12 | to_YMDH }}
+    for:
+      variable: [none]
+
+  - transform: select time
+    new name: horiz::GsiIeee::obs4
+    starting field: horiz::GsiIeee::obs
+    cycle: {{ PDATEm18 | to_YMDH }}
+    for:
+      variable: [none]
+
+  - transform: select time
+    new name: horiz::GsiIeee::lat4
+    starting field: horiz::GsiIeee::lat
+    cycle: {{ PDATEm18 | to_YMDH }}
+    for:
+      variable: [none]
+
+  - transform: select time
+    new name: horiz::GsiIeee::lon4
+    starting field: horiz::GsiIeee::lon
+    cycle: {{ PDATEm18 | to_YMDH }}
+    for:
+      variable: [none]
+
+graphics:
+
+  plotting_backend: Emcpy
+  figure_list:
+
+  # Map plots
+  # ---------
+
+    # Observations
+    - batch figure:
+        variables: ['obs1']
+        levels: {{LEVELS}}
+      dynamic options:
+        - type: vminvmaxcmap
+          level: ${level}
+          data variable: horiz::GsiIeee::${variable}
+
+      figure:
+        layout: [2,2]
+        figure size: [8,7]
+        title: "Ozone: Observed Values \n ompsnp_n20, \n level ${level}"
+        output name: map_plots/ompsnp_npp/horiz/observed_${level}.png
+
+      plots:
+        - mapping:
+            projection: plcarr
+            domain: global
+          add_map_features: ['coastline']
+          add_colorbar:
+            label: "{{ PDATE | to_YMDH }}"
+          add_grid:
+          layers:
+          - type: MapScatter
+            longitude:
+              variable: horiz::GsiIeee::lon1
+            latitude:
+              variable: horiz::GsiIeee::lat1
+            data:
+              variable: horiz::GsiIeee::obs1
+            level: ${level}
+            markersize: 2
+            colorbar: true
+            cmap: 'rainbow'
+            vmin: ${dynamic_vmin}
+            vmax: ${dynamic_vmax}
+
+        - mapping:
+            projection: plcarr
+            domain: global
+          add_map_features: ['coastline']
+          add_colorbar:
+            label: "{{ PDATEm6 | to_YMDH }}"
+          add_grid:
+          layers:
+          - type: MapScatter
+            longitude:
+              variable: horiz::GsiIeee::lon2
+            latitude:
+              variable: horiz::GsiIeee::lat2
+            data:
+              variable: horiz::GsiIeee::obs2
+            level: ${level}
+            markersize: 2
+            colorbar: true
+            cmap: 'rainbow'
+            vmin: ${dynamic_vmin}
+            vmax: ${dynamic_vmax}
+
+        - mapping:
+            projection: plcarr
+            domain: global
+          add_map_features: ['coastline']
+          add_colorbar:
+            label: "{{ PDATEm12 | to_YMDH }}"
+          add_grid:
+          layers:
+          - type: MapScatter
+            longitude:
+              variable: horiz::GsiIeee::lon3
+            latitude:
+              variable: horiz::GsiIeee::lat3
+            data:
+              variable: horiz::GsiIeee::obs3
+            level: ${level}
+            markersize: 2
+            colorbar: true
+            cmap: 'rainbow'
+            vmin: ${dynamic_vmin}
+            vmax: ${dynamic_vmax}
+
+        - mapping:
+            projection: plcarr
+            domain: global
+          add_map_features: ['coastline']
+          add_colorbar:
+            label: "{{ PDATEm18 | to_YMDH }}"
+          add_grid:
+          layers:
+          - type: MapScatter
+            longitude:
+              variable: horiz::GsiIeee::lon4
+            latitude:
+              variable: horiz::GsiIeee::lat4
+            data:
+              variable: horiz::GsiIeee::obs4
+            level: ${level}
+            markersize: 2
+            colorbar: true
+            cmap: 'rainbow'
+            vmin: ${dynamic_vmin}
+            vmax: ${dynamic_vmax}
