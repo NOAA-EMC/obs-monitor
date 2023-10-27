@@ -1,6 +1,7 @@
 # DA Monitoring source dictionary
 
 cycle_interval: 6
+data: '/scratch1/NCEPDEV/da/Edward.Safford/noscrub/git/eva/src/eva/tests/data'
 
 satellites:
   - name: npp

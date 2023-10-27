@@ -11,37 +11,37 @@ from re import sub
 import yaml
 from wxflow import parse_j2yaml, save_as_yaml
 from wxflow import add_to_datetime, to_timedelta, to_datetime
+from eva import eva_driver
 
-
-def genYAML(input_yaml, output_yaml, config):
+def genYaml(input_yaml, output_yaml, config):
     # read in YAML/Jinja template
     final_config = parse_j2yaml(input_yaml, config)
     save_as_yaml(final_config, output_yaml)
 
 #--------------------------------------------------------------------------------------------
 
-def camel_case(s):
+def camelCase(s):
   s = sub(r"(_|-)+", " ", s).title().replace(" ", "")
   return ''.join([s[0].lower(), s[1:]])
 
 #--------------------------------------------------------------------------------------------
 
-def loadConfig(satname, instrument, plot, cycle_tm, cycle_interval):
-    config = {}
-    config['SAT'] = satname
-    config['SENSOR'] = instrument
-    config['LEVELS'] = plot.get('levels')
-    config['RUN'] = plot.get('run')
+def loadConfig(satname, instrument, plot, cycle_tm, cycle_interval, data_location):
+    config = {
+              'SAT': satname,
+              'SENSOR': instrument,
+              'LEVELS': plot.get('levels'),
+              'RUN': plot.get('run'),
+              'PDATE': cycle_tm,
+              'PLOT_TEMPLATE': camelCase(plot.get('plot')),
+              'DATA': data_location
+    }
  
     times = int(plot.get('times'))
-    config['PDATE'] = cycle_tm
-
     for x in range(1,times):
-        date_str = 'PDATEm'+str(x*6)
+        date_str = f"PDATEm{x*6}"
         config[date_str] = add_to_datetime(cycle_tm, to_timedelta(f"-{cycle_interval*x}H"))
 
-    config['DATA'] = '/scratch1/NCEPDEV/da/Edward.Safford/noscrub/git/eva/src/eva/tests/data'
-    config['PLOT_TEMPLATE'] = camel_case(plot.get('plot'))
     return config 
 
 #--------------------------------------------------------------------------------------------
@@ -67,26 +67,22 @@ if __name__ == "__main__":
                      f'errors when attempting to load: {mon_sources}, error: {e}')
 
     cycle_interval = mon_dict.get('cycle_interval')
+    data_location = mon_dict.get('data')
 
     sats = mon_dict.get('satellites')
     for sat in sats:
         satname = sat.get('name')
         
-        instruments = sat.get('instruments')
-        for inst in instruments:
+        for inst in sat.get('instruments'):
             instrument = inst.get('name')
-            plots = inst.get('plot_list')
 
-            for plot in plots:
-                config = loadConfig(satname, instrument, plot, cycle_tm, cycle_interval)
-                plot_template = config['PLOT_TEMPLATE']+ '.yaml'
-                output_yaml = config['SENSOR'] + '_' + config['SAT'] + '_' + plot_template 
-                plot_template = '../parm/gfs/' + plot_template
-                genYAML(plot_template, output_yaml, config)
+            for plot in inst.get('plot_list'):
+                config = loadConfig(satname, instrument, plot, cycle_tm, cycle_interval, data_location)
+                plot_template = f"{config['PLOT_TEMPLATE']}.yaml"
+                plot_yaml = f"{config['SENSOR']}_{config['SAT']}_{plot_template}"
 
-                cmd = "~/.local/bin/eva " + output_yaml
-                rtn_value = os.system(cmd)
-                if rtn_value == 0:
-                    rc = os.system("rm ./" + output_yaml)
-                else:
-                    logger.abort(f"Error:  Returned value from eva run using {output_yaml} = {returned_value}")
+                plot_template = os.path.join('../parm/gfs/', plot_template)
+                genYaml(plot_template, plot_yaml, config)
+
+                eva_driver.eva(plot_yaml)
+                os.remove(plot_yaml)

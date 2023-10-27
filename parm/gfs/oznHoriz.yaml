@@ -10,9 +10,9 @@ datasets:
       - {{DATA}}/ozn_data/horiz/ompsnp_npp.ges.ctl
     filenames:
       - {{DATA}}/ozn_data/horiz/{{SENSOR}}_{{SAT}}.{{RUN}}.{{ PDATE | to_YMDH }}.ieee_d
-      - {{DATA}}/ozn_data/horiz/ompsnp_npp.ges.{{ PDATEm6 | to_YMDH }}.ieee_d
-      - {{DATA}}/ozn_data/horiz/ompsnp_npp.ges.{{ PDATEm12 | to_YMDH }}.ieee_d
-      - {{DATA}}/ozn_data/horiz/ompsnp_npp.ges.{{ PDATEm18 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/horiz/{{SENSOR}}_{{SAT}}.{{RUN}}.{{ PDATEm6 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/horiz/{{SENSOR}}_{{SAT}}.{{RUN}}.{{ PDATEm12 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/horiz/{{SENSOR}}_{{SAT}}.{{RUN}}.{{ PDATEm18 | to_YMDH }}.ieee_d
     levels: {{LEVELS}}
     groups:
       - name: GsiIeee
@@ -123,8 +123,8 @@ graphics:
       figure:
         layout: [2,2]
         figure size: [8,7]
-        title: "Ozone: Observed Values \n ompsnp_n20, \n level ${level}"
-        output name: map_plots/ompsnp_npp/horiz/observed_${level}.png
+        title: "Ozone: Observed Values \n {{SENSOR}}_{{SAT}}, \n level ${level}"
+        output name: map_plots/{{SENSOR}}_{{SAT}}/horiz/observed_${level}.png
 
       plots:
         - mapping:
