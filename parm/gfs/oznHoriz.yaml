@@ -1,17 +1,19 @@
 datasets:
   - name: horiz
     type: MonDataSpace
-    satellite: npp
-    sensor: ompsnp
+    satellite: {{SAT}}
+    sensor: {{SENSOR}}
+    run: {{RUN}}
+
     type: MonDataSpace
     control_file:
-      - ../data/ozn_data/horiz/ompsnp_npp.ges.ctl
+      - {{DATA}}/ozn_data/horiz/ompsnp_npp.ges.ctl
     filenames:
-      - ../data/ozn_data/horiz/ompsnp_npp.ges.2023082118.ieee_d
-      - ../data/ozn_data/horiz/ompsnp_npp.ges.2023082112.ieee_d
-      - ../data/ozn_data/horiz/ompsnp_npp.ges.2023082106.ieee_d
-      - ../data/ozn_data/horiz/ompsnp_npp.ges.2023082100.ieee_d
-    levels: &levels 1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22
+      - {{DATA}}/ozn_data/horiz/{{SENSOR}}_{{SAT}}.{{RUN}}.{{ PDATE | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/horiz/{{SENSOR}}_{{SAT}}.{{RUN}}.{{ PDATEm6 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/horiz/{{SENSOR}}_{{SAT}}.{{RUN}}.{{ PDATEm12 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/horiz/{{SENSOR}}_{{SAT}}.{{RUN}}.{{ PDATEm18 | to_YMDH }}.ieee_d
+    levels: {{LEVELS}}
     groups:
       - name: GsiIeee
         variables: &variables [obs]
@@ -20,84 +22,84 @@ transforms:
   - transform: select time
     new name: horiz::GsiIeee::obs1
     starting field: horiz::GsiIeee::obs
-    cycle: 2023082118
+    cycle: {{ PDATE | to_YMDH }}
     for:
       variable: [none]
 
   - transform: select time
     new name: horiz::GsiIeee::lat1
     starting field: horiz::GsiIeee::lat
-    cycle: 2023082118
+    cycle: {{ PDATE | to_YMDH }}
     for:
       variable: [none]
 
   - transform: select time
     new name: horiz::GsiIeee::lon1
     starting field: horiz::GsiIeee::lon
-    cycle: 2023082118
+    cycle: {{ PDATE | to_YMDH }}
     for:
       variable: [none]
 
   - transform: select time
     new name: horiz::GsiIeee::obs2
     starting field: horiz::GsiIeee::obs
-    cycle: 2023082112
+    cycle: {{ PDATEm6 | to_YMDH }}
     for:
       variable: [none]
 
   - transform: select time
     new name: horiz::GsiIeee::lat2
     starting field: horiz::GsiIeee::lat
-    cycle: 2023082112
+    cycle: {{ PDATEm6 | to_YMDH }}
     for:
       variable: [none]
 
   - transform: select time
     new name: horiz::GsiIeee::lon2
     starting field: horiz::GsiIeee::lon
-    cycle: 2023082112
+    cycle: {{ PDATEm6 | to_YMDH }}
     for:
       variable: [none]
 
   - transform: select time
     new name: horiz::GsiIeee::obs3
     starting field: horiz::GsiIeee::obs
-    cycle: 2023082106
+    cycle: {{ PDATEm12 | to_YMDH }}
     for:
       variable: [none]
 
   - transform: select time
     new name: horiz::GsiIeee::lat3
     starting field: horiz::GsiIeee::lat
-    cycle: 2023082106
+    cycle: {{ PDATEm12 | to_YMDH }}
     for:
       variable: [none]
 
   - transform: select time
     new name: horiz::GsiIeee::lon3
     starting field: horiz::GsiIeee::lon
-    cycle: 2023082106
+    cycle: {{ PDATEm12 | to_YMDH }}
     for:
       variable: [none]
 
   - transform: select time
     new name: horiz::GsiIeee::obs4
     starting field: horiz::GsiIeee::obs
-    cycle: 2023082100
+    cycle: {{ PDATEm18 | to_YMDH }}
     for:
       variable: [none]
 
   - transform: select time
     new name: horiz::GsiIeee::lat4
     starting field: horiz::GsiIeee::lat
-    cycle: 2023082100
+    cycle: {{ PDATEm18 | to_YMDH }}
     for:
       variable: [none]
 
   - transform: select time
     new name: horiz::GsiIeee::lon4
     starting field: horiz::GsiIeee::lon
-    cycle: 2023082100
+    cycle: {{ PDATEm18 | to_YMDH }}
     for:
       variable: [none]
 
@@ -112,7 +114,7 @@ graphics:
     # Observations
     - batch figure:
         variables: ['obs1']
-        levels: *levels
+        levels: {{LEVELS}}
       dynamic options:
         - type: vminvmaxcmap
           level: ${level}
@@ -121,8 +123,8 @@ graphics:
       figure:
         layout: [2,2]
         figure size: [8,7]
-        title: "Ozone: Observed Values \n ompsnp_n20, \n level ${level}"
-        output name: map_plots/ompsnp_npp/horiz/observed_${level}.png
+        title: "Ozone: Observed Values \n {{SENSOR}}_{{SAT}}, \n level ${level}"
+        output name: map_plots/{{SENSOR}}_{{SAT}}/horiz/observed_${level}.png
 
       plots:
         - mapping:
@@ -130,7 +132,7 @@ graphics:
             domain: global
           add_map_features: ['coastline']
           add_colorbar:
-            label: "2023082118"
+            label: "{{ PDATE | to_YMDH }}"
           add_grid:
           layers:
           - type: MapScatter
@@ -152,7 +154,7 @@ graphics:
             domain: global
           add_map_features: ['coastline']
           add_colorbar:
-            label: "2023082112"
+            label: "{{ PDATEm6 | to_YMDH }}"
           add_grid:
           layers:
           - type: MapScatter
@@ -174,7 +176,7 @@ graphics:
             domain: global
           add_map_features: ['coastline']
           add_colorbar:
-            label: "2023082106"
+            label: "{{ PDATEm12 | to_YMDH }}"
           add_grid:
           layers:
           - type: MapScatter
@@ -196,7 +198,7 @@ graphics:
             domain: global
           add_map_features: ['coastline']
           add_colorbar:
-            label: "2023082100"
+            label: "{{ PDATEm18 | to_YMDH }}"
           add_grid:
           layers:
           - type: MapScatter

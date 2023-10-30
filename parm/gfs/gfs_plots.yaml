@@ -1,0 +1,24 @@
+# DA Monitoring source dictionary
+
+cycle_interval: 6
+data: '/scratch1/NCEPDEV/da/Edward.Safford/noscrub/git/eva/src/eva/tests/data'
+
+satellites:
+  - name: npp
+    instruments:
+      - name: ompsnp
+        plot_list:
+          - plot: ozn horiz
+            times: 4
+            levels: '1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22'
+            run: ges
+
+#  - name: another_satellite
+#    instruments:
+#      - name: another_instrument
+#        plot_list:
+#          - plot: ozn time
+#            times: 120
+#            levels: '1,2,3,4'
+#            run: anl
+

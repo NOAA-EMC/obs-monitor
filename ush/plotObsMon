@@ -1,0 +1,127 @@
+#!/usr/bin/env python3
+# plotObsMon
+#
+# Parse input yaml plot file, apply to DA monitor templates to
+# create eva yaml files, run eva.
+
+import argparse
+import os
+from re import sub
+import yaml
+from wxflow import parse_j2yaml, save_as_yaml
+from wxflow import add_to_datetime, to_timedelta, to_datetime
+from eva.eva_driver import eva
+from eva.utilities.logger import Logger
+
+
+def genYaml(input_yaml, output_yaml, config):
+    """
+    Read in input yaml file and modify with contents of config.
+    
+    Parameters:
+        input_yaml (yaml file): path to input yaml file
+        output_yaml (yaml file): path to output yaml file
+        config (dict): configuration dictionary
+    Return:
+        None
+    """
+
+    final_config = parse_j2yaml(input_yaml, config)
+    save_as_yaml(final_config, output_yaml)
+
+#--------------------------------------------------------------------------------------------
+
+def camelCase(s):
+    """
+    Convert string with spaces, dashes, or underscores to cammel case.
+    
+    Parameters:
+        s (str): input string
+    Return:
+        string contents in camelCase
+    """
+
+    s = sub(r"(_|-)+", " ", s).title().replace(" ", "")
+    return ''.join([s[0].lower(), s[1:]])
+
+#--------------------------------------------------------------------------------------------
+
+def loadConfig(satname, instrument, plot, cycle_tm, cycle_interval, data_location):
+    """
+    Load configuration dictionary.
+
+    Parameters:
+        satname (str): Name of satellite
+        instrument (str): Name of instrument
+        plot (str): plot template
+        cycle_tm (datetime): Cycle time of plot
+        cycle_interval (int): number of hours between cycles
+        data_location (str): path to directory containing data files 
+
+    Return:
+        config(dict): Dictionary containing configuration information
+    """
+    config = {
+              'SAT': satname,
+              'SENSOR': instrument,
+              'LEVELS': plot.get('levels'),
+              'RUN': plot.get('run'),
+              'PDATE': cycle_tm,
+              'PLOT_TEMPLATE': camelCase(plot.get('plot')),
+              'DATA': data_location
+    }
+ 
+    times = int(plot.get('times'))
+    for x in range(1,times):
+        date_str = f"PDATEm{x*6}"
+        config[date_str] = add_to_datetime(cycle_tm, to_timedelta(f"-{cycle_interval*x}H"))
+
+    return config 
+
+#--------------------------------------------------------------------------------------------
+
+if __name__ == "__main__":
+    """
+    plotObsMon 
+
+    Read and parse input yaml file, load configuration and apply to requested yaml template(s),
+    and plot results.
+    """
+
+    logger = Logger('plotObsMon')
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('-i', '--input', type=str, help='Input YAML plot file', required=True)
+    parser.add_argument('-p', '--pdate', type=str, help='Plot time YYYYMMDDHH', required=True)
+    args = parser.parse_args()
+
+    cycle_tm = to_datetime(args.pdate)
+
+    try:
+        mon_sources = args.input
+        with open(mon_sources, 'r') as mon_sources_opened:
+            mon_dict = yaml.safe_load(mon_sources_opened)
+    except Exception as e:
+        logger.abort('plotObsMon is expecting a valid yaml file, but it encountered ' +
+                     f'errors when attempting to load: {mon_sources}, error: {e}')
+
+    cycle_interval = mon_dict.get('cycle_interval')
+    data_location = mon_dict.get('data')
+
+    sats = mon_dict.get('satellites')
+    for sat in sats:
+        satname = sat.get('name')
+        
+        for inst in sat.get('instruments'):
+            instrument = inst.get('name')
+
+            for plot in inst.get('plot_list'):
+                config = loadConfig(satname, instrument, plot, cycle_tm, cycle_interval, data_location)
+                plot_template = f"{config['PLOT_TEMPLATE']}.yaml"
+                plot_yaml = f"{config['SENSOR']}_{config['SAT']}_{plot_template}"
+
+                plot_template = os.path.join('../parm/gfs/', plot_template)
+                genYaml(plot_template, plot_yaml, config)
+
+                eva(plot_yaml)
+                os.remove(plot_yaml)
