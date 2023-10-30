@@ -1,32 +1,66 @@
 #!/usr/bin/env python3
 # plotObsMon
-# parse input yaml plot file, apply to DA monitor templates to
-# create eva yaml files and run eva.
+#
+# Parse input yaml plot file, apply to DA monitor templates to
+# create eva yaml files, run eva.
 
 import argparse
-from logger import Logger
-
 import os
 from re import sub
 import yaml
 from wxflow import parse_j2yaml, save_as_yaml
 from wxflow import add_to_datetime, to_timedelta, to_datetime
-from eva import eva_driver
+from eva.eva_driver import eva
+from eva.utilities.logger import Logger
+
 
 def genYaml(input_yaml, output_yaml, config):
-    # read in YAML/Jinja template
+    """
+    Read in input yaml file and modify with contents of config.
+    
+    Parameters:
+        input_yaml (yaml file): path to input yaml file
+        output_yaml (yaml file): path to output yaml file
+        config (dict): configuration dictionary
+    Return:
+        None
+    """
+
     final_config = parse_j2yaml(input_yaml, config)
     save_as_yaml(final_config, output_yaml)
 
 #--------------------------------------------------------------------------------------------
 
 def camelCase(s):
-  s = sub(r"(_|-)+", " ", s).title().replace(" ", "")
-  return ''.join([s[0].lower(), s[1:]])
+    """
+    Convert string with spaces, dashes, or underscores to cammel case.
+    
+    Parameters:
+        s (str): input string
+    Return:
+        string contents in camelCase
+    """
+
+    s = sub(r"(_|-)+", " ", s).title().replace(" ", "")
+    return ''.join([s[0].lower(), s[1:]])
 
 #--------------------------------------------------------------------------------------------
 
 def loadConfig(satname, instrument, plot, cycle_tm, cycle_interval, data_location):
+    """
+    Load configuration dictionary.
+
+    Parameters:
+        satname (str): Name of satellite
+        instrument (str): Name of instrument
+        plot (str): plot template
+        cycle_tm (datetime): Cycle time of plot
+        cycle_interval (int): number of hours between cycles
+        data_location (str): path to directory containing data files 
+
+    Return:
+        config(dict): Dictionary containing configuration information
+    """
     config = {
               'SAT': satname,
               'SENSOR': instrument,
@@ -47,15 +81,20 @@ def loadConfig(satname, instrument, plot, cycle_tm, cycle_interval, data_locatio
 #--------------------------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    logger = Logger('plotObsMon')
+    """
+    plotObsMon 
 
+    Read and parse input yaml file, load configuration and apply to requested yaml template(s),
+    and plot results.
+    """
+
+    logger = Logger('plotObsMon')
     parser = argparse.ArgumentParser()
+
     parser.add_argument('-i', '--input', type=str, help='Input YAML plot file', required=True)
     parser.add_argument('-p', '--pdate', type=str, help='Plot time YYYYMMDDHH', required=True)
-
     args = parser.parse_args()
 
-    # convert pdate argument to datetime
     cycle_tm = to_datetime(args.pdate)
 
     try:
@@ -84,5 +123,5 @@ if __name__ == "__main__":
                 plot_template = os.path.join('../parm/gfs/', plot_template)
                 genYaml(plot_template, plot_yaml, config)
 
-                eva_driver.eva(plot_yaml)
+                eva(plot_yaml)
                 os.remove(plot_yaml)
