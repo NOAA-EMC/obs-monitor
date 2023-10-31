@@ -34,7 +34,7 @@ def genYaml(input_yaml, output_yaml, config):
 def camelCase(s):
     """
     Convert string with spaces, dashes, or underscores to cammel case.
-    
+
     Parameters:
         s (str): input string
     Return:
@@ -70,9 +70,9 @@ def loadConfig(satname, instrument, plot, cycle_tm, cycle_interval, data_locatio
               'PLOT_TEMPLATE': camelCase(plot.get('plot')),
               'DATA': data_location
     }
- 
+
     times = int(plot.get('times'))
-    for x in range(1,times):
+    for x in range(1,times+1):
         date_str = f"PDATEm{x*6}"
         config[date_str] = add_to_datetime(cycle_tm, to_timedelta(f"-{cycle_interval*x}H"))
 
@@ -111,7 +111,7 @@ if __name__ == "__main__":
     sats = mon_dict.get('satellites')
     for sat in sats:
         satname = sat.get('name')
-        
+
         for inst in sat.get('instruments'):
             instrument = inst.get('name')
 
