@@ -297,7 +297,7 @@ graphics:
         figure size: [20,18]
         tight layout:
         title: "Summary Plot {{SENSOR}}_{{SAT}} \n Valid: {{ PDATE | to_YMDH }}"
-        output name: lineplots/{{SENSOR}}_{{SAT}}/summary/summary.{{SENSOR}}_{{SAT}}.png
+        output name: lineplots/{{SENSOR}}_{{SAT}}/ozn/summary/summary.{{SENSOR}}_{{SAT}}.png
         plot logo:
           which: 'noaa/nws'
           loc: 'upper left'

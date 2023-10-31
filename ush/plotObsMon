@@ -65,6 +65,7 @@ def loadConfig(satname, instrument, plot, cycle_tm, cycle_interval, data_locatio
               'SAT': satname,
               'SENSOR': instrument,
               'LEVELS': plot.get('levels'),
+              'CHANNELS': plot.get('channels'),
               'RUN': plot.get('run'),
               'PDATE': cycle_tm,
               'PLOT_TEMPLATE': camelCase(plot.get('plot')),
@@ -75,6 +76,24 @@ def loadConfig(satname, instrument, plot, cycle_tm, cycle_interval, data_locatio
     for x in range(1,times+1):
         date_str = f"PDATEm{x*6}"
         config[date_str] = add_to_datetime(cycle_tm, to_timedelta(f"-{cycle_interval*x}H"))
+
+    # Some plots with channels require a configuration value of XTICKS (tick marks on the
+    # plotted x axis).  The x axis tick marks indicate the actual channel number, which can
+    # be > 8000 for iasi.  Use the actual channel numbers as tick marks, if the last channel
+    # is < 30 (all but cris-fsr and iasis are), or use a resonable interval if larger.
+    if config['CHANNELS'] is not None:
+        last_chan = int(config['CHANNELS'].split(',')[-1])
+
+        if last_chan < 30:
+            config['XTICKS'] = config['CHANNELS']
+        else:
+            interval = 250 if last_chan < 3000 else 1000
+            ctr = interval
+            xticks = ""
+            while ctr < int(last_chan):
+                xticks =  xticks + str(ctr) + ','
+                ctr += interval
+            config['XTICKS'] = xticks[:-1]
 
     return config 
 

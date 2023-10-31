@@ -166,7 +166,7 @@ graphics:
         figure size: [20,18]
         tight layout:
         title: "${variable}, {{SENSOR}}_{{SAT}} level ${level}  \n Valid: {{ PDATE | to_YMDH }}"
-        output name: line_plots/{{SENSOR}}_{{SAT}}/time/{{SENSOR}}_{{SAT}}.${level}.${variable}.png
+        output name: line_plots/{{SENSOR}}_{{SAT}}/ozn/time/{{SENSOR}}_{{SAT}}.${level}.${variable}.png
         plot logo:
           which: 'noaa/nws'
           loc: 'upper right'
@@ -200,7 +200,7 @@ graphics:
         figure size: [20,18]
         tight layout:
         title: "obs-ges {{SENSOR}}_{{SAT}} level ${level}  \n Valid: {{ PDATE | to_YMDH }}"
-        output name: line_plots/{{SENSOR}}_{{SAT}}/time/{{SENSOR}}_{{SAT}}.${level}.omg.png
+        output name: line_plots/{{SENSOR}}_{{SAT}}/ozn/time/{{SENSOR}}_{{SAT}}.${level}.omg.png
         plot logo:
           which: 'noaa/nws'
           loc: 'upper right'

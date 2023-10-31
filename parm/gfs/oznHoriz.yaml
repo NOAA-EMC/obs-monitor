@@ -124,7 +124,7 @@ graphics:
         layout: [2,2]
         figure size: [8,7]
         title: "Ozone: Observed Values \n {{SENSOR}}_{{SAT}}, \n level ${level}"
-        output name: map_plots/{{SENSOR}}_{{SAT}}/horiz/observed_${level}.png
+        output name: map_plots/{{SENSOR}}_{{SAT}}/ozn/horiz/observed_${level}.png
 
       plots:
         - mapping:
