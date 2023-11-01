@@ -1,0 +1,239 @@
+#
+# Time series plots for OznMon gfs
+#
+# Generate separate 30 day time/series plots for:
+#   - number of obs 
+#   - penalty
+#   - omgnbc
+#   - bias correction
+#   - omgbc
+
+diagnostics:
+
+# Data read
+# ---------
+datasets:
+  - name: time
+    satellite: {{SAT}}
+    sensor: {{SENSOR}}
+    type: MonDataSpace
+    control_file:
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.ctl
+    filenames:
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATE | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm6 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm12 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm18 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm24 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm30 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm36 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm42 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm48 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm54 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm60 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm66 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm72 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm78 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm84 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm90 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm96 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm102 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm108 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm114 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm120 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm126 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm132 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm138 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm144 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm150 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm156 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm162 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm168 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm174 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm180 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm186 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm192 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm198 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm204 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm210 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm216 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm222 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm228 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm234 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm240 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm246 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm252 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm258 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm264 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm270 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm276 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm282 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm288 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm294 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm300 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm306 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm312 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm318 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm324 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm330 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm336 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm342 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm348 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm354 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm360 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm366 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm372 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm378 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm384 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm390 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm396 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm402 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm408 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm414 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm420 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm426 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm432 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm438 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm444 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm450 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm456 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm462 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm468 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm474 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm480 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm486 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm492 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm498 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm504 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm510 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm516 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm522 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm528 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm534 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm540 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm546 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm552 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm558 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm564 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm570 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm576 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm582 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm588 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm594 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm600 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm606 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm612 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm618 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm624 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm630 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm636 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm642 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm648 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm654 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm660 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm666 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm672 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm678 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm684 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm690 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm696 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm702 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm708 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm714 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm720 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm726 | to_YMDH }}.ieee_d
+
+    levels: {{LEVELS}}
+    regions: &regions 1
+    groups:
+      - name: GsiIeee
+        variables: &variables ['cnt', 'cpen', 'sdvomg', 'avgomg']
+
+graphics:
+
+  plotting_backend: Emcpy
+  figure_list:
+
+    # Obs count plots
+    # ---------------
+    - batch figure:
+        levels: {{LEVELS}}
+        variables: ['cnt', 'cpen']
+        sensor: {{SENSOR}}
+
+      figure:
+        layout: [1,1]
+        figure size: [20,18]
+        tight layout:
+        title: "${variable}, {{SENSOR}}_{{SAT}} level ${level}  \n Valid: {{ PDATE | to_YMDH }}"
+        output name: line_plots/{{SENSOR}}_{{SAT}}/ozn/time/{{SENSOR}}_{{SAT}}.${level}.${variable}.png
+        plot logo:
+          which: 'noaa/nws'
+          loc: 'upper right'
+
+      plots:
+        - add_xlabel: 'Cycle'
+          add_ylabel: '${variable}'
+          layers:
+          - type: LinePlot
+            x:
+              variable: time::GsiIeee::cycle
+            y:
+              variable: time::GsiIeee::${variable}
+            color: 'blue'
+            level: ${level}
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.25
+            color: 'black'
+
+
+    # All defined variables
+    # ---------------------
+    - batch figure:
+        variables: ['sdvomg']
+        levels: {{LEVELS}}
+
+      figure:
+        layout: [2,1]
+        figure size: [20,18]
+        tight layout:
+        title: "obs-ges {{SENSOR}}_{{SAT}} level ${level}  \n Valid: {{ PDATE | to_YMDH }}"
+        output name: line_plots/{{SENSOR}}_{{SAT}}/ozn/time/{{SENSOR}}_{{SAT}}.${level}.omg.png
+        plot logo:
+          which: 'noaa/nws'
+          loc: 'upper right'
+
+      plots:
+        - add_xlabel: 'Cycle'
+          add_ylabel: "Standard Deviation"
+          layers:
+          - type: LinePlot
+            x:
+              variable: time::GsiIeee::cycle
+            y:
+              variable: time::GsiIeee::${variable}
+            color: 'red'
+            level: ${level}
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.25
+            color: 'black'
+
+        - add_xlabel: 'Cycle'
+          add_ylabel: "Average"
+          layers:
+          - type: LinePlot
+            x:
+              variable: time::GsiIeee::cycle
+            y:
+              variable: time::GsiIeee::avgomg
+            color: 'blue'
+            level: ${level}
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.25
+            color: 'black'

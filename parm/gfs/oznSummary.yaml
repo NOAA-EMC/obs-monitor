@@ -1,0 +1,529 @@
+#
+#  Summary plots for OznMon gfs
+# 
+#    Make 4 plots:
+#      - Obs counts from last 4 cycles
+#      - Avg and sdv omgbc for 1 day, 7 days,  and 30 days
+#      - Avg and sdv penalty for 1 day, 1 day, and 30 days
+
+
+# Data read
+# ---------
+datasets:
+  - name: summary
+    satellite: {{SAT}}
+    sensor: {{SENSOR}}
+    type: MonDataSpace
+    control_file:
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.ctl
+    filenames:
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATE | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm6 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm12 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm18 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm24 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm30 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm36 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm42 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm48 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm54 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm60 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm66 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm72 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm78 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm84 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm90 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm96 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm102 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm108 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm114 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm120 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm126 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm132 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm138 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm144 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm150 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm156 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm162 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm168 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm174 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm180 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm186 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm192 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm198 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm204 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm210 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm216 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm222 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm228 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm234 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm240 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm246 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm252 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm258 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm264 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm270 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm276 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm282 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm288 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm294 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm300 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm306 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm312 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm318 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm324 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm330 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm336 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm342 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm348 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm354 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm360 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm366 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm372 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm378 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm384 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm390 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm396 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm402 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm408 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm414 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm420 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm426 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm432 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm438 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm444 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm450 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm456 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm462 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm468 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm474 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm480 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm486 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm492 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm498 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm504 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm510 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm516 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm522 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm528 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm534 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm540 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm546 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm552 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm558 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm564 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm570 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm576 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm582 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm588 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm594 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm600 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm606 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm612 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm618 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm624 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm630 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm636 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm642 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm648 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm654 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm660 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm666 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm672 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm678 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm684 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm690 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm696 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm702 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm708 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm714 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm720 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.ges.{{ PDATEm726 | to_YMDH }}.ieee_d
+
+    levels: {{LEVELS}}
+    regions: &regions 1
+    groups:
+      - name: GsiIeee
+        variables: ['cnt']
+
+transforms:
+  - transform: accept where
+    new name: summary::GsiIeee::nassim
+    starting field: summary::GsiIeee::level_nassim
+    where:
+      - summary::GsiIeee::level_nassim > 0
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: summary::GsiIeee::assim
+    starting field: summary::GsiIeee::level_assim
+    where:
+      - summary::GsiIeee::level_assim > 0
+    for:
+      variable: [none]
+
+  - transform: select time
+    new name: summary::GsiIeee::count_cyc1
+    starting field: summary::GsiIeee::cnt
+    cycle: {{ PDATE | to_YMDH }}
+    for:
+      variable: [none]
+
+  - transform: select time
+    new name: summary::GsiIeee::count_cyc2
+    starting field: summary::GsiIeee::cnt
+    cycle: {{ PDATEm6 | to_YMDH }}
+    for:
+      variable: [none]
+
+  - transform: select time
+    new name: summary::GsiIeee::count_cyc3
+    starting field: summary::GsiIeee::cnt
+    cycle: {{ PDATEm12 | to_YMDH }}
+    for:
+      variable: [none]
+
+  - transform: select time
+    new name: summary::GsiIeee::count_cyc4
+    starting field: summary::GsiIeee::cnt
+    cycle: {{ PDATEm18 | to_YMDH }}
+    for:
+      variable: [none]
+
+  # Single avg obs - ges
+  - transform: select time
+    new name: summary::GsiIeee::avgomg_1
+    starting field: summary::GsiIeee::avgomg
+    cycle: {{ PDATE | to_YMDH }}
+    for:
+      variable: [none]
+
+  # Single sdv obs - ges
+  - transform: select time
+    new name: summary::GsiIeee::sdvomg_1
+    starting field: summary::GsiIeee::sdvomg
+    cycle: {{ PDATE | to_YMDH }}
+    for:
+      variable: [none]
+
+  # avg obs-ges, 1 day
+  - transform: select time
+    new name: summary::GsiIeee::avgomg_1d
+    starting field: summary::GsiIeee::avgomg
+    start cycle: {{ PDATE | to_YMDH }}
+    end cycle: {{ PDATEm18 | to_YMDH }}
+    for:
+      variable: [none]
+
+  # sdv obs-ges, 1 day
+  - transform: select time
+    new name: summary::GsiIeee::sdvomg_1d
+    starting field: summary::GsiIeee::sdvomg
+    start cycle: {{ PDATE | to_YMDH }}
+    end cycle: {{ PDATEm18 | to_YMDH }}
+    for:
+      variable: [none]
+
+  # avg obs-ges, 30 day
+  - transform: select time
+    new name: summary::GsiIeee::avgomg_30d
+    starting field: summary::GsiIeee::avgomg
+    start cycle: {{ PDATE | to_YMDH }}
+    end cycle: {{ PDATEm720 | to_YMDH }}
+    for:
+      variable: [none]
+
+  # sdv obs-ges, 30 day
+  - transform: select time
+    new name: summary::GsiIeee::sdvomg_30d
+    starting field: summary::GsiIeee::sdvomg
+    start cycle: {{ PDATE | to_YMDH }}
+    end cycle: {{ PDATEm720 | to_YMDH }}
+    for:
+      variable: [none]
+
+  # cpen, 1 cycle
+  - transform: select time
+    new name: summary::GsiIeee::cpen_1c
+    starting field: summary::GsiIeee::cpen
+    cycle: {{ PDATE | to_YMDH }}
+    for:
+      variable: [none]
+
+  # cpen, 1 day
+  - transform: select time
+    new name: summary::GsiIeee::cpen_1d
+    starting field: summary::GsiIeee::cpen
+    start cycle: {{ PDATE | to_YMDH }}
+    end cycle: {{ PDATEm18 | to_YMDH }}
+    for:
+      variable: [none]
+
+  # cpen, 30 day
+  - transform: select time
+    new name: summary::GsiIeee::cpen_30d
+    starting field: summary::GsiIeee::cpen
+    start cycle: {{ PDATE | to_YMDH }}
+    end cycle: {{ PDATEm720 | to_YMDH }}
+    for:
+      variable: [none]
+
+  - transform: arithmetic
+    new name: summary::GsiIeee::yaxis_100
+    equals: summary::GsiIeee::level_yaxis_z + 100.0
+    for:
+      variable: [none]
+    
+  - transform: arithmetic
+    new name: summary::GsiIeee::yaxis_np5
+    equals: summary::GsiIeee::level_yaxis_z + -1.5
+    for:
+      variable: [none]
+    
+  - transform: arithmetic
+    new name: summary::GsiIeee::yaxis_n5
+    equals: summary::GsiIeee::level_yaxis_z + -5.0
+    for:
+      variable: [none]
+    
+graphics:
+
+  plotting_backend: Emcpy
+  figure_list:
+
+    - figure:
+        layout: [3,1]
+        figure size: [20,18]
+        tight layout:
+        title: "Summary Plot {{SENSOR}}_{{SAT}} \n Valid: {{ PDATE | to_YMDH }}"
+        output name: lineplots/{{SENSOR}}_{{SAT}}/ozn/summary/summary.{{SENSOR}}_{{SAT}}.png
+        plot logo:
+          which: 'noaa/nws'
+          loc: 'upper left'
+          subplot_orientation: 'first'
+      plots:
+        # Obs counts, last 4 cycles
+        # -------------------------
+        - add_xlabel: 'Level'
+          add_ylabel: 'Observation Count'
+          add_legend:
+            loc: 'upper right'
+          set_xticks: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22]
+          set_yticks: [100, 150, 200, 250, 300, 350, 400]
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.25
+            color: 'black'
+          add_title: 
+            label: "Number of Obs Passing QC \n {{ PDATE | to_YMDH }}"
+            loc: 'Left'
+          layers:
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::level
+            y:
+              variable: summary::GsiIeee::count_cyc1
+            color: 'blue'
+            label: '{{ PDATE | to_YMDH }}'
+
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::level
+            y:
+              variable: summary::GsiIeee::count_cyc2
+            color: 'green'
+            label: '{{ PDATEm6 | to_YMDH }}'
+
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::level
+            y:
+              variable: summary::GsiIeee::count_cyc3
+            color: 'orange'
+            label: '{{ PDATEm12 | to_YMDH }}'
+
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::level
+            y:
+              variable: summary::GsiIeee::count_cyc4
+            color: 'red'
+            label: '{{ PDATEm18 | to_YMDH }}'
+
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::assim
+            y: 
+              variable: summary::GsiIeee::yaxis_100
+            color: 'green'
+            label: 'level assim'
+            linestyle: ''
+            marker: 's'
+            markersize: '6'
+
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::nassim
+            y: 
+              variable: summary::GsiIeee::yaxis_100
+            color: 'red'
+            label: 'chan not assim'
+            linestyle: ''
+            marker: 's'
+            markersize: '6'
+
+        # obs-ges, avg and sdv, 1 cycle, 1 day, 30 days
+        # --------------------------------------------------
+        - add_xlabel: 'Level'
+          add_ylabel: 'Obs-Ges'
+          add_legend:
+            loc: 'upper left'
+          set_xticks: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22]
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.25
+            color: 'black'
+          add_title: 
+            label: "Obs-Ges\n {{ PDATE | to_YMDH }}"
+            loc: 'Left'
+          layers:
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::level
+            y:
+              variable: summary::GsiIeee::avgomg_1
+            color: 'blue'
+            label: 'avg 1 cycle'
+
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::level
+            y:
+              variable: summary::GsiIeee::avgomg_1d
+            color: 'green'
+            label: 'avg 1 day'
+
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::level
+            y:
+              variable: summary::GsiIeee::avgomg_30d
+            color: 'purple'
+            label: 'avg 30 days'
+
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::level
+            y:
+              variable: summary::GsiIeee::sdvomg_1
+            color: 'red'
+            label: 'sdv 1 cycle'
+
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::level
+            y:
+              variable: summary::GsiIeee::sdvomg_1d
+            color: 'orange'
+            label: 'sdv 1 day'
+
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::level
+            y:
+              variable: summary::GsiIeee::sdvomg_30d
+            color: 'yellow'
+            label: 'sdv 30 day'
+
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::assim
+            y: 
+              variable: summary::GsiIeee::yaxis_n5
+            color: 'green'
+            label: 'chan assim'
+            linestyle: ''
+            marker: 's'
+            markersize: '6'
+
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::nassim
+            y: 
+              variable: summary::GsiIeee::yaxis_n5
+            color: 'red'
+            label: 'chan not assim'
+            linestyle: ''
+            marker: 's'
+            markersize: '6'
+
+          - type: HorizontalLine
+            y: 0
+            linewidth: 0.75
+            label: ''
+
+        # Contribution to Penalty, 1 cycle, 1 day, 30 days
+        # ------------------------------------------------
+        - add_xlabel: 'Level'
+          add_ylabel: 'Contribution to Penalty'
+          add_legend:
+            loc: 'upper left'
+          set_xticks: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22]
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.25
+            color: 'black'
+          add_title: 
+            label: "Contribution to Penalty\n {{ PDATE | to_YMDH }}"
+            loc: 'Left'
+          layers:
+
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::level
+            y:
+              variable: summary::GsiIeee::cpen_1c
+            color: 'blue'
+            label: '1 cycle'
+
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::level
+            y:
+              variable: summary::GsiIeee::cpen_1d
+            color: 'green'
+            label: '1 day'
+
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::level
+            y:
+              variable: summary::GsiIeee::cpen_30d
+            color: 'red'
+            label: '30 days'
+
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::assim
+            y: 
+              variable: summary::GsiIeee::yaxis_np5
+            color: 'green'
+            label: 'chan assim'
+            linestyle: ''
+            marker: 's'
+            markersize: '6'
+
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::nassim
+            y: 
+              variable: summary::GsiIeee::yaxis_np5
+            color: 'red'
+            label: 'chan not assim'
+            linestyle: ''
+            marker: 's'
+            markersize: '6'

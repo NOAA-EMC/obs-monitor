@@ -1,0 +1,575 @@
+#
+#  Summary plots for RadMon gfs
+# 
+#    Make 4 plots:
+#      - Obs counts from last 4 cycles
+#      - Avg total bias correction for 1 cycle, 1 day, and 30 days
+#      - Avg omgbc for 1 cycle and 30 days
+#      - Avg penalty for 1 cycle, 1 day, and 30 days
+
+diagnostics:
+
+# Data read
+# ---------
+datasets:
+  - name: summary
+    satellite: {{SAT}}
+    sensor: {{SENSOR}}
+    type: MonDataSpace
+    control_file:
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.ctl
+    filenames:
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATE | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm6 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm12 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm18 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm24 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm30 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm36 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm42 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm48 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm54 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm60 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm66 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm72 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm78 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm84 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm90 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm96 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm102 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm108 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm114 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm120 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm126 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm132 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm138 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm144 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm150 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm156 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm162 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm168 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm174 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm180 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm186 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm192 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm198 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm204 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm210 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm216 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm222 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm228 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm234 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm240 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm246 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm252 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm258 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm264 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm270 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm276 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm282 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm288 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm294 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm300 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm306 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm312 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm318 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm324 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm330 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm336 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm342 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm348 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm354 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm360 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm366 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm372 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm378 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm384 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm390 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm396 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm402 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm408 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm414 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm420 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm426 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm432 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm438 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm444 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm450 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm456 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm462 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm468 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm474 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm480 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm486 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm492 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm498 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm504 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm510 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm516 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm522 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm528 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm534 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm540 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm546 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm552 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm558 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm564 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm570 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm576 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm582 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm588 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm594 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm600 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm606 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm612 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm618 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm624 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm630 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm636 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm642 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm648 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm654 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm660 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm666 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm672 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm678 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm684 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm690 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm696 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm702 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm708 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm714 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm720 | to_YMDH }}.ieee_d
+      - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm726 | to_YMDH }}.ieee_d
+
+    channels: {{CHANNELS}}
+    regions: &regions 1
+    groups:
+      - name: GsiIeee
+
+transforms:
+  - transform: accept where
+    new name: summary::GsiIeee::nassim
+    starting field: summary::GsiIeee::chan_nassim
+    where:
+      - summary::GsiIeee::chan_nassim > 0
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: summary::GsiIeee::assim
+    starting field: summary::GsiIeee::chan_assim
+    where:
+      - summary::GsiIeee::chan_assim > 0
+    for:
+      variable: [none]
+
+  - transform: select time
+    new name: summary::GsiIeee::count_cyc1
+    starting field: summary::GsiIeee::count
+    cycle: {{ PDATE | to_YMDH }}
+    for:
+      variable: [none]
+
+  - transform: select time
+    new name: summary::GsiIeee::count_cyc2
+    starting field: summary::GsiIeee::count
+    cycle: {{ PDATEm6 | to_YMDH }}
+    for:
+      variable: [none]
+
+  - transform: select time
+    new name: summary::GsiIeee::count_cyc3
+    starting field: summary::GsiIeee::count
+    cycle: {{ PDATEm12 | to_YMDH }}
+    for:
+      variable: [none]
+
+  - transform: select time
+    new name: summary::GsiIeee::count_cyc4
+    starting field: summary::GsiIeee::count
+    cycle: {{ PDATEm18 | to_YMDH }}
+    for:
+      variable: [none]
+
+  # Note that total is the total bias correction for a given
+  # channel/region.  To find the average divide total by count.
+  - transform: arithmetic
+    new name: summary::GsiIeee::total_avg
+    equals: summary::GsiIeee::total/summary::GsiIeee::count
+    for:
+      variable: [none]
+
+  # Note that omgbc is the total omgbc for a given
+  # channel/region.  To find the average divide omgbc by count.
+  - transform: arithmetic
+    new name: summary::GsiIeee::omgbc_avg
+    equals: summary::GsiIeee::omgbc/summary::GsiIeee::count
+    for:
+      variable: [none]
+
+  # Single cycle total bias correction
+  - transform: select time
+    new name: summary::GsiIeee::total_1cyc
+    starting field: summary::GsiIeee::total_avg
+    cycle: {{ PDATE | to_YMDH }}
+    for:
+      variable: [none]
+
+  # 4 cycle total bias correction using time slice
+  - transform: select time
+    new name: summary::GsiIeee::total_1d
+    starting field: summary::GsiIeee::total_avg
+    start cycle: {{ PDATE | to_YMDH }}
+    end cycle: {{ PDATEm18 | to_YMDH }}
+    for:
+      variable: [none]
+
+  # 120 cycle total bias correction using time slice
+  - transform: select time
+    new name: summary::GsiIeee::total_30d
+    starting field: summary::GsiIeee::total_avg
+    start cycle: {{ PDATE | to_YMDH }}
+    end cycle: {{ PDATEm720 | to_YMDH }}
+    for:
+      variable: [none]
+
+  # 1 day omgbc using time slice
+  - transform: select time
+    new name: summary::GsiIeee::omgbc_1c
+    starting field: summary::GsiIeee::omgbc_avg
+    cycle: {{ PDATE | to_YMDH }}
+    for:
+      variable: [none]
+
+  # 30 day omgbc using time slice
+  - transform: select time
+    new name: summary::GsiIeee::omgbc_30d
+    starting field: summary::GsiIeee::omgbc_avg
+    start cycle: {{ PDATE | to_YMDH }}
+    end cycle: {{ PDATEm720 | to_YMDH }}
+    for:
+      variable: [none]
+
+  # Note that penalty is the total penalty for a given
+  # channel/region.  To find the average divide penalty by count.
+  - transform: arithmetic
+    new name: summary::GsiIeee::penalty_avg
+    equals: summary::GsiIeee::penalty/summary::GsiIeee::count
+    for:
+      variable: [none]
+
+  # 1 cycle penalty using time slice
+  - transform: select time
+    new name: summary::GsiIeee::penalty_1c
+    starting field: summary::GsiIeee::penalty_avg
+    cycle: {{ PDATE | to_YMDH }}
+    for:
+      variable: [none]
+
+  # 1 day penalty using time slice
+  - transform: select time
+    new name: summary::GsiIeee::penalty_1d
+    starting field: summary::GsiIeee::penalty_avg
+    start cycle: {{ PDATE | to_YMDH }}
+    end cycle: {{ PDATEm18 | to_YMDH }}
+    for:
+      variable: [none]
+
+  # 30 day penalty using time slice
+  - transform: select time
+    new name: summary::GsiIeee::penalty_30d
+    starting field: summary::GsiIeee::penalty_avg
+    start cycle: {{ PDATE | to_YMDH }}
+    end cycle: {{ PDATEm720 | to_YMDH }}
+    for:
+      variable: [none]
+
+  - transform: arithmetic
+    new name: summary::GsiIeee::yaxis_100  
+    equals: summary::GsiIeee::chan_yaxis_z + 100.0
+    for:
+      variable: [none]
+
+  - transform: arithmetic
+    new name: summary::GsiIeee::yaxis_n1p5  
+    equals: summary::GsiIeee::chan_yaxis_z + -1.5
+    for:
+      variable: [none]
+
+  - transform: arithmetic
+    new name: summary::GsiIeee::yaxis_np05  
+    equals: summary::GsiIeee::chan_yaxis_z + -0.05
+    for:
+      variable: [none]
+
+graphics:
+
+  plotting_backend: Emcpy
+  figure_list:
+
+    - figure:
+        layout: [4,1]
+        figure size: [20,18]
+        tight layout:
+        title: "Summary Plot {{SENSOR}}_{{SAT}} \n Valid: {{ PDATE | to_YMDH }}"
+        output name: line_plots/{{SENSOR}}_{{SAT}}/rad/summary/summary.{{SENSOR}}_{{SAT}}.png
+        plot logo:
+          which: 'noaa/nws'
+          loc: 'upper center'
+          subplot_orientation: 'first'
+      plots:
+        # Obs counts, last 4 cycles
+        # -------------------------
+        - add_xlabel: 'Channel'
+          add_ylabel: 'Observation Count'
+          add_legend:
+            loc: 'upper right'
+          set_xticks: [{{XTICKS}}]  # need solution for large chan counts
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.5
+            color: 'black'
+          add_title: 
+            label: "Number of Obs Passing QC \n {{ PDATE | to_YMDH }}"
+            loc: 'Left'
+          layers:
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::channel
+            y:
+              variable: summary::GsiIeee::count_cyc1
+            color: 'blue'
+            label: '{{ PDATE | to_YMDH }}'
+
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::channel
+            y:
+              variable: summary::GsiIeee::count_cyc2
+            color: 'green'
+            label: '{{ PDATEm6 | to_YMDH }}'
+
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::channel
+            y:
+              variable: summary::GsiIeee::count_cyc3
+            color: 'orange'
+            label: '{{ PDATEm12 | to_YMDH }}'
+
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::channel
+            y:
+              variable: summary::GsiIeee::count_cyc4
+            color: 'red'
+            label: '{{ PDATEm18 | to_YMDH }}'
+
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::assim
+            y: 
+              variable: summary::GsiIeee::yaxis_100
+            color: 'green'
+            label: 'chan assim'
+            linestyle: ''
+            marker: 's'
+            markersize: '6'
+
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::nassim
+            y: 
+              variable: summary::GsiIeee::yaxis_100
+            color: 'red'
+            label: 'chan not assim'
+            linestyle: ''
+            marker: 's'
+            markersize: '6'
+
+        # Avg total bias correction, 1 cycle, 1 day, 30 days
+        # --------------------------------------------------
+        - add_xlabel: 'Channel'
+          add_ylabel: 'Total Bias Correction (K)'
+          add_legend:
+            loc: 'upper right'
+          set_xticks: [{{XTICKS}}]
+          set_yticks: [-1.0, -0.5, 0, 0.5, 1.0]
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.5
+            color: 'black'
+          add_title: 
+            label: "Total Bias Correction(K) \n {{ PDATE | to_YMDH }}"
+            loc: 'Left'
+          layers:
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::channel
+            y:
+              variable: summary::GsiIeee::total_1cyc
+            color: 'blue'
+            label: '1 cycle'
+
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::channel
+            y:
+              variable: summary::GsiIeee::total_1d
+            color: 'red'
+            label: '1 day'
+
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::channel
+            y:
+              variable: summary::GsiIeee::total_30d
+            color: 'green'
+            label: '30 days'
+
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::assim
+            y: 
+              variable: summary::GsiIeee::yaxis_n1p5
+            color: 'green'
+            label: 'chan assim'
+            linestyle: ''
+            marker: 's'
+            markersize: '6'
+
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::nassim
+            y: 
+              variable: summary::GsiIeee::yaxis_n1p5
+            color: 'red'
+            label: 'chan not assim'
+            linestyle: ''
+            marker: 's'
+            markersize: '6'
+
+          - type: HorizontalLine
+            y: 0
+            linewidth: 1.0
+            label: ''
+
+        # Avg omgbc 1 cycle, 30 days
+        # --------------------------
+        - add_xlabel: 'Channel'
+          add_ylabel: 'Obs - Ges with BC (K)'
+          add_legend:
+            loc: 'upper right'
+          set_xticks: [{{XTICKS}}]
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.5
+            color: 'black'
+          add_title: 
+            label: "Observed - Ges with Bias Cor(K) \n {{ PDATE | to_YMDH }}"
+            loc: 'Left'
+          layers:
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::channel
+            y:
+              variable: summary::GsiIeee::omgbc_1c
+            color: 'blue'
+            label: '1 cycle'
+
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::channel
+            y:
+              variable: summary::GsiIeee::omgbc_30d
+            color: 'red'
+            label: '30 days'
+
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::assim
+            y: 
+              variable: summary::GsiIeee::yaxis_np05
+            color: 'green'
+            label: 'chan assim'
+            linestyle: ''
+            marker: 's'
+            markersize: '6'
+
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::nassim
+            y: 
+              variable: summary::GsiIeee::yaxis_np05
+            color: 'red'
+            label: 'chan not assim'
+            linestyle: ''
+            marker: 's'
+            markersize: '6'
+
+        # Avg penalty value 1 cycle, 1 day, 30 days
+        # -----------------------------------------
+        - add_xlabel: 'Channel'
+          add_ylabel: "Contribution to Penalty"
+          add_legend:
+            loc: 'upper right'
+          set_xticks: [{{XTICKS}}]
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.5
+            color: 'black'
+          add_title: 
+            label: "Contribution to Penalty \n {{ PDATE | to_YMDH }}"
+            loc: 'Left'
+          layers:
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::channel
+            y:
+              variable: summary::GsiIeee::penalty_1c
+            color: 'blue'
+            label: '1 cycle'
+
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::channel
+            y:
+              variable: summary::GsiIeee::penalty_1d
+            color: 'red'
+            label: '1 day'
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::channel
+            y:
+              variable: summary::GsiIeee::penalty_30d
+            color: 'orange'
+            label: '30 days'
+
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::assim
+            y: 
+              variable: summary::GsiIeee::yaxis_np05
+            color: 'green'
+            label: 'chan assim'
+            linestyle: ''
+            marker: 's'
+            markersize: '6'
+
+          - type: LinePlot
+            x:
+              variable: summary::GsiIeee::nassim
+            y: 
+              variable: summary::GsiIeee::yaxis_np05
+            color: 'red'
+            label: 'chan not assim'
+            linestyle: ''
+            marker: 's'
+            markersize: '6'
+
+

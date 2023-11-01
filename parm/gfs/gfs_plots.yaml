@@ -13,12 +13,40 @@ satellites:
             levels: '1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22'
             run: ges
 
-#  - name: another_satellite
-#    instruments:
-#      - name: another_instrument
-#        plot_list:
-#          - plot: ozn time
-#            times: 120
-#            levels: '1,2,3,4'
-#            run: anl
+          - plot: ozn time
+            times: 121 
+            levels: '1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22'
+            run: ges
 
+          - plot: ozn summary
+            times: 121
+            levels: '1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22'
+            run: ges
+
+  - name: g16
+    instruments:
+      - name: abi
+        plot_list:
+          - plot: rad summary
+            times: 121
+            channels: '7,8,9,10,11,12,13,14,15,16'
+            run: ges
+
+          - plot: rad time
+            times: 121
+            channels: '7,8,9,10,11,12,13,14,15,16'
+            run: ges
+
+  - name: j1
+    instruments:
+      - name: viirs-m
+        plot_list:
+          - plot: rad angle
+            times: 121
+            channels: '12,13,14,15,16'
+            run: ges
+
+          - plot: rad bcoef
+            times: 121
+            channels: '12,13,14,15,16'
+            run: ges
