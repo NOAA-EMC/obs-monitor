@@ -142,7 +142,6 @@ datasets:
       - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm720 | to_YMDH }}.ieee_d
       - {{DATA}}/rad_data/time.{{SENSOR}}_{{SAT}}.{{ PDATEm726 | to_YMDH }}.ieee_d
 
-#    channels: &channels 7,8,9,10,11,12,13,14,15,16
     channels: {{CHANNELS}}
     regions: &regions 1
     groups:
