@@ -43,7 +43,7 @@ jobs:
     - name: Put eva in the path
       run: echo "$HOME/.local/bin" >> $GITHUB_PATH
     - name: Put eva in the pythonpath
-      run: echo "$HOME/.local/lib/python3.11/site-packages/" >> $PYTHONPATH
+      run: export PYTHONPATH=$PYTHONPATH:$HOME/.local/lib/python3.11/site-packages/
 
     - name: Install pycodestyle dependencies
       run: |
