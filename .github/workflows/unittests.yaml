@@ -42,6 +42,8 @@ jobs:
       run: $CONDA/bin/pip3 install --use-deprecated=legacy-resolver -r $GITHUB_WORKSPACE/eva/requirements-github.txt --user $GITHUB_WORKSPACE/eva
     - name: Put eva in the path
       run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+    #- name: Put eva in the pythonpath
+    #  run: echo "$HOME/.local/lib/python3.10/site-packages/" >> $PYTHONPATH
 
     - name: Install pycodestyle dependencies
       run: |
@@ -68,7 +70,7 @@ jobs:
     - name: Test running plotObsMon
       run: |
         cd $GITHUB_WORKSPACE/obs-monitor/ush
-        ./plotObsMon -i $GITHUB_WORKSPACE/obs-monitor/parm/gfs/gfs_plot.yaml -o $GITHUB_WORKSPACE/gfs_eva_test.yaml
+        python3 plotObsMon -i $GITHUB_WORKSPACE/obs-monitor/parm/gfs/gfs_plot.yaml -o $GITHUB_WORKSPACE/gfs_eva_test.yaml
 
     - name: Display YAML file
       run: |
