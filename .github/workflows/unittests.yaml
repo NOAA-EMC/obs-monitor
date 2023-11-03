@@ -22,11 +22,6 @@ jobs:
     - name: Install pip
       run: conda install pip
 
-    - name: Install pycodestyle dependencies
-      run: |
-        pip install --upgrade pip
-        pip install pycodestyle
-
     - name: Checkout wxflow
       uses: actions/checkout@v3
       with:
@@ -37,7 +32,7 @@ jobs:
     - name: Install wxflow
       run: |
         cd wxflow
-        pip install .
+        $CONDA/bin/pip3 install .
 
     # Install cartopy
     - name: Install cartopy
@@ -68,13 +63,7 @@ jobs:
     - name: Test running plotObsMon
       run: |
         cd $GITHUB_WORKSPACE/obs-monitor/ush
-        which python3
-        echo $PYTHONPATH
-        $CONDA/bin/python3 -c "import eva; print(eva.__file__)"
         $CONDA/bin/python3 plotObsMon -i $GITHUB_WORKSPACE/obs-monitor/parm/gfs/gfs_plot.yaml -o $GITHUB_WORKSPACE/gfs_eva_test.yaml
-        export PYTHONPATH=$PYTHONPATH:$HOME/.local/lib/python3.11/site-packages/
-        echo $PYTHONPATH
-        python3 -c "import eva; print(eva.__file__)"
 
     - name: Display YAML file
       run: |
