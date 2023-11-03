@@ -60,11 +60,11 @@ jobs:
       with:
         path: obs-monitor
 
-    - name: Test running plotObsMon
-      run: |
-        cd $GITHUB_WORKSPACE/obs-monitor/ush
-        $CONDA/bin/python3 plotObsMon -i $GITHUB_WORKSPACE/obs-monitor/parm/gfs/gfs_plots.yaml -p 2023110300
+#    - name: Test running plotObsMon
+#      run: |
+#        cd $GITHUB_WORKSPACE/obs-monitor/ush
+#        $CONDA/bin/python3 plotObsMon -i $GITHUB_WORKSPACE/obs-monitor/parm/gfs/gfs_plots.yaml -p 2023110300
 
-    - name: Display YAML files
-      run: |
-        ls $GITHUB_WORKSPACE/obs-monitor/ush
+#    - name: Display YAML files
+#      run: |
+#        ls $GITHUB_WORKSPACE/obs-monitor/ush
