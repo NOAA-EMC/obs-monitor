@@ -71,7 +71,9 @@ jobs:
       run: |
         cd $GITHUB_WORKSPACE/obs-monitor/ush
         which python3
+        echo $PYTHONPATH
         python3 -c "import eva; print(eva.__file__)"
+        $CONDA/bin/python3 -c "import eva; print(eva.__file__)"
         ./plotObsMon -i $GITHUB_WORKSPACE/obs-monitor/parm/gfs/gfs_plot.yaml -o $GITHUB_WORKSPACE/gfs_eva_test.yaml
 
     - name: Display YAML file
