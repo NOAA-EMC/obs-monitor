@@ -30,13 +30,16 @@ jobs:
     - name: Clone eva repo
       uses: actions/checkout@v2
       with:
+        repository: JCSDA-internal/eva
+        ref: develop
+        path: eva
         lfs: true
 
     # Install eva
     #- name: Upgrade pip
     #  run: $CONDA/bin/pip3 install --upgrade pip
     - name: Install eva and dependencies
-      run: $CONDA/bin/pip3 install --use-deprecated=legacy-resolver -r requirements-github.txt --user .
+      run: $CONDA/bin/pip3 install --use-deprecated=legacy-resolver -r requirements-github.txt --user $GITHUB_WORKSPACE/eva
     - name: Put eva in the path
       run: echo "$HOME/.local/bin" >> $GITHUB_PATH
 
