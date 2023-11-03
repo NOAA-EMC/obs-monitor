@@ -67,3 +67,6 @@ jobs:
         cd $GITHUB_WORKSPACE/obs-monitor/ush
         ./plotObsMon -i $GITHUB_WORKSPACE/obs-monitor/parm/gfs/gfs_plot.yaml -o $GITHUB_WORKSPACE/gfs_eva_test.yaml
 
+    - name: Display YAML file
+      run: |
+        cat $GITHUB_WORKSPACE/gfs_eva_test.yaml
