@@ -1,0 +1,23 @@
+name: Coding Norms
+on: [push]
+
+jobs:
+  check_pynorms:
+    runs-on: ubuntu-latest
+    name: Check python coding norms with pycodestyle
+
+    steps:
+
+    - name: Install dependencies
+      run: |
+        pip install --upgrade pip
+        pip install pycodestyle
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        path: obs-monitor
+
+    - name: Run pycodestyle
+      run: |
+        cd $GITHUB_WORKSPACE/obs-monitor
+        pycodestyle -v --config ./.pycodestyle ./ush ./ush/plotObsMon

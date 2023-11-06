@@ -17,7 +17,7 @@ from eva.utilities.logger import Logger
 def genYaml(input_yaml, output_yaml, config):
     """
     Read in input yaml file and modify with contents of config.
-    
+
     Parameters:
         input_yaml (yaml file): path to input yaml file
         output_yaml (yaml file): path to output yaml file
@@ -29,7 +29,8 @@ def genYaml(input_yaml, output_yaml, config):
     final_config = parse_j2yaml(input_yaml, config)
     save_as_yaml(final_config, output_yaml)
 
-#--------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------
+
 
 def camelCase(s):
     """
@@ -44,7 +45,8 @@ def camelCase(s):
     s = sub(r"(_|-)+", " ", s).title().replace(" ", "")
     return ''.join([s[0].lower(), s[1:]])
 
-#--------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------
+
 
 def loadConfig(satname, instrument, plot, cycle_tm, cycle_interval, data_location):
     """
@@ -56,24 +58,24 @@ def loadConfig(satname, instrument, plot, cycle_tm, cycle_interval, data_locatio
         plot (str): plot template
         cycle_tm (datetime): Cycle time of plot
         cycle_interval (int): number of hours between cycles
-        data_location (str): path to directory containing data files 
+        data_location (str): path to directory containing data files
 
     Return:
         config(dict): Dictionary containing configuration information
     """
     config = {
-              'SAT': satname,
-              'SENSOR': instrument,
-              'LEVELS': plot.get('levels'),
-              'CHANNELS': plot.get('channels'),
-              'RUN': plot.get('run'),
-              'PDATE': cycle_tm,
-              'PLOT_TEMPLATE': camelCase(plot.get('plot')),
-              'DATA': data_location
+        'SAT': satname,
+        'SENSOR': instrument,
+        'LEVELS': plot.get('levels'),
+        'CHANNELS': plot.get('channels'),
+        'RUN': plot.get('run'),
+        'PDATE': cycle_tm,
+        'PLOT_TEMPLATE': camelCase(plot.get('plot')),
+        'DATA': data_location
     }
 
     times = int(plot.get('times'))
-    for x in range(1,times+1):
+    for x in range(1, times+1):
         date_str = f"PDATEm{x*6}"
         config[date_str] = add_to_datetime(cycle_tm, to_timedelta(f"-{cycle_interval*x}H"))
 
@@ -91,17 +93,18 @@ def loadConfig(satname, instrument, plot, cycle_tm, cycle_interval, data_locatio
             ctr = interval
             xticks = ""
             while ctr < int(last_chan):
-                xticks =  xticks + str(ctr) + ','
+                xticks = xticks + str(ctr) + ','
                 ctr += interval
             config['XTICKS'] = xticks[:-1]
 
-    return config 
+    return config
 
-#--------------------------------------------------------------------------------------------
+# --------------------------------------------------------------------------------------------
+
 
 if __name__ == "__main__":
     """
-    plotObsMon 
+    plotObsMon
 
     Read and parse input yaml file, load configuration and apply to requested yaml template(s),
     and plot results.

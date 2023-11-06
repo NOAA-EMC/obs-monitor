@@ -1,0 +1,70 @@
+name: Unit Tests
+on: [push, pull_request]
+
+jobs:
+  ctests:
+    runs-on: ubuntu-latest
+    name: Run Unit Tests with ctest
+
+    steps:
+
+    # Setup Python
+    #- name: Set up Python 3.10
+    #  uses: actions/setup-python@v2
+    #  with:
+    #    python-version: 3.10.10
+
+    # Update conda
+    - name: Update conda
+      run: conda update -n base -c defaults conda
+
+    # Install pip
+    - name: Install pip
+      run: conda install pip
+
+    - name: Checkout wxflow
+      uses: actions/checkout@v3
+      with:
+        repository: NOAA-EMC/wxflow
+        ref: develop
+        path: wxflow
+
+    - name: Install wxflow
+      run: |
+        cd wxflow
+        $CONDA/bin/pip3 install .
+
+    # Install cartopy
+    - name: Install cartopy
+      run: conda install -c conda-forge cartopy
+
+    # Clone the eva code
+    - name: Clone eva repo
+      uses: actions/checkout@v2
+      with:
+        repository: JCSDA-internal/eva
+        ref: develop
+        path: eva
+        lfs: true
+
+    # Install eva
+    #- name: Upgrade pip
+    #  run: $CONDA/bin/pip3 install --upgrade pip
+    - name: Install eva and dependencies
+      run: $CONDA/bin/pip3 install --use-deprecated=legacy-resolver -r $GITHUB_WORKSPACE/eva/requirements-github.txt --user $GITHUB_WORKSPACE/eva
+    - name: Put eva in the path
+      run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+    - name: Checkout
+      uses: actions/checkout@v2
+      with:
+        path: obs-monitor
+
+#    - name: Test running plotObsMon
+#      run: |
+#        cd $GITHUB_WORKSPACE/obs-monitor/ush
+#        $CONDA/bin/python3 plotObsMon -i $GITHUB_WORKSPACE/obs-monitor/parm/gfs/gfs_plots.yaml -p 2023110300
+
+#    - name: Display YAML files
+#      run: |
+#        ls $GITHUB_WORKSPACE/obs-monitor/ush
