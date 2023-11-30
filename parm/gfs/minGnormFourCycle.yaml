@@ -1,0 +1,149 @@
+#
+# Gnorm 4 cycle plots for MinMon gfs
+#
+# Generate one plot:
+#   - gnorm values (all iterations) for last 4 cycles & 7 day avg
+
+
+# Data read
+# ---------
+datasets:
+  - name: gnorm
+    type: MonDataSpace
+    control_file:
+      - {{DATA}}/min_data/glb_allgnorm.ctl
+    filenames:
+      - {{DATA}}/min_data/{{ PDATE | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/min_data/{{ PDATEm6 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/min_data/{{ PDATEm12 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/min_data/{{ PDATEm18 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/min_data/{{ PDATEm24 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/min_data/{{ PDATEm30 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/min_data/{{ PDATEm36 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/min_data/{{ PDATEm42 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/min_data/{{ PDATEm48 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/min_data/{{ PDATEm54 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/min_data/{{ PDATEm60 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/min_data/{{ PDATEm66 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/min_data/{{ PDATEm72 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/min_data/{{ PDATEm78 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/min_data/{{ PDATEm84 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/min_data/{{ PDATEm90 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/min_data/{{ PDATEm96 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/min_data/{{ PDATEm102 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/min_data/{{ PDATEm108 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/min_data/{{ PDATEm114 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/min_data/{{ PDATEm120 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/min_data/{{ PDATEm126 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/min_data/{{ PDATEm132 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/min_data/{{ PDATEm138 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/min_data/{{ PDATEm144 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/min_data/{{ PDATEm150 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/min_data/{{ PDATEm156 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/min_data/{{ PDATEm162 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/min_data/{{ PDATEm168 | to_YMDH }}.gnorms.ieee_d
+
+    groups:
+      - name: GsiIeee
+        variables: &variables ['gnorm']
+
+transforms:
+  - transform: select time
+    new name: gnorm::GsiIeee::log_gnorm_cyc1
+    starting field: gnorm::GsiIeee::log_gnorm
+    cycle: {{ PDATE | to_YMDH }}
+    for:
+      variable: [none]
+
+  - transform: select time
+    new name: gnorm::GsiIeee::log_gnorm_cyc2
+    starting field: gnorm::GsiIeee::log_gnorm
+    cycle: {{ PDATEm6 | to_YMDH }}
+    for:
+      variable: [none]
+
+  - transform: select time
+    new name: gnorm::GsiIeee::log_gnorm_cyc3
+    starting field: gnorm::GsiIeee::log_gnorm
+    cycle: {{ PDATEm12 | to_YMDH }}
+    for:
+      variable: [none]
+
+  - transform: select time
+    new name: gnorm::GsiIeee::log_gnorm_cyc4
+    starting field: gnorm::GsiIeee::log_gnorm
+    cycle: {{ PDATEm18 | to_YMDH }}
+    for:
+      variable: [none]
+
+  - transform: select time
+    new name: gnorm::GsiIeee::log_gnorm_7d
+    starting field: gnorm::GsiIeee::log_gnorm
+    start cycle: {{ PDATE | to_YMDH }}
+    end cycle: {{ PDATEm162 | to_YMDH }}
+    for:
+      variable: [none]
+
+graphics:
+
+  plotting_backend: Emcpy
+  figure_list:
+
+    # Gnorm single cycle & 7 day hourly mean
+    # --------------------------------------
+    - figure:
+        layout: [1,1]
+        figure size: [20,18]
+        tight layout:
+        title: "Valid: {{ PDATE | to_YMDH }}"
+        output name: line_plots/minimization/{{NET}}_{{RUN}}.4cycle.gnorms.png
+        plot logo:
+          which: 'noaa/nws'
+          loc: 'upper center'
+
+      plots:
+        - add_xlabel: 'Iteration Number'
+          add_ylabel: 'log( gnorm )'
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.5
+            color: 'black'
+          add_legend:
+            loc: 'upper right'
+          layers:
+          - type: LinePlot
+            x:
+              variable: gnorm::GsiIeee::iteration
+            y:
+              variable: gnorm::GsiIeee::log_gnorm_cyc1
+            color: 'blue'
+            label: '{{ PDATE | to_YMDH }}'
+          - type: LinePlot
+            x:
+              variable: gnorm::GsiIeee::iteration
+            y:
+              variable: gnorm::GsiIeee::log_gnorm_cyc2
+            color: 'red'
+            label: '{{ PDATEm6 | to_YMDH }}'
+          - type: LinePlot
+            x:
+              variable: gnorm::GsiIeee::iteration
+            y:
+              variable: gnorm::GsiIeee::log_gnorm_cyc3
+            color: 'green'
+            label: '{{ PDATEm12 | to_YMDH }}'
+          - type: LinePlot
+            x:
+              variable: gnorm::GsiIeee::iteration
+            y:
+              variable: gnorm::GsiIeee::log_gnorm_cyc4
+            color: 'orange'
+            label: '{{ PDATEm18 | to_YMDH }}'
+          - type: LinePlot
+            x:
+              variable: gnorm::GsiIeee::iteration
+            y:
+              variable: gnorm::GsiIeee::log_gnorm_7d
+            color: 'black'
+            label: '7 day mean'
