@@ -131,6 +131,7 @@ if __name__ == "__main__":
     cycle_interval = mon_dict.get('cycle_interval')
     data_location = mon_dict.get('data')
 
+    # if specified, generate template YAMLS and figures for satellite based obs
     if 'satellites' in mon_dict.keys():
         for sat in mon_dict.get('satellites'):
             satname = sat.get('name')
@@ -150,6 +151,7 @@ if __name__ == "__main__":
                     eva(plot_yaml)
                     os.remove(plot_yaml)
 
+    # if specified, generate template YAMLs and figures for minimization
     if 'minimization' in mon_dict.keys():
         satname = None
         instrument = None
