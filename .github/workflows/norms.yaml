@@ -20,4 +20,4 @@ jobs:
     - name: Run pycodestyle
       run: |
         cd $GITHUB_WORKSPACE/obs-monitor
-        pycodestyle -v --config ./.pycodestyle ./ush 
+        pycodestyle -v --config ./.pycodestyle ./ush
