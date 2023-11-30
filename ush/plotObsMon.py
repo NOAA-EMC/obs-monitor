@@ -131,39 +131,39 @@ if __name__ == "__main__":
     cycle_interval = mon_dict.get('cycle_interval')
     data_location = mon_dict.get('data')
 
-    sats = mon_dict.get('satellites')
-    for sat in (sats or []):
-        satname = sat.get('name')
+    if 'satellites' in mon_dict.keys():
+        for sat in mon_dict.get('satellites'):
+            satname = sat.get('name')
 
-        for inst in sat.get('instruments'):
-            instrument = inst.get('name')
+            for inst in sat.get('instruments'):
+                instrument = inst.get('name')
 
-            for plot in inst.get('plot_list'):
-                config = loadConfig(satname, instrument, plot, cycle_tm,
-                                    cycle_interval, data_location)
+                for plot in inst.get('plot_list'):
+                    config = loadConfig(satname, instrument, plot, cycle_tm,
+                                        cycle_interval, data_location)
+                    plot_template = f"{config['PLOT_TEMPLATE']}.yaml"
+                    plot_yaml = f"{config['SENSOR']}_{config['SAT']}_{plot_template}"
+
+                    plot_template = os.path.join('../parm/gfs/', plot_template)
+                    genYaml(plot_template, plot_yaml, config)
+
+                    eva(plot_yaml)
+                    os.remove(plot_yaml)
+
+    if 'minimization' in mon_dict.keys():
+        satname = None
+        instrument = None
+        for min in mon_dict.get('minimization'):
+            net = min.get('net')
+
+            for plot in min.get('plot_list'):
+                config = loadConfig(satname, instrument, plot, cycle_tm, cycle_interval,
+                                    data_location, net)
+
                 plot_template = f"{config['PLOT_TEMPLATE']}.yaml"
-                plot_yaml = f"{config['SENSOR']}_{config['SAT']}_{plot_template}"
-
+                plot_yaml = f"{config['NET']}_{config['RUN']}_{plot_template}"
                 plot_template = os.path.join('../parm/gfs/', plot_template)
-                genYaml(plot_template, plot_yaml, config)
 
+                genYaml(plot_template, plot_yaml, config)
                 eva(plot_yaml)
                 os.remove(plot_yaml)
-
-    mins = mon_dict.get('minimization')
-    satname = None
-    instrument = None
-    for min in (mins: or []):
-        net = min.get('net')
-
-        for plot in min.get('plot_list'):
-            config = loadConfig(satname, instrument, plot, cycle_tm, cycle_interval,
-                                data_location, net)
-
-            plot_template = f"{config['PLOT_TEMPLATE']}.yaml"
-            plot_yaml = f"{config['NET']}_{config['RUN']}_{plot_template}"
-            plot_template = os.path.join('../parm/gfs/', plot_template)
-
-            genYaml(plot_template, plot_yaml, config)
-            eva(plot_yaml)
-            os.remove(plot_yaml)
