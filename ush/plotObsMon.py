@@ -138,7 +138,8 @@ if __name__ == "__main__":
             instrument = inst.get('name')
 
             for plot in inst.get('plot_list'):
-                config = loadConfig(satname, instrument, plot, cycle_tm, cycle_interval, data_location)
+                config = loadConfig(satname, instrument, plot, cycle_tm,
+                                    cycle_interval, data_location)
                 plot_template = f"{config['PLOT_TEMPLATE']}.yaml"
                 plot_yaml = f"{config['SENSOR']}_{config['SAT']}_{plot_template}"
 
