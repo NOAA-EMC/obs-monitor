@@ -50,3 +50,17 @@ satellites:
             times: 121
             channels: '12,13,14,15,16'
             run: ges
+
+minimization:
+  - net: gfs
+    plot_list:
+      - plot: min summary
+        run: gdas
+
+      - plot: min gnorm four cycle
+        run: gdas
+        times: 28
+
+      - plot: min gnorm one cycle
+        run: gdas
+        times: 28

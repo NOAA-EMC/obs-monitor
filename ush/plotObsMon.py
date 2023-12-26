@@ -48,7 +48,7 @@ def camelCase(s):
 # --------------------------------------------------------------------------------------------
 
 
-def loadConfig(satname, instrument, plot, cycle_tm, cycle_interval, data_location):
+def loadConfig(satname, instrument, plot, cycle_tm, cycle_interval, data_location, net=None):
     """
     Load configuration dictionary.
 
@@ -59,7 +59,7 @@ def loadConfig(satname, instrument, plot, cycle_tm, cycle_interval, data_locatio
         cycle_tm (datetime): Cycle time of plot
         cycle_interval (int): number of hours between cycles
         data_location (str): path to directory containing data files
-
+        net (str): model run NET value
     Return:
         config(dict): Dictionary containing configuration information
     """
@@ -68,16 +68,18 @@ def loadConfig(satname, instrument, plot, cycle_tm, cycle_interval, data_locatio
         'SENSOR': instrument,
         'LEVELS': plot.get('levels'),
         'CHANNELS': plot.get('channels'),
+        'NET': net,
         'RUN': plot.get('run'),
         'PDATE': cycle_tm,
         'PLOT_TEMPLATE': camelCase(plot.get('plot')),
         'DATA': data_location
     }
 
-    times = int(plot.get('times'))
-    for x in range(1, times+1):
-        date_str = f"PDATEm{x*6}"
-        config[date_str] = add_to_datetime(cycle_tm, to_timedelta(f"-{cycle_interval*x}H"))
+    times = int(plot.get('times')) if plot.get('times') else None
+    if times is not None:
+        for x in range(1, times+1):
+            date_str = f"PDATEm{x*6}"
+            config[date_str] = add_to_datetime(cycle_tm, to_timedelta(f"-{cycle_interval*x}H"))
 
     # Some plots with channels require a configuration value of XTICKS (tick marks on the
     # plotted x axis).  The x axis tick marks indicate the actual channel number, which can
@@ -116,7 +118,6 @@ if __name__ == "__main__":
     parser.add_argument('-i', '--input', type=str, help='Input YAML plot file', required=True)
     parser.add_argument('-p', '--pdate', type=str, help='Plot time YYYYMMDDHH', required=True)
     args = parser.parse_args()
-
     cycle_tm = to_datetime(args.pdate)
 
     try:
@@ -130,21 +131,41 @@ if __name__ == "__main__":
     cycle_interval = mon_dict.get('cycle_interval')
     data_location = mon_dict.get('data')
 
-    sats = mon_dict.get('satellites')
-    for sat in sats:
-        satname = sat.get('name')
+    # if specified, generate template YAMLS and figures for satellite based obs
+    if 'satellites' in mon_dict.keys():
+        for sat in mon_dict.get('satellites'):
+            satname = sat.get('name')
 
-        for inst in sat.get('instruments'):
-            instrument = inst.get('name')
+            for inst in sat.get('instruments'):
+                instrument = inst.get('name')
 
-            for plot in inst.get('plot_list'):
-                config = loadConfig(satname, instrument, plot, cycle_tm,
-                                    cycle_interval, data_location)
+                for plot in inst.get('plot_list'):
+                    config = loadConfig(satname, instrument, plot, cycle_tm,
+                                        cycle_interval, data_location)
+                    plot_template = f"{config['PLOT_TEMPLATE']}.yaml"
+                    plot_yaml = f"{config['SENSOR']}_{config['SAT']}_{plot_template}"
+
+                    plot_template = os.path.join('../parm/gfs/', plot_template)
+                    genYaml(plot_template, plot_yaml, config)
+
+                    eva(plot_yaml)
+                    os.remove(plot_yaml)
+
+    # if specified, generate template YAMLs and figures for minimization
+    if 'minimization' in mon_dict.keys():
+        satname = None
+        instrument = None
+        for min in mon_dict.get('minimization'):
+            net = min.get('net')
+
+            for plot in min.get('plot_list'):
+                config = loadConfig(satname, instrument, plot, cycle_tm, cycle_interval,
+                                    data_location, net)
+
                 plot_template = f"{config['PLOT_TEMPLATE']}.yaml"
-                plot_yaml = f"{config['SENSOR']}_{config['SAT']}_{plot_template}"
-
+                plot_yaml = f"{config['NET']}_{config['RUN']}_{plot_template}"
                 plot_template = os.path.join('../parm/gfs/', plot_template)
-                genYaml(plot_template, plot_yaml, config)
 
+                genYaml(plot_template, plot_yaml, config)
                 eva(plot_yaml)
                 os.remove(plot_yaml)
