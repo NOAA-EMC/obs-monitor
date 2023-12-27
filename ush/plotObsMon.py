@@ -48,7 +48,8 @@ def camelCase(s):
 # --------------------------------------------------------------------------------------------
 
 
-def loadConfig(satname, instrument, obstype, plot, cycle_tm, cycle_interval, data_location, net=None):
+def loadConfig(satname, instrument, obstype, plot, cycle_tm, cycle_interval,
+               data_location, net=None):
     """
     Load configuration dictionary.
 
@@ -134,10 +135,9 @@ if __name__ == "__main__":
 
     cycle_interval = mon_dict.get('cycle_interval')
     data_location = mon_dict.get('data')
-    logger.info(f" mon_dict.keys(): {mon_dict.keys()}")
 
-    # if specified, generate template YAMLS and figures for satellite based obs
-    # for satellites, minimization, and observations
+    # Generate template YAMLS and figures for specified satellite instruments
+    # minimization stats, and conventional observations
     if 'satellites' in mon_dict.keys():
         for sat in mon_dict.get('satellites'):
             satname = sat.get('name')
@@ -161,7 +161,6 @@ if __name__ == "__main__":
     if 'minimization' in mon_dict.keys():
         satname = None
         instrument = None
-        obstype = None
         for min in mon_dict.get('minimization'):
             net = min.get('net')
 
