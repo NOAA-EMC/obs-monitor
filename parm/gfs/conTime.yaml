@@ -1,0 +1,482 @@
+###############################################################################
+#
+# Time series plots for ConMon gfs
+#
+# Generate separate 30 day time series plots for:
+#   - global 
+#       num assimilated         (count1.1, count1.2, where .1 = ges, .2 = anl)
+#       num rejected by vqc     (count_vqc1.1, count_vqc1.2) 
+#       num rejected by gc      (count2.1, count2.2)
+#       num monitored           (count3.1, count3.2)
+#      
+###############################################################################
+
+diagnostics:
+
+# Data read
+# ---------
+datasets:
+  - name: ges
+    type: {{OBSTYPE}} 
+    subtype: 00
+    type: MonDataSpace
+    control_file:
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.ctl
+    filenames:
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATE | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm6 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm12 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm18 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm24 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm30 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm36 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm42 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm48 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm54 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm60 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm66 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm72 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm78 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm84 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm90 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm96 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm102 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm108 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm114 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm120 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm126 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm132 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm138 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm144 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm150 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm156 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm162 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm168 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm174 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm180 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm186 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm192 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm198 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm204 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm210 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm216 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm222 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm228 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm234 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm240 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm246 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm252 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm258 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm264 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm270 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm276 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm282 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm288 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm294 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm300 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm306 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm312 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm318 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm324 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm330 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm336 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm342 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm348 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm354 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm360 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm366 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm372 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm378 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm384 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm390 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm396 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm402 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm408 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm414 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm420 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm426 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm432 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm438 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm444 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm450 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm456 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm462 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm468 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm474 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm480 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm486 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm492 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm498 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm504 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm510 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm516 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm522 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm528 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm534 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm540 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm546 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm552 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm558 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm564 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm570 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm576 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm582 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm588 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm594 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm600 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm606 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm612 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm618 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm624 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm630 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm636 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm642 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm648 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm654 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm660 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm666 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm672 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm678 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm684 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm690 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm696 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm702 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm708 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm714 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm720 | to_YMDH }}
+
+    regions: 1
+
+    groups:
+      - name: ges
+
+  - name: anl
+    type: {{OBSTYPE}} 
+    subtype: 00
+    type: MonDataSpace
+    control_file:
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.ctl
+    filenames:
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATE | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm6 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm12 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm18 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm24 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm30 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm36 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm42 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm48 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm54 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm60 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm66 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm72 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm78 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm84 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm90 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm96 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm102 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm108 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm114 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm120 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm126 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm132 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm138 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm144 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm150 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm156 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm162 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm168 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm174 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm180 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm186 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm192 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm198 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm204 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm210 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm216 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm222 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm228 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm234 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm240 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm246 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm252 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm258 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm264 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm270 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm276 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm282 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm288 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm294 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm300 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm306 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm312 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm318 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm324 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm330 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm336 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm342 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm348 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm354 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm360 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm366 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm372 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm378 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm384 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm390 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm396 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm402 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm408 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm414 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm420 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm426 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm432 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm438 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm444 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm450 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm456 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm462 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm468 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm474 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm480 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm486 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm492 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm498 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm504 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm510 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm516 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm522 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm528 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm534 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm540 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm546 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm552 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm558 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm564 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm570 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm576 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm582 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm588 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm594 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm600 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm606 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm612 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm618 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm624 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm630 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm636 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm642 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm648 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm654 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm660 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm666 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm672 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm678 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm684 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm690 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm696 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm702 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm708 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm714 | to_YMDH }}
+
+    regions: 1
+
+    datatypes: &datatypes ['q120_0', 'q130_0']
+
+    groups:
+      - name: anl
+
+transforms:
+  - transform: accept where
+    new name: ges::ges::count1_allev
+    starting field: ges::ges::count1
+    where:
+      - ges::ges::level == 1
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: anl::anl::count1_allev
+    starting field: anl::anl::count1
+    where:
+      - anl::anl::level == 1
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: ges::ges::count_vqc1_allev
+    starting field: ges::ges::count_vqc1
+    where:
+      - ges::ges::level == 1
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: anl::anl::count_vqc1_allev
+    starting field: anl::anl::count_vqc1
+    where:
+      - anl::anl::level == 1
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: ges::ges::count2_allev
+    starting field: ges::ges::count2
+    where:
+      - ges::ges::level == 1
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: anl::anl::count2_allev
+    starting field: anl::anl::count2
+    where:
+      - anl::anl::level == 1
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: ges::ges::count3_allev
+    starting field: ges::ges::count3
+    where:
+      - ges::ges::level == 1
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: anl::anl::count3_allev
+    starting field: anl::anl::count3
+    where:
+      - anl::anl::level == 1
+    for:
+      variable: [none]
+
+graphics:
+
+  plotting_backend: Emcpy
+  figure_list:
+
+    # 4 plot ConMon time series
+    # -------------------------
+    - batch figure:
+        datatypes: *datatypes
+        variables:  ['count1_allev', 'count_vqc1_allev', 'count2_allev']
+
+      figure:
+        layout: [4,1]
+        figure size: [20,18]
+        tight layout:
+        title: "Valid: {{ PDATE | to_YMDH }} \n ${datatype}, Global, All Levels"
+        output name: line_plots/conmon/${datatype}.time.png
+        plot logo:
+          which: 'noaa/nws'
+          loc: 'upper left'
+          subplot_orientation: 'last'
+
+      plots:
+        - add_xlabel: 'Assimilated'
+          add_ylabel: 'Count'
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.5
+            color: 'black'
+          add_legend:
+            loc: 'upper right'
+          layers:
+          - type: LinePlot
+            x:
+              variable: ges::ges::cycle
+            y:
+              variable: ges::ges::count1_allev
+            color: 'black'
+            datatype: ${datatype}
+            label: 'initial outloop'
+          - type: LinePlot
+            x:
+              variable: anl::anl::cycle
+            y:
+              variable: anl::anl::count1_allev
+            color: 'blue'
+            datatype: ${datatype}
+            label: 'final outloop'
+            
+        - add_xlabel: 'Rejected by VQC'
+          add_ylabel: 'Count'
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.5
+            color: 'black'
+          add_legend:
+            loc: 'upper right'
+          layers:
+          - type: LinePlot
+            x:
+              variable: ges::ges::cycle
+            y:
+              variable: ges::ges::count_vqc1_allev
+            color: 'black'
+            datatype: ${datatype}
+            label: 'initial outloop'
+          - type: LinePlot
+            x:
+              variable: anl::anl::cycle
+            y:
+              variable: anl::anl::count_vqc1_allev
+            color: 'blue'
+            datatype: ${datatype}
+            label: 'final outloop'
+
+        - add_xlabel: 'Rejected by GC'
+          add_ylabel: 'Count'
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.5
+            color: 'black'
+          add_legend:
+            loc: 'upper right'
+          layers:
+          - type: LinePlot
+            x:
+              variable: ges::ges::cycle
+            y:
+              variable: ges::ges::count2_allev
+            color: 'black'
+            datatype: ${datatype}
+            label: 'initial outloop'
+          - type: LinePlot
+            x:
+              variable: anl::anl::cycle
+            y:
+              variable: anl::anl::count2_allev
+            color: 'blue'
+            datatype: ${datatype}
+            label: 'final outloop'
+            
+        - add_xlabel: 'Monitored'
+          add_ylabel: 'Count'
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.5
+            color: 'black'
+          add_legend:
+            loc: 'upper right'
+          layers:
+          - type: LinePlot
+            x:
+              variable: ges::ges::cycle
+            y:
+              variable: ges::ges::count3_allev
+            color: 'black'
+            datatype: ${datatype}
+            label: 'initial outloop'
+          - type: LinePlot
+            x:
+              variable: anl::anl::cycle
+            y:
+              variable: anl::anl::count3_allev
+            color: 'blue'
+            datatype: ${datatype}
+            label: 'final outloop'
