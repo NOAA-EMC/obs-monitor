@@ -1,0 +1,184 @@
+#
+# Vertical single cycle plots for ConMon gfs
+#
+# Generate plots for:
+#   - global 
+#       number assimilated         (count1.1, count1.2)
+#       number rejected by vqc     (count_vqc1.1, count_vqc1.2) 
+#       number rejected by gc      (count2.1, count2.2)
+#       number monitored           (count3.1, count3.2)
+#      
+
+diagnostics:
+
+# Data read
+# ---------
+datasets:
+  - name: ges
+    obstype: {{OBSTYPE}}
+    type: MonDataSpace
+    control_file:
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.ctl
+    filenames:
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATE | to_YMDH }}
+
+    regions: 1
+
+    groups:
+      - name: ges
+
+  - name: anl
+    obstype: {{OBSTYPE}}
+    type: MonDataSpace
+    control_file:
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.ctl
+    filenames:
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATE | to_YMDH }}
+
+    regions: 1
+
+    datatypes: &datatypes ['q120_0', 'q130_0']
+
+    groups:
+      - name: anl
+
+transforms:
+  - transform: accept where
+    new name: ges::ges::level2
+    starting field: ges::ges::level
+    where:
+      - ges::ges::level > 1
+    for:
+      variable: [none]
+
+graphics:
+
+  plotting_backend: Emcpy
+  figure_list:
+
+    # 4 plot ConMon time series
+    # -------------------------
+    - batch figure:
+        datatypes: *datatypes
+        variables:  ['count1', 'count2', 'count_vqc1', 'count3']
+
+      figure:
+        layout: [2,2]
+        figure size: [20,18]
+        tight layout:
+        title: "Valid: {{ PDATE | to_YMDH }} \n ${datatype}, Global"
+        output name: line_plots/conmon/vert/${datatype}.vert.png
+        plot logo:
+          which: 'noaa/nws'
+          loc: 'upper left'
+          subplot_orientation: 'first'
+
+      plots:
+        - add_xlabel: 'Assimilated'
+          add_ylabel: 'Count'
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.5
+            color: 'black'
+          add_legend:
+            loc: 'upper right'
+          layers:
+          - type: LinePlot
+            x:
+              variable: ges::ges::count1
+            y:
+              variable: ges::ges::level2
+            color: 'black'
+            datatype: ${datatype}
+            label: 'initial outloop'
+          - type: LinePlot
+            x:
+              variable: anl::anl::count1
+            y:
+              variable: ges::ges::level2
+            color: 'blue'
+            datatype: ${datatype}
+            label: 'final outloop'
+            
+        - add_xlabel: 'Rejected by GC'
+          add_ylabel: 'Count'
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.5
+            color: 'black'
+          add_legend:
+            loc: 'upper right'
+          layers:
+          - type: LinePlot
+            x:
+              variable: ges::ges::count2
+            y:
+              variable: ges::ges::level2
+            color: 'black'
+            datatype: ${datatype}
+            label: 'initial outloop'
+          - type: LinePlot
+            x:
+              variable: anl::anl::count2
+            y:
+              variable: ges::ges::level2
+            color: 'blue'
+            datatype: ${datatype}
+            label: 'final outloop'
+            
+        - add_xlabel: 'Rejected by VQC'
+          add_ylabel: 'Count'
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.5
+            color: 'black'
+          add_legend:
+            loc: 'upper right'
+          set_xticks: [1,5,10,15,20]
+          layers:
+          - type: LinePlot
+            x:
+              variable: ges::ges::count_vqc1
+            y:
+              variable: ges::ges::level2
+            color: 'black'
+            datatype: ${datatype}
+            label: 'initial outloop'
+          - type: LinePlot
+            x:
+              variable: anl::anl::count_vqc1
+            y:
+              variable: ges::ges::level2
+            color: 'blue'
+            datatype: ${datatype}
+            label: 'final outloop'
+
+        - add_xlabel: 'Monitored'
+          add_ylabel: 'Count'
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.5
+            color: 'black'
+          add_legend:
+            loc: 'upper right'
+          layers:
+          - type: LinePlot
+            x:
+              variable: ges::ges::count3
+            y:
+              variable: ges::ges::level2
+            color: 'black'
+            datatype: ${datatype}
+            label: 'initial outloop'
+          - type: LinePlot
+            x:
+              variable: anl::anl::count3
+            y:
+              variable: ges::ges::level2
+            color: 'blue'
+            datatype: ${datatype}
+            label: 'final outloop'

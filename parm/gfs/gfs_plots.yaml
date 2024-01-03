@@ -70,3 +70,5 @@ observations:
     plot_list:
       - plot: con time
         times: 121
+      - plot: con vert
+        times: 1

@@ -17,8 +17,7 @@ diagnostics:
 # ---------
 datasets:
   - name: ges
-    type: {{OBSTYPE}} 
-    subtype: 00
+    obstype: {{OBSTYPE}} 
     type: MonDataSpace
     control_file:
       - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.ctl
@@ -151,8 +150,7 @@ datasets:
       - name: ges
 
   - name: anl
-    type: {{OBSTYPE}} 
-    subtype: 00
+    obstype: {{OBSTYPE}} 
     type: MonDataSpace
     control_file:
       - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.ctl
@@ -366,7 +364,7 @@ graphics:
         figure size: [20,18]
         tight layout:
         title: "Valid: {{ PDATE | to_YMDH }} \n ${datatype}, Global, All Levels"
-        output name: line_plots/conmon/${datatype}.time.png
+        output name: line_plots/conmon/time/${datatype}.time.png
         plot logo:
           which: 'noaa/nws'
           loc: 'upper left'
