@@ -64,3 +64,11 @@ minimization:
       - plot: min gnorm one cycle
         run: gdas
         times: 28
+
+observations:
+  - obstype: q
+    plot_list:
+      - plot: con time
+        times: 121
+      - plot: con vert
+        times: 1

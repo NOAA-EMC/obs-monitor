@@ -48,13 +48,15 @@ def camelCase(s):
 # --------------------------------------------------------------------------------------------
 
 
-def loadConfig(satname, instrument, plot, cycle_tm, cycle_interval, data_location, net=None):
+def loadConfig(satname, instrument, obstype, plot, cycle_tm, cycle_interval,
+               data_location, net=None):
     """
     Load configuration dictionary.
 
     Parameters:
         satname (str): Name of satellite
         instrument (str): Name of instrument
+        obstype (str): Type of observation
         plot (str): plot template
         cycle_tm (datetime): Cycle time of plot
         cycle_interval (int): number of hours between cycles
@@ -66,6 +68,7 @@ def loadConfig(satname, instrument, plot, cycle_tm, cycle_interval, data_locatio
     config = {
         'SAT': satname,
         'SENSOR': instrument,
+        'OBSTYPE': obstype,
         'LEVELS': plot.get('levels'),
         'CHANNELS': plot.get('channels'),
         'NET': net,
@@ -110,6 +113,8 @@ if __name__ == "__main__":
 
     Read and parse input yaml file, load configuration and apply to requested yaml template(s),
     and plot results.
+
+    Example calling sequence: >python plotObsMon.py -i ../parm/gfs/gfs_plots.yaml -p 2023122000
     """
 
     logger = Logger('plotObsMon')
@@ -131,16 +136,18 @@ if __name__ == "__main__":
     cycle_interval = mon_dict.get('cycle_interval')
     data_location = mon_dict.get('data')
 
-    # if specified, generate template YAMLS and figures for satellite based obs
+    # Generate template YAMLS and figures for specified satellite instruments
+    # minimization stats, and conventional observations
     if 'satellites' in mon_dict.keys():
         for sat in mon_dict.get('satellites'):
             satname = sat.get('name')
+            obstype = None
 
             for inst in sat.get('instruments'):
                 instrument = inst.get('name')
 
                 for plot in inst.get('plot_list'):
-                    config = loadConfig(satname, instrument, plot, cycle_tm,
+                    config = loadConfig(satname, instrument, obstype, plot, cycle_tm,
                                         cycle_interval, data_location)
                     plot_template = f"{config['PLOT_TEMPLATE']}.yaml"
                     plot_yaml = f"{config['SENSOR']}_{config['SAT']}_{plot_template}"
@@ -151,7 +158,6 @@ if __name__ == "__main__":
                     eva(plot_yaml)
                     os.remove(plot_yaml)
 
-    # if specified, generate template YAMLs and figures for minimization
     if 'minimization' in mon_dict.keys():
         satname = None
         instrument = None
@@ -159,11 +165,30 @@ if __name__ == "__main__":
             net = min.get('net')
 
             for plot in min.get('plot_list'):
-                config = loadConfig(satname, instrument, plot, cycle_tm, cycle_interval,
+                config = loadConfig(satname, instrument, obstype, plot, cycle_tm, cycle_interval,
                                     data_location, net)
 
                 plot_template = f"{config['PLOT_TEMPLATE']}.yaml"
                 plot_yaml = f"{config['NET']}_{config['RUN']}_{plot_template}"
+                plot_template = os.path.join('../parm/gfs/', plot_template)
+
+                genYaml(plot_template, plot_yaml, config)
+                eva(plot_yaml)
+                os.remove(plot_yaml)
+
+    if 'observations' in mon_dict.keys():
+        satname = None
+        instrument = None
+        obstype = None
+        for obs in mon_dict.get('observations'):
+            obstype = obs.get('obstype')
+
+            for plot in obs.get('plot_list'):
+                config = loadConfig(satname, instrument, obstype, plot, cycle_tm, cycle_interval,
+                                    data_location)
+
+                plot_template = f"{config['PLOT_TEMPLATE']}.yaml"
+                plot_yaml = f"{config['OBSTYPE']}_{plot_template}"
                 plot_template = os.path.join('../parm/gfs/', plot_template)
 
                 genYaml(plot_template, plot_yaml, config)
