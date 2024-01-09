@@ -137,7 +137,6 @@ graphics:
             color: 'black'
           add_legend:
             loc: 'upper right'
-          set_xticks: [1,5,10,15,20]
           layers:
           - type: LinePlot
             x:

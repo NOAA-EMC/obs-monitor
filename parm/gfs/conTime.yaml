@@ -348,6 +348,102 @@ transforms:
     for:
       variable: [none]
 
+  - transform: accept where
+    new name: ges::ges::bias1_allev
+    starting field: ges::ges::bias1
+    where:
+      - ges::ges::level == 1
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: anl::anl::bias1_allev
+    starting field: anl::anl::bias1
+    where:
+      - anl::anl::level == 1
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: ges::ges::rms1_allev
+    starting field: ges::ges::rms1
+    where:
+      - ges::ges::level == 1
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: anl::anl::rms1_allev
+    starting field: anl::anl::rms1
+    where:
+      - anl::anl::level == 1
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: ges::ges::bias3_allev
+    starting field: ges::ges::bias3
+    where:
+      - ges::ges::level == 1
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: anl::anl::bias3_allev
+    starting field: anl::anl::bias3
+    where:
+      - anl::anl::level == 1
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: ges::ges::bias2_allev
+    starting field: ges::ges::bias2
+    where:
+      - ges::ges::level == 1
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: anl::anl::bias2_allev
+    starting field: anl::anl::bias2
+    where:
+      - anl::anl::level == 1
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: ges::ges::rms2_allev
+    starting field: ges::ges::rms2
+    where:
+      - ges::ges::level == 1
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: anl::anl::rms2_allev
+    starting field: anl::anl::rms2
+    where:
+      - anl::anl::level == 1
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: ges::ges::rms3_allev
+    starting field: ges::ges::rms3
+    where:
+      - ges::ges::level == 1
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: anl::anl::rms3_allev
+    starting field: anl::anl::rms3
+    where:
+      - anl::anl::level == 1
+    for:
+      variable: [none]
+
 graphics:
 
   plotting_backend: Emcpy
@@ -357,14 +453,14 @@ graphics:
     # -------------------------
     - batch figure:
         datatypes: *datatypes
-        variables:  ['count1_allev', 'count_vqc1_allev', 'count2_allev']
+        variables:  ['count1_allev']
 
       figure:
         layout: [4,1]
         figure size: [20,18]
         tight layout:
         title: "Valid: {{ PDATE | to_YMDH }} \n ${datatype}, Global, All Levels"
-        output name: line_plots/conmon/time/${datatype}.time.png
+        output name: line_plots/conmon/time/${datatype}_count.{{ PDATE | to_YMDH }}.png
         plot logo:
           which: 'noaa/nws'
           loc: 'upper left'
@@ -478,3 +574,188 @@ graphics:
             color: 'blue'
             datatype: ${datatype}
             label: 'final outloop'
+
+    - batch figure:
+        datatypes: *datatypes
+        variables:  ['bias1_allev']
+
+      figure:
+        layout: [6,1]
+        figure size: [20,18]
+        tight layout:
+        title: "Valid: {{ PDATE | to_YMDH }}\n ${datatype}, Global, All Levels"
+        output name: line_plots/conmon/time/${datatype}_bias.{{ PDATE | to_YMDH }}.png
+        plot logo:
+          which: 'noaa/nws'
+          loc: 'upper left'
+          subplot_orientation: 'last'
+
+      plots:
+        - add_xlabel: 'Obs-Ges Assimilated'
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.5
+            color: 'black'
+          add_legend:
+            loc: 'upper right'
+          layers:
+          - type: LinePlot
+            x:
+              variable: ges::ges::cycle
+            y:
+              variable: ges::ges::bias1_allev
+            color: 'red'
+            datatype: ${datatype}
+            label: 'initial outloop'
+          - type: LinePlot
+            x:
+              variable: anl::anl::cycle
+            y:
+              variable: anl::anl::bias1_allev
+            color: 'blue'
+            datatype: ${datatype}
+            label: 'final outloop'
+          - type: HorizontalLine
+            y: 0
+            linewidth: 0.75
+            label: ''
+
+        - add_xlabel: 'RMS Assimilated'
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.5
+            color: 'black'
+          add_legend:
+            loc: 'upper right'
+          layers:
+          - type: LinePlot
+            x:
+              variable: ges::ges::cycle
+            y:
+              variable: ges::ges::rms1_allev
+            color: 'red'
+            datatype: ${datatype}
+            label: 'initial outloop'
+          - type: LinePlot
+            x:
+              variable: anl::anl::cycle
+            y:
+              variable: anl::anl::rms1_allev
+            color: 'blue'
+            datatype: ${datatype}
+            label: 'final outloop'
+
+        - add_xlabel: 'Obs-Ges Monitored'
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.5
+            color: 'black'
+          add_legend:
+            loc: 'upper right'
+          layers:
+          - type: LinePlot
+            x:
+              variable: ges::ges::cycle
+            y:
+              variable: ges::ges::bias3_allev
+            color: 'red'
+            datatype: ${datatype}
+            label: 'initial outloop'
+          - type: LinePlot
+            x:
+              variable: anl::anl::cycle
+            y:
+              variable: anl::anl::bias3_allev
+            color: 'blue'
+            datatype: ${datatype}
+            label: 'final outloop'
+          - type: HorizontalLine
+            y: 0
+            linewidth: 0.75
+            label: ''
+
+        - add_xlabel: 'RMS Monitored'
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.5
+            color: 'black'
+          add_legend:
+            loc: 'upper right'
+          layers:
+          - type: LinePlot
+            x:
+              variable: ges::ges::cycle
+            y:
+              variable: ges::ges::rms3_allev
+            color: 'red'
+            datatype: ${datatype}
+            label: 'initial outloop'
+          - type: LinePlot
+            x:
+              variable: anl::anl::cycle
+            y:
+              variable: anl::anl::rms3_allev
+            color: 'blue'
+            datatype: ${datatype}
+            label: 'final outloop'
+
+        - add_xlabel: 'Obs-Ges Rejected'
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.5
+            color: 'black'
+          add_legend:
+            loc: 'upper right'
+          layers:
+          - type: LinePlot
+            x:
+              variable: ges::ges::cycle
+            y:
+              variable: ges::ges::bias2_allev
+            color: 'red'
+            datatype: ${datatype}
+            label: 'initial outloop'
+          - type: LinePlot
+            x:
+              variable: anl::anl::cycle
+            y:
+              variable: anl::anl::bias2_allev
+            color: 'blue'
+            datatype: ${datatype}
+            label: 'final outloop'
+          - type: HorizontalLine
+            y: 0
+            linewidth: 0.75
+            label: ''
+
+        - add_xlabel: 'RMS Rejected'
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.5
+            color: 'black'
+          add_legend:
+            loc: 'upper right'
+          layers:
+          - type: LinePlot
+            x:
+              variable: ges::ges::cycle
+            y:
+              variable: ges::ges::rms2_allev
+            color: 'red'
+            datatype: ${datatype}
+            label: 'initial outloop'
+          - type: LinePlot
+            x:
+              variable: anl::anl::cycle
+            y:
+              variable: anl::anl::rms2_allev
+            color: 'blue'
+            datatype: ${datatype}
+            label: 'final outloop'
+
