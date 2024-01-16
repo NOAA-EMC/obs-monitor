@@ -2,6 +2,7 @@
 
 cycle_interval: 6
 data: '/scratch1/NCEPDEV/da/Edward.Safford/noscrub/git/eva/src/eva/tests/data'
+net: gfs
 
 satellites:
   - name: npp
@@ -27,11 +28,6 @@ satellites:
     instruments:
       - name: abi
         plot_list:
-          - plot: rad summary
-            times: 121
-            channels: '7,8,9,10,11,12,13,14,15,16'
-            run: ges
-
           - plot: rad time
             times: 121
             channels: '7,8,9,10,11,12,13,14,15,16'

@@ -1,0 +1,26 @@
+# DA Monitoring source dictionary
+
+cycle_interval: 1
+data: '/scratch1/NCEPDEV/da/Edward.Safford/noscrub/git/eva/src/eva/tests/data/nam/rad_data'
+net: nam
+
+satellites:
+  - name: metop-b
+    instruments:
+      - name: amsua
+        plot_list:
+          - plot: rad time
+            times: 121
+            channels: '1,2,3,4,5,6,7,8,9,10,11,12,13,14,15'
+            run: ges
+
+          - plot: rad angle
+            times: 121
+            channels: '1,2,3,4,5,6,7,8,9,10,11,12,13,14,15'
+            run: ges
+
+          - plot: rad bcoef
+            times: 121
+            channels: '1,2,3,4,5,6,7,8,9,10,11,12,13,14,15'
+            run: ges
+
