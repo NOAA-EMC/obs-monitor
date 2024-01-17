@@ -1,0 +1,337 @@
+# RadMon Angle plot performs the following:
+#   1.  Load binary monitor data for 120 cycles
+#   2.  Generate angle plots with 1 day, 1 day (24 cyc), and 5 day spans for:
+#         number of obs 
+#         penalty
+#         omgnbc
+#         total bias correction
+#         omgbc
+#         lapse
+#         lapse2
+#         const (mean correction)
+#         emiss
+#         ordang1
+#         ordang2
+#         ordang3
+#         ordang4
+#
+#   Note that fixang, scangl, clw, cos, and sin, which are available in the binary
+#   files are not included in this plot script.  Presently they are all zero values
+#   so there is no need to add the extra processing time.  This script is slow enough
+#   as is.
+#
+#   With this script in particular it's worth considering how much of what this plots 
+#   is really useful as a routinely available plot and how much belongs in a script 
+#   to be used for more in-depth investigations.
+#
+#   Also I'll need to consider a means to substitute the control file variable name 
+#   for the more descriptive term in plot labels (i.e. "const" = "Mean Correction").
+#
+#   Lastly this script does not include the sdv values for the variables.  I'm 
+#   convinced the sdv values in the existing RadMon angle plots are wrong.  That
+#   can be addressed/fixed when we replace the DA monitor data extraction mechanism.
+#  
+
+diagnostics:
+
+# Data read
+# ---------
+datasets:
+  - name: angle
+    satellite: {{SAT}}
+    sensor: {{SENSOR}}
+    type: MonDataSpace
+    control_file:
+      - {{DATA}}/radmon.{{ PDATE | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.ctl
+    filenames:
+      - {{DATA}}/radmon.{{ PDATE | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATE | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm1 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm1 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm2 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm2 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm3 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm3 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm4 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm4 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm5 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm5 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm6 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm6 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm7 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm7 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm8 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm8 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm9 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm9 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm10 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm10 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm11 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm11 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm12 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm12 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm13 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm13 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm14 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm14 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm15 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm15 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm16 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm16 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm17 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm17 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm18 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm18 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm19 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm19 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm20 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm20 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm21 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm21 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm22 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm22 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm23 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm23 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm24 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm24 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm25 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm25 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm26 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm26 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm27 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm27 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm28 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm28 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm29 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm29 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm30 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm30 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm31 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm31 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm32 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm32 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm33 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm33 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm34 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm34 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm35 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm35 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm36 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm36 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm37 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm37 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm38 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm38 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm39 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm39 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm40 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm40 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm41 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm41 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm42 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm42 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm43 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm43 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm44 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm44 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm45 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm45 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm46 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm46 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm47 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm47 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm48 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm48 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm49 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm49 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm50 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm50 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm51 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm51 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm52 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm52 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm53 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm53 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm54 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm54 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm55 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm55 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm56 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm56 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm57 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm57 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm58 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm58 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm59 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm59 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm60 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm60 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm61 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm61 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm62 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm62 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm63 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm63 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm64 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm64 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm65 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm65 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm66 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm66 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm67 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm67 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm68 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm68 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm69 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm69 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm70 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm70 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm71 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm71 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm72 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm72 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm73 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm73 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm74 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm74 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm75 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm75 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm76 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm76 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm77 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm77 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm78 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm78 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm79 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm79 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm80 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm80 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm81 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm81 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm82 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm82 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm83 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm83 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm84 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm84 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm85 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm85 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm86 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm86 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm87 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm87 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm88 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm88 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm89 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm89 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm90 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm90 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm91 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm91 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm92 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm92 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm93 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm93 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm94 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm94 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm95 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm95 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm96 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm96 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm97 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm97 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm98 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm98 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm99 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm99 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm100 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm100 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm101 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm101 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm102 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm102 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm103 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm103 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm104 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm104 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm105 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm105 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm106 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm106 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm107 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm107 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm108 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm108 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm109 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm109 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm110 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm110 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm111 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm111 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm112 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm112 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm113 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm113 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm114 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm114 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm115 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm115 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm116 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm116 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm117 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm117 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm118 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm118 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm119 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm119 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm120 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm120 | to_YMDH }}.ieee_d
+      - {{DATA}}/radmon.{{ PDATEm121 | to_YMD }}/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm121 | to_YMDH }}.ieee_d
+
+    channels: {{CHANNELS}}
+    groups:
+      - name: GsiIeee
+        variables: &variables ['penalty', 'omgnbc', 'omgbc', 'total', 'lapse', 'lapse2', 'const', 'emiss', 'ordang1', 'ordang2', 'ordang3', 'ordang4']
+
+
+transforms:
+
+  - transform: accept where
+    new name: angle::GsiIeee::count_1
+    starting field: angle::GsiIeee::count
+    where:
+      - angle::GsiIeee::count > 0
+    for:
+      variable: [none]
+
+  - transform: select time
+    new name: angle::GsiIeee::count_1d
+    starting field: angle::GsiIeee::count_1
+    start cycle: {{ PDATE | to_YMDH }}
+    end cycle: {{ PDATEm23 | to_YMDH }}
+    for:
+      variable: [none]
+
+  - transform: select time
+    new name: angle::GsiIeee::count_5d
+    starting field: angle::GsiIeee::count_1
+    start cycle: {{ PDATE | to_YMDH }}
+    end cycle: {{ PDATEm110 | to_YMDH }}
+    for:
+      variable: [none]
+
+  - transform: arithmetic
+    new name: angle::GsiIeee::${variable}_avg
+    equals: angle::GsiIeee::${variable}/angle::GsiIeee::count_1
+    for:
+      variable: *variables
+
+  - transform: select time
+    new name: angle::GsiIeee::${variable}_avg_1d
+    starting field: angle::GsiIeee::${variable}_avg
+    start cycle: {{ PDATE | to_YMDH }}
+    end cycle: {{ PDATEm23 | to_YMDH }}
+    for:
+      variable: *variables
+
+  - transform: select time
+    new name: angle::GsiIeee::${variable}_avg_5d
+    starting field: angle::GsiIeee::${variable}_avg
+    start cycle: {{ PDATE | to_YMDH }}
+    end cycle: {{ PDATEm110 | to_YMDH }}
+    for:
+      variable: *variables
+
+
+graphics:
+
+  plotting_backend: Emcpy
+  figure_list:
+
+  # Angle plots
+  # -----------
+    - batch figure:
+        channels: {{CHANNELS}}
+        variables: ['count']
+
+      figure:
+        layout: [1,1]
+        figure size: [20,18]
+        title: "${variable}, {{SENSOR}}_{{SAT}} channel ${channel}  \n Valid: {{ PDATE | to_YMDH }}"
+        output name: line_plots/{{NET}}/{{SENSOR}}_{{SAT}}/angle/angle.{{SENSOR}}_{{SAT}}.${channel}.${variable}.png
+        plot logo:
+          which: 'noaa/nws'
+          loc: 'upper left'
+
+      plots:
+
+        - add_xlabel: 'Scan Position'
+          add_ylabel: '${variable}'
+          add_legend:
+            loc: 'upper right'
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.5
+            color: 'black'
+
+          layers:
+          - type: LinePlot
+            x:
+              variable: angle::GsiIeee::scan
+            y:
+              variable: angle::GsiIeee::${variable}_1d
+            color: 'blue'
+            channel: ${channel}
+            label: '1 day'
+
+          - type: LinePlot
+            x:
+              variable: angle::GsiIeee::scan
+            y:
+              variable: angle::GsiIeee::${variable}_5d
+            color: 'green'
+            channel: ${channel}
+            label: '1 week'
+
+          - type: VerticalLine
+            x: 0
+            linewidth: 0.75
+            label: ''
+
+          - type: HorizontalLine
+            y: 0
+            linewidth: 0.75
+            label: ''
+
+    - batch figure:
+        variables: *variables
+        channels: {{CHANNELS}}
+      figure:
+        layout: [1,1]
+        figure size: [20,18]
+        title: "${variable}, {{SENSOR}}_{{SAT}} channel ${channel}  \n Valid: {{ PDATE | to_YMDH }}"
+        output name: line_plots/{{NET}}/{{SENSOR}}_{{SAT}}/angle/angle.{{SENSOR}}_{{SAT}}.${channel}.${variable}.png
+        plot logo:
+          which: 'noaa/nws'
+          loc: 'upper left'
+
+      plots:
+        - add_xlabel: 'Scan Position'
+          add_ylabel: "${variable}"
+          add_legend:
+            loc: 'upper right'
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.5
+            color: 'black'
+
+          layers:
+          - type: LinePlot
+            x:
+              variable: angle::GsiIeee::scan
+            y:
+              variable: angle::GsiIeee::${variable}_avg_1d
+            color: 'blue'
+            channel: ${channel}
+            label: '1 day'
+
+          - type: LinePlot
+            x:
+              variable: angle::GsiIeee::scan
+            y:
+              variable: angle::GsiIeee::${variable}_avg_5d
+            color: 'green'
+            channel: ${channel}
+            label: '7 days'
+
+          - type: VerticalLine
+            x: 0
+            linewidth: 0.75
+            label: ''
+
+          - type: HorizontalLine
+            y: 0
+            linewidth: 0.75
+            label: ''
+

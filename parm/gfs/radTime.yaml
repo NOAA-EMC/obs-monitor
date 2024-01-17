@@ -1,5 +1,5 @@
 #
-# Time series plots for RadMon gfs
+# Time series and Summary plots for RadMon gfs
 #
 # Generate separate 30 day time series plots for:
 #   - number of obs 
@@ -7,6 +7,8 @@
 #   - omgnbc
 #   - bias correction
 #   - omgbc
+#
+# Generate 4 panel Summary plots
 
 diagnostics:
 
@@ -156,6 +158,161 @@ transforms:
     for:
       variable: *variables
 
+  - transform: accept where
+    new name: time::GsiIeee::nassim
+    starting field: time::GsiIeee::chan_nassim
+    where:
+      - time::GsiIeee::chan_nassim > 0
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: time::GsiIeee::assim
+    starting field: time::GsiIeee::chan_assim
+    where:
+      - time::GsiIeee::chan_assim > 0
+    for:
+      variable: [none]
+
+  - transform: select time
+    new name: time::GsiIeee::count_cyc1
+    starting field: time::GsiIeee::count
+    cycle: {{ PDATE | to_YMDH }}
+    for:
+      variable: [none]
+
+  - transform: select time
+    new name: time::GsiIeee::count_cyc2
+    starting field: time::GsiIeee::count
+    cycle: {{ PDATEm6 | to_YMDH }}
+    for:
+      variable: [none]
+
+  - transform: select time
+    new name: time::GsiIeee::count_cyc3
+    starting field: time::GsiIeee::count
+    cycle: {{ PDATEm12 | to_YMDH }}
+    for:
+      variable: [none]
+
+  - transform: select time
+    new name: time::GsiIeee::count_cyc4
+    starting field: time::GsiIeee::count
+    cycle: {{ PDATEm18 | to_YMDH }}
+    for:
+      variable: [none]
+
+  # Note that total is the total bias correction for a given
+  # channel/region.  To find the average divide total by count.
+  - transform: arithmetic
+    new name: time::GsiIeee::total_avg
+    equals: time::GsiIeee::total/time::GsiIeee::count
+    for:
+      variable: [none]
+  
+  # Note that omgbc is the total omgbc for a given
+  # channel/region.  To find the average divide omgbc by count.
+  - transform: arithmetic
+    new name: time::GsiIeee::omgbc_avg
+    equals: time::GsiIeee::omgbc/time::GsiIeee::count
+    for:
+      variable: [none]
+  
+  # Single cycle total bias correction
+  - transform: select time
+    new name: time::GsiIeee::total_1cyc
+    starting field: time::GsiIeee::total_avg
+    cycle: {{ PDATE | to_YMDH }}
+    for:
+      variable: [none]
+
+  # 4 cycle total bias correction using time slice
+  - transform: select time
+    new name: time::GsiIeee::total_1d
+    starting field: time::GsiIeee::total_avg
+    start cycle: {{ PDATE | to_YMDH }}
+    end cycle: {{ PDATEm18 | to_YMDH }}
+    for:
+      variable: [none]
+  
+  # 120 cycle total bias correction using time slice
+  - transform: select time
+    new name: time::GsiIeee::total_30d
+    starting field: time::GsiIeee::total_avg
+    start cycle: {{ PDATE | to_YMDH }}
+    end cycle: {{ PDATEm720 | to_YMDH }}
+    for:
+      variable: [none]
+  
+  # 1 day omgbc using time slice
+  - transform: select time
+    new name: time::GsiIeee::omgbc_1c
+    starting field: time::GsiIeee::omgbc_avg
+    cycle: {{ PDATE | to_YMDH }}
+    for:
+      variable: [none]
+  
+  # 30 day omgbc using time slice
+  - transform: select time
+    new name: time::GsiIeee::omgbc_30d
+    starting field: time::GsiIeee::omgbc_avg
+    start cycle: {{ PDATE | to_YMDH }}
+    end cycle: {{ PDATEm720 | to_YMDH }}
+    for:
+      variable: [none]
+  
+  # Note that penalty is the total penalty for a given
+  # channel/region.  To find the average divide penalty by count.
+  - transform: arithmetic
+    new name: time::GsiIeee::penalty_avg
+    equals: time::GsiIeee::penalty/time::GsiIeee::count
+    for:
+      variable: [none]
+  
+  # 1 cycle penalty using time slice
+  - transform: select time
+    new name: time::GsiIeee::penalty_1c
+    starting field: time::GsiIeee::penalty_avg
+    cycle: {{ PDATE | to_YMDH }}
+    for:
+      variable: [none]
+  
+  # 1 day penalty using time slice
+  - transform: select time
+    new name: time::GsiIeee::penalty_1d
+    starting field: time::GsiIeee::penalty_avg
+    start cycle: {{ PDATE | to_YMDH }}
+    end cycle: {{ PDATEm18 | to_YMDH }}
+    for:
+      variable: [none]
+  
+  # 30 day penalty using time slice
+  - transform: select time
+    new name: time::GsiIeee::penalty_30d
+    starting field: time::GsiIeee::penalty_avg
+    start cycle: {{ PDATE | to_YMDH }}
+    end cycle: {{ PDATEm720 | to_YMDH }}
+    for:
+      variable: [none]
+  
+  - transform: arithmetic
+    new name: time::GsiIeee::yaxis_100
+    equals: time::GsiIeee::chan_yaxis_z + 100.0
+    for:
+      variable: [none]
+  
+  - transform: arithmetic
+    new name: time::GsiIeee::yaxis_n1p5
+    equals: time::GsiIeee::chan_yaxis_z + -1.5
+    for:
+      variable: [none]
+  
+  - transform: arithmetic
+    new name: time::GsiIeee::yaxis_np05
+    equals: time::GsiIeee::chan_yaxis_z + -0.05
+    for:
+      variable: [none]
+  
 graphics:
 
   plotting_backend: Emcpy
@@ -173,7 +330,7 @@ graphics:
         figure size: [20,18]
         tight layout:
         title: "${variable}, {{SENSOR}}_{{SAT}} channel ${channel}  \n Valid: {{ PDATE | to_YMDH }}"
-        output name: line_plots/{{SENSOR}}_{{SAT}}/rad/time/time.{{SENSOR}}_{{SAT}}.${channel}.${variable}.png
+        output name: line_plots/{{NET}}/{{SENSOR}}_{{SAT}}/time/time.{{SENSOR}}_{{SAT}}.${channel}.${variable}.png
         plot logo:
           which: 'noaa/nws'
           loc: 'upper right'
@@ -201,7 +358,7 @@ graphics:
         figure size: [20,18]
         tight layout:
         title: "${variable}, {{SENSOR}}_{{SAT}} channel ${channel}  \n Valid: {{ PDATE | to_YMDH }}"
-        output name: line_plots/{{SENSOR}}_{{SAT}}/rad/time/time.{{SENSOR}}_{{SAT}}.${channel}.${variable}.png
+        output name: line_plots/{{NET}}/{{SENSOR}}_{{SAT}}/time/time.{{SENSOR}}_{{SAT}}.${channel}.${variable}.png
         plot logo:
           which: 'noaa/nws'
           loc: 'upper right'
@@ -217,3 +374,268 @@ graphics:
               variable: time::GsiIeee::${variable}_avg
             color: 'blue'
             channel: ${channel}
+
+    - figure:
+        layout: [4,1]
+        figure size: [20,18]
+        tight layout:
+        title: "Summary Plot {{SENSOR}}_{{SAT}} \n Valid: {{ PDATE | to_YMDH }}"
+        output name: line_plots/{{NET}}/{{SENSOR}}_{{SAT}}/summary/summary.{{SENSOR}}_{{SAT}}.png
+        plot logo:
+          which: 'noaa/nws'
+          loc: 'upper center'
+          subplot_orientation: 'first'
+      plots:
+        # Obs counts, last 4 cycles
+        # -------------------------
+        - add_xlabel: 'Channel'
+          add_ylabel: 'Observation Count'
+          add_legend:
+            loc: 'upper right'
+          set_xticks: [{{XTICKS}}]  # need solution for large chan counts
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.5
+            color: 'black'
+          add_title:
+            label: "Number of Obs Passing QC \n {{ PDATE | to_YMDH }}"
+            loc: 'Left'
+          layers:
+          - type: LinePlot
+            x:
+              variable: time::GsiIeee::channel
+            y:
+              variable: time::GsiIeee::count_cyc1
+            color: 'blue'
+            label: '{{ PDATE | to_YMDH }}'
+
+          - type: LinePlot
+            x:
+              variable: time::GsiIeee::channel
+            y:
+              variable: time::GsiIeee::count_cyc2
+            color: 'green'
+            label: '{{ PDATEm6 | to_YMDH }}'
+
+          - type: LinePlot
+            x:
+              variable: time::GsiIeee::channel
+            y:
+              variable: time::GsiIeee::count_cyc3
+            color: 'orange'
+            label: '{{ PDATEm12 | to_YMDH }}'
+
+          - type: LinePlot
+            x:
+              variable: time::GsiIeee::channel
+            y:
+              variable: time::GsiIeee::count_cyc4
+            color: 'red'
+            label: '{{ PDATEm18 | to_YMDH }}'
+
+          - type: LinePlot
+            x:
+              variable: time::GsiIeee::assim
+            y:
+              variable: time::GsiIeee::yaxis_100
+            color: 'green'
+            label: 'chan assim'
+            linestyle: ''
+            marker: 's'
+            markersize: '6'
+
+          - type: LinePlot
+            x:
+              variable: time::GsiIeee::nassim
+            y:
+              variable: time::GsiIeee::yaxis_100
+            color: 'red'
+            label: 'chan not assim'
+            linestyle: ''
+            marker: 's'
+            markersize: '6'
+
+        # Avg total bias correction, 1 cycle, 1 day, 30 days
+        # --------------------------------------------------
+        - add_xlabel: 'Channel'
+          add_ylabel: 'Total Bias Correction (K)'
+          add_legend:
+            loc: 'upper right'
+          set_xticks: [{{XTICKS}}]
+          set_yticks: [-1.0, -0.5, 0, 0.5, 1.0]
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.5
+            color: 'black'
+          add_title:
+            label: "Total Bias Correction(K) \n {{ PDATE | to_YMDH }}"
+            loc: 'Left'
+          layers:
+          - type: LinePlot
+            x:
+              variable: time::GsiIeee::channel
+            y:
+              variable: time::GsiIeee::total_1cyc
+            color: 'blue'
+            label: '1 cycle'
+
+          - type: LinePlot
+            x:
+              variable: time::GsiIeee::channel
+            y:
+              variable: time::GsiIeee::total_1d
+            color: 'red'
+            label: '1 day'
+
+          - type: LinePlot
+            x:
+              variable: time::GsiIeee::channel
+            y:
+              variable: time::GsiIeee::total_30d
+            color: 'green'
+            label: '30 days'
+
+          - type: LinePlot
+            x:
+              variable: time::GsiIeee::assim
+            y:
+              variable: time::GsiIeee::yaxis_n1p5
+            color: 'green'
+            label: 'chan assim'
+            linestyle: ''
+            marker: 's'
+            markersize: '6'
+
+          - type: LinePlot
+            x:
+              variable: time::GsiIeee::nassim
+            y:
+              variable: time::GsiIeee::yaxis_n1p5
+            color: 'red'
+            label: 'chan not assim'
+            linestyle: ''
+            marker: 's'
+            markersize: '6'
+
+          - type: HorizontalLine
+            y: 0
+            linewidth: 1.0
+            label: ''
+
+        # Avg omgbc 1 cycle, 30 days
+        # --------------------------
+        - add_xlabel: 'Channel'
+          add_ylabel: 'Obs - Ges with BC (K)'
+          add_legend:
+            loc: 'upper right'
+          set_xticks: [{{XTICKS}}]
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.5
+            color: 'black'
+          add_title:
+            label: "Observed - Ges with Bias Cor(K) \n {{ PDATE | to_YMDH }}"
+            loc: 'Left'
+          layers:
+          - type: LinePlot
+            x:
+              variable: time::GsiIeee::channel
+            y:
+              variable: time::GsiIeee::omgbc_1c
+            color: 'blue'
+            label: '1 cycle'
+
+          - type: LinePlot
+            x:
+              variable: time::GsiIeee::channel
+            y:
+              variable: time::GsiIeee::omgbc_30d
+            color: 'red'
+            label: '30 days'
+
+          - type: LinePlot
+            x:
+              variable: time::GsiIeee::assim
+            y:
+              variable: time::GsiIeee::yaxis_np05
+            color: 'green'
+            label: 'chan assim'
+            linestyle: ''
+            marker: 's'
+            markersize: '6'
+
+          - type: LinePlot
+            x:
+              variable: time::GsiIeee::nassim
+            y:
+              variable: time::GsiIeee::yaxis_np05
+            color: 'red'
+            label: 'chan not assim'
+            linestyle: ''
+            marker: 's'
+            markersize: '6'
+
+        # Avg penalty value 1 cycle, 1 day, 30 days
+        # -----------------------------------------
+        - add_xlabel: 'Channel'
+          add_ylabel: "Contribution to Penalty"
+          add_legend:
+            loc: 'upper right'
+          set_xticks: [{{XTICKS}}]
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.5
+            color: 'black'
+          add_title:
+            label: "Contribution to Penalty \n {{ PDATE | to_YMDH }}"
+            loc: 'Left'
+          layers:
+          - type: LinePlot
+            x:
+              variable: time::GsiIeee::channel
+            y:
+              variable: time::GsiIeee::penalty_1c
+            color: 'blue'
+            label: '1 cycle'
+
+          - type: LinePlot
+            x:
+              variable: time::GsiIeee::channel
+            y:
+              variable: time::GsiIeee::penalty_1d
+            color: 'red'
+            label: '1 day'
+          - type: LinePlot
+            x:
+              variable: time::GsiIeee::channel
+            y:
+              variable: time::GsiIeee::penalty_30d
+            color: 'orange'
+            label: '30 days'
+
+          - type: LinePlot
+            x:
+              variable: time::GsiIeee::assim
+            y:
+              variable: time::GsiIeee::yaxis_np05
+            color: 'green'
+            label: 'chan assim'
+            linestyle: ''
+            marker: 's'
+            markersize: '6'
+
+          - type: LinePlot
+            x:
+              variable: time::GsiIeee::nassim
+            y:
+              variable: time::GsiIeee::yaxis_np05
+            color: 'red'
+            label: 'chan not assim'
+            linestyle: ''
+            marker: 's'
+            markersize: '6'
+
