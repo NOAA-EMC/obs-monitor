@@ -81,7 +81,7 @@ def loadConfig(satname, instrument, obstype, plot, cycle_tm, cycle_interval,
     times = int(plot.get('times')) if plot.get('times') else None
     if times is not None:
         for x in range(1, times+1):
-            date_str = f"PDATEm{x*6}"
+            date_str = f"PDATEm{x*cycle_interval}"
             config[date_str] = add_to_datetime(cycle_tm, to_timedelta(f"-{cycle_interval*x}H"))
 
     # Some plots with channels require a configuration value of XTICKS (tick marks on the
@@ -133,6 +133,7 @@ if __name__ == "__main__":
         logger.abort('plotObsMon is expecting a valid yaml file, but it encountered ' +
                      f'errors when attempting to load: {mon_sources}, error: {e}')
 
+    net = mon_dict.get('net')
     cycle_interval = mon_dict.get('cycle_interval')
     data_location = mon_dict.get('data')
 
@@ -148,11 +149,13 @@ if __name__ == "__main__":
 
                 for plot in inst.get('plot_list'):
                     config = loadConfig(satname, instrument, obstype, plot, cycle_tm,
-                                        cycle_interval, data_location)
+                                        cycle_interval, data_location, net)
                     plot_template = f"{config['PLOT_TEMPLATE']}.yaml"
                     plot_yaml = f"{config['SENSOR']}_{config['SAT']}_{plot_template}"
 
-                    plot_template = os.path.join('../parm/gfs/', plot_template)
+                    parm_location = f"../parm/{net}/"
+                    plot_template = os.path.join(parm_location, plot_template)
+
                     genYaml(plot_template, plot_yaml, config)
 
                     eva(plot_yaml)
