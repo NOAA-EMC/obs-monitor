@@ -73,6 +73,7 @@ def loadConfig(satname, instrument, obstype, plot, cycle_tm, cycle_interval,
         'CHANNELS': plot.get('channels'),
         'NET': net,
         'RUN': plot.get('run'),
+        'STEP': plot.get('step'),
         'PDATE': cycle_tm,
         'PLOT_TEMPLATE': camelCase(plot.get('plot')),
         'DATA': data_location
@@ -173,7 +174,8 @@ if __name__ == "__main__":
 
                 plot_template = f"{config['PLOT_TEMPLATE']}.yaml"
                 plot_yaml = f"{config['NET']}_{config['RUN']}_{plot_template}"
-                plot_template = os.path.join('../parm/gfs/', plot_template)
+                parm_location = f"../parm/{net}/"
+                plot_template = os.path.join(parm_location, plot_template)
 
                 genYaml(plot_template, plot_yaml, config)
                 eva(plot_yaml)
@@ -192,7 +194,8 @@ if __name__ == "__main__":
 
                 plot_template = f"{config['PLOT_TEMPLATE']}.yaml"
                 plot_yaml = f"{config['OBSTYPE']}_{plot_template}"
-                plot_template = os.path.join('../parm/gfs/', plot_template)
+                parm_location = f"../parm/{net}/"
+                plot_template = os.path.join(parm_location, plot_template)
 
                 genYaml(plot_template, plot_yaml, config)
                 eva(plot_yaml)

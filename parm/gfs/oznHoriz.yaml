@@ -3,16 +3,16 @@ datasets:
     type: MonDataSpace
     satellite: {{SAT}}
     sensor: {{SENSOR}}
-    run: {{RUN}}
+    run: {{STEP}}
 
     type: MonDataSpace
     control_file:
-      - {{DATA}}/ozn_data/horiz/ompsnp_npp.ges.ctl
+      - {{DATA}}/ozn_data/horiz/ompsnp_npp.{{STEP}}.ctl
     filenames:
-      - {{DATA}}/ozn_data/horiz/{{SENSOR}}_{{SAT}}.{{RUN}}.{{ PDATE | to_YMDH }}.ieee_d
-      - {{DATA}}/ozn_data/horiz/{{SENSOR}}_{{SAT}}.{{RUN}}.{{ PDATEm6 | to_YMDH }}.ieee_d
-      - {{DATA}}/ozn_data/horiz/{{SENSOR}}_{{SAT}}.{{RUN}}.{{ PDATEm12 | to_YMDH }}.ieee_d
-      - {{DATA}}/ozn_data/horiz/{{SENSOR}}_{{SAT}}.{{RUN}}.{{ PDATEm18 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/horiz/{{SENSOR}}_{{SAT}}.{{STEP}}.{{ PDATE | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/horiz/{{SENSOR}}_{{SAT}}.{{STEP}}.{{ PDATEm6 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/horiz/{{SENSOR}}_{{SAT}}.{{STEP}}.{{ PDATEm12 | to_YMDH }}.ieee_d
+      - {{DATA}}/ozn_data/horiz/{{SENSOR}}_{{SAT}}.{{STEP}}.{{ PDATEm18 | to_YMDH }}.ieee_d
     levels: {{LEVELS}}
     groups:
       - name: GsiIeee
