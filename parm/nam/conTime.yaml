@@ -1,0 +1,761 @@
+###############################################################################
+#
+# Time series plots for ConMon gfs
+#
+# Generate separate 30 day time series plots for:
+#   - global 
+#       num assimilated         (count1.1, count1.2, where .1 = ges, .2 = anl)
+#       num rejected by vqc     (count_vqc1.1, count_vqc1.2) 
+#       num rejected by gc      (count2.1, count2.2)
+#       num monitored           (count3.1, count3.2)
+#      
+###############################################################################
+
+diagnostics:
+
+# Data read
+# ---------
+datasets:
+  - name: ges
+    obstype: {{OBSTYPE}} 
+    type: MonDataSpace
+    control_file:
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.ctl
+    filenames:
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATE | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm1 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm2 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm3 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm4 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm5 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm6 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm7 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm8 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm9 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm10 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm11 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm12 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm13 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm14 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm15 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm16 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm17 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm18 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm19 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm20 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm21 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm22 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm23 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm24 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm25 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm26 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm27 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm28 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm29 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm30 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm31 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm32 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm33 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm34 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm35 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm36 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm37 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm38 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm39 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm40 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm41 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm42 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm43 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm44 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm45 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm46 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm47 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm48 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm49 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm50 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm51 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm52 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm53 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm54 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm55 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm56 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm57 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm58 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm59 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm60 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm61 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm62 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm63 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm64 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm65 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm66 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm67 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm68 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm69 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm70 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm71 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm72 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm73 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm74 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm75 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm76 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm77 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm78 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm79 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm80 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm81 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm82 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm83 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm84 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm85 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm86 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm87 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm88 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm89 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm90 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm91 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm92 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm93 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm94 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm95 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm96 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm97 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm98 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm99 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm100 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm101 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm102 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm103 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm104 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm105 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm106 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm107 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm108 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm109 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm110 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm111 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm112 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm113 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm114 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm115 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm116 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm117 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm118 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm119 | to_YMDH }}
+      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATEm120 | to_YMDH }}
+
+    regions: 2
+
+    groups:
+      - name: ges
+
+  - name: anl
+    obstype: {{OBSTYPE}} 
+    type: MonDataSpace
+    control_file:
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.ctl
+    filenames:
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATE | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm1 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm2 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm3 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm4 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm5 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm6 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm7 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm8 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm9 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm10 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm12 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm13 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm14 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm15 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm16 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm17 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm18 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm19 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm20 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm21 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm22 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm23 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm24 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm25 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm26 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm27 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm28 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm29 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm30 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm31 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm32 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm33 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm34 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm35 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm36 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm37 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm38 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm39 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm40 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm41 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm42 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm43 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm44 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm45 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm46 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm47 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm48 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm49 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm50 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm51 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm52 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm53 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm54 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm55 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm56 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm57 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm58 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm59 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm60 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm61 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm62 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm63 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm64 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm65 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm66 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm67 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm68 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm69 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm70 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm71 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm72 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm73 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm74 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm75 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm76 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm77 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm78 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm79 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm80 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm81 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm82 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm83 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm84 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm85 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm86 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm87 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm88 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm89 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm90 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm91 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm92 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm93 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm94 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm95 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm96 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm97 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm98 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm99 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm100 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm101 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm102 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm103 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm104 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm105 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm106 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm107 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm108 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm109 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm110 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm111 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm112 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm113 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm114 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm115 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm116 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm117 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm118 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm119 | to_YMDH }}
+      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATEm120 | to_YMDH }}
+
+    regions: 2
+
+    datatypes: &datatypes ['q120_0', 'q130_0']
+
+    groups:
+      - name: anl
+
+transforms:
+  - transform: accept where
+    new name: ges::ges::count1_allev
+    starting field: ges::ges::count1
+    where:
+      - ges::ges::level == 1
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: anl::anl::count1_allev
+    starting field: anl::anl::count1
+    where:
+      - anl::anl::level == 1
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: ges::ges::count_vqc1_allev
+    starting field: ges::ges::count_vqc1
+    where:
+      - ges::ges::level == 1
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: anl::anl::count_vqc1_allev
+    starting field: anl::anl::count_vqc1
+    where:
+      - anl::anl::level == 1
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: ges::ges::count2_allev
+    starting field: ges::ges::count2
+    where:
+      - ges::ges::level == 1
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: anl::anl::count2_allev
+    starting field: anl::anl::count2
+    where:
+      - anl::anl::level == 1
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: ges::ges::count3_allev
+    starting field: ges::ges::count3
+    where:
+      - ges::ges::level == 1
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: anl::anl::count3_allev
+    starting field: anl::anl::count3
+    where:
+      - anl::anl::level == 1
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: ges::ges::bias1_allev
+    starting field: ges::ges::bias1
+    where:
+      - ges::ges::level == 1
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: anl::anl::bias1_allev
+    starting field: anl::anl::bias1
+    where:
+      - anl::anl::level == 1
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: ges::ges::rms1_allev
+    starting field: ges::ges::rms1
+    where:
+      - ges::ges::level == 1
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: anl::anl::rms1_allev
+    starting field: anl::anl::rms1
+    where:
+      - anl::anl::level == 1
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: ges::ges::bias3_allev
+    starting field: ges::ges::bias3
+    where:
+      - ges::ges::level == 1
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: anl::anl::bias3_allev
+    starting field: anl::anl::bias3
+    where:
+      - anl::anl::level == 1
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: ges::ges::bias2_allev
+    starting field: ges::ges::bias2
+    where:
+      - ges::ges::level == 1
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: anl::anl::bias2_allev
+    starting field: anl::anl::bias2
+    where:
+      - anl::anl::level == 1
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: ges::ges::rms2_allev
+    starting field: ges::ges::rms2
+    where:
+      - ges::ges::level == 1
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: anl::anl::rms2_allev
+    starting field: anl::anl::rms2
+    where:
+      - anl::anl::level == 1
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: ges::ges::rms3_allev
+    starting field: ges::ges::rms3
+    where:
+      - ges::ges::level == 1
+    for:
+      variable: [none]
+
+  - transform: accept where
+    new name: anl::anl::rms3_allev
+    starting field: anl::anl::rms3
+    where:
+      - anl::anl::level == 1
+    for:
+      variable: [none]
+
+graphics:
+
+  plotting_backend: Emcpy
+  figure_list:
+
+    # 4 plot ConMon time series
+    # -------------------------
+    - batch figure:
+        datatypes: *datatypes
+        variables:  ['count1_allev']
+
+      figure:
+        layout: [4,1]
+        figure size: [20,18]
+        tight layout:
+        title: "Valid: {{ PDATE | to_YMDH }} \n ${datatype}, N. Hemisphere, All Levels"
+        output name: line_plots/conmon/time/${datatype}_count.{{ PDATE | to_YMDH }}.png
+        plot logo:
+          which: 'noaa/nws'
+          loc: 'upper left'
+          subplot_orientation: 'last'
+
+      plots:
+        - add_xlabel: 'Assimilated'
+          add_ylabel: 'Count'
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.5
+            color: 'black'
+          add_legend:
+            loc: 'upper right'
+          layers:
+          - type: LinePlot
+            x:
+              variable: ges::ges::cycle
+            y:
+              variable: ges::ges::count1_allev
+            color: 'black'
+            datatype: ${datatype}
+            label: 'initial outloop'
+          - type: LinePlot
+            x:
+              variable: anl::anl::cycle
+            y:
+              variable: anl::anl::count1_allev
+            color: 'blue'
+            datatype: ${datatype}
+            label: 'final outloop'
+            
+        - add_xlabel: 'Rejected by VQC'
+          add_ylabel: 'Count'
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.5
+            color: 'black'
+          add_legend:
+            loc: 'upper right'
+          layers:
+          - type: LinePlot
+            x:
+              variable: ges::ges::cycle
+            y:
+              variable: ges::ges::count_vqc1_allev
+            color: 'black'
+            datatype: ${datatype}
+            label: 'initial outloop'
+          - type: LinePlot
+            x:
+              variable: anl::anl::cycle
+            y:
+              variable: anl::anl::count_vqc1_allev
+            color: 'blue'
+            datatype: ${datatype}
+            label: 'final outloop'
+
+        - add_xlabel: 'Rejected by GC'
+          add_ylabel: 'Count'
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.5
+            color: 'black'
+          add_legend:
+            loc: 'upper right'
+          layers:
+          - type: LinePlot
+            x:
+              variable: ges::ges::cycle
+            y:
+              variable: ges::ges::count2_allev
+            color: 'black'
+            datatype: ${datatype}
+            label: 'initial outloop'
+          - type: LinePlot
+            x:
+              variable: anl::anl::cycle
+            y:
+              variable: anl::anl::count2_allev
+            color: 'blue'
+            datatype: ${datatype}
+            label: 'final outloop'
+            
+        - add_xlabel: 'Monitored'
+          add_ylabel: 'Count'
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.5
+            color: 'black'
+          add_legend:
+            loc: 'upper right'
+          layers:
+          - type: LinePlot
+            x:
+              variable: ges::ges::cycle
+            y:
+              variable: ges::ges::count3_allev
+            color: 'black'
+            datatype: ${datatype}
+            label: 'initial outloop'
+          - type: LinePlot
+            x:
+              variable: anl::anl::cycle
+            y:
+              variable: anl::anl::count3_allev
+            color: 'blue'
+            datatype: ${datatype}
+            label: 'final outloop'
+
+    - batch figure:
+        datatypes: *datatypes
+        variables:  ['bias1_allev']
+
+      figure:
+        layout: [6,1]
+        figure size: [20,18]
+        tight layout:
+        title: "Valid: {{ PDATE | to_YMDH }}\n ${datatype}, N. Hemisphere, All Levels"
+        output name: line_plots/conmon/time/${datatype}_bias.{{ PDATE | to_YMDH }}.png
+        plot logo:
+          which: 'noaa/nws'
+          loc: 'upper left'
+          subplot_orientation: 'last'
+
+      plots:
+        - add_xlabel: 'Obs-Ges Assimilated'
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.5
+            color: 'black'
+          add_legend:
+            loc: 'upper right'
+          layers:
+          - type: LinePlot
+            x:
+              variable: ges::ges::cycle
+            y:
+              variable: ges::ges::bias1_allev
+            color: 'red'
+            datatype: ${datatype}
+            label: 'initial outloop'
+          - type: LinePlot
+            x:
+              variable: anl::anl::cycle
+            y:
+              variable: anl::anl::bias1_allev
+            color: 'blue'
+            datatype: ${datatype}
+            label: 'final outloop'
+          - type: HorizontalLine
+            y: 0
+            linewidth: 0.75
+            label: ''
+
+        - add_xlabel: 'RMS Assimilated'
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.5
+            color: 'black'
+          add_legend:
+            loc: 'upper right'
+          layers:
+          - type: LinePlot
+            x:
+              variable: ges::ges::cycle
+            y:
+              variable: ges::ges::rms1_allev
+            color: 'red'
+            datatype: ${datatype}
+            label: 'initial outloop'
+          - type: LinePlot
+            x:
+              variable: anl::anl::cycle
+            y:
+              variable: anl::anl::rms1_allev
+            color: 'blue'
+            datatype: ${datatype}
+            label: 'final outloop'
+
+        - add_xlabel: 'Obs-Ges Monitored'
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.5
+            color: 'black'
+          add_legend:
+            loc: 'upper right'
+          layers:
+          - type: LinePlot
+            x:
+              variable: ges::ges::cycle
+            y:
+              variable: ges::ges::bias3_allev
+            color: 'red'
+            datatype: ${datatype}
+            label: 'initial outloop'
+          - type: LinePlot
+            x:
+              variable: anl::anl::cycle
+            y:
+              variable: anl::anl::bias3_allev
+            color: 'blue'
+            datatype: ${datatype}
+            label: 'final outloop'
+          - type: HorizontalLine
+            y: 0
+            linewidth: 0.75
+            label: ''
+
+        - add_xlabel: 'RMS Monitored'
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.5
+            color: 'black'
+          add_legend:
+            loc: 'upper right'
+          layers:
+          - type: LinePlot
+            x:
+              variable: ges::ges::cycle
+            y:
+              variable: ges::ges::rms3_allev
+            color: 'red'
+            datatype: ${datatype}
+            label: 'initial outloop'
+          - type: LinePlot
+            x:
+              variable: anl::anl::cycle
+            y:
+              variable: anl::anl::rms3_allev
+            color: 'blue'
+            datatype: ${datatype}
+            label: 'final outloop'
+
+        - add_xlabel: 'Obs-Ges Rejected'
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.5
+            color: 'black'
+          add_legend:
+            loc: 'upper right'
+          layers:
+          - type: LinePlot
+            x:
+              variable: ges::ges::cycle
+            y:
+              variable: ges::ges::bias2_allev
+            color: 'red'
+            datatype: ${datatype}
+            label: 'initial outloop'
+          - type: LinePlot
+            x:
+              variable: anl::anl::cycle
+            y:
+              variable: anl::anl::bias2_allev
+            color: 'blue'
+            datatype: ${datatype}
+            label: 'final outloop'
+          - type: HorizontalLine
+            y: 0
+            linewidth: 0.75
+            label: ''
+
+        - add_xlabel: 'RMS Rejected'
+          add_grid:
+            axis: 'both'
+            linestyle: 'dotted'
+            linewidth: 0.5
+            color: 'black'
+          add_legend:
+            loc: 'upper right'
+          layers:
+          - type: LinePlot
+            x:
+              variable: ges::ges::cycle
+            y:
+              variable: ges::ges::rms2_allev
+            color: 'red'
+            datatype: ${datatype}
+            label: 'initial outloop'
+          - type: LinePlot
+            x:
+              variable: anl::anl::cycle
+            y:
+              variable: anl::anl::rms2_allev
+            color: 'blue'
+            datatype: ${datatype}
+            label: 'final outloop'
+

@@ -254,7 +254,7 @@ graphics:
         layout: [1,1]
         figure size: [20,18]
         title: "${variable}, {{SENSOR}}_{{SAT}} channel ${channel}  \n Valid: {{ PDATE | to_YMDH }}"
-        output name: line_plots/{{NET}}/{{SENSOR}}_{{SAT}}/angle/angle.{{SENSOR}}_{{SAT}}.${channel}.${variable}.png
+        output name: line_plots/{{MODEL}}/{{SENSOR}}_{{SAT}}/angle/angle.{{SENSOR}}_{{SAT}}.${channel}.${variable}.png
         plot logo:
           which: 'noaa/nws'
           loc: 'upper left'
@@ -316,7 +316,7 @@ graphics:
         layout: [1,1]
         figure size: [20,18]
         title: "${variable}, {{SENSOR}}_{{SAT}} channel ${channel}  \n Valid: {{ PDATE | to_YMDH }}"
-        output name: line_plots/{{NET}}/{{SENSOR}}_{{SAT}}/angle/angle.{{SENSOR}}_{{SAT}}.${channel}.${variable}.png
+        output name: line_plots/{{MODEL}}/{{SENSOR}}_{{SAT}}/angle/angle.{{SENSOR}}_{{SAT}}.${channel}.${variable}.png
         plot logo:
           which: 'noaa/nws'
           loc: 'upper left'

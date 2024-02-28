@@ -2,7 +2,7 @@
 
 cycle_interval: 6
 data: '/scratch1/NCEPDEV/da/Edward.Safford/noscrub/git/eva/src/eva/tests/data'
-net: gfs
+model: gfs
 
 satellites:
   - name: npp
@@ -12,17 +12,34 @@ satellites:
           - plot: ozn horiz
             times: 4
             levels: '1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22'
-            step: ges
+            component: ges
 
           - plot: ozn time
             times: 121 
             levels: '1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22'
-            step: ges
+            component: ges
 
           - plot: ozn summary
             times: 121
             levels: '1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22'
-            step: ges
+            component: ges
+
+  - name: metop-b
+    instruments:
+      - name: mhs
+        plot_list:
+          - plot: rad time
+            times: 121
+            channels: '1,2,3,4,5'
+            component: ges
+          - plot: rad angle
+            times: 121
+            channels: '1,2,3,4,5'
+            component: ges
+          - plot: rad bcoef
+            times: 121
+            channels: '1,2,3,4,5'
+            component: ges
 
   - name: g16
     instruments:
@@ -31,7 +48,7 @@ satellites:
           - plot: rad time
             times: 121
             channels: '7,8,9,10,11,12,13,14,15,16'
-            step: ges
+            component: ges
 
   - name: j1
     instruments:
@@ -40,18 +57,19 @@ satellites:
           - plot: rad angle
             times: 121
             channels: '12,13,14,15,16'
-            step: ges
+            component: ges
 
           - plot: rad bcoef
             times: 121
             channels: '12,13,14,15,16'
-            step: ges
+            component: ges
 
 minimization:
-  - net: gfs
+  - model: gfs
     plot_list:
       - plot: min summary
         run: gdas
+        times: 28
 
       - plot: min gnorm four cycle
         run: gdas

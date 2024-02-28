@@ -49,7 +49,7 @@ def camelCase(s):
 
 
 def loadConfig(satname, instrument, obstype, plot, cycle_tm, cycle_interval,
-               data_location, net=None):
+               data_location, model=None):
     """
     Load configuration dictionary.
 
@@ -61,7 +61,7 @@ def loadConfig(satname, instrument, obstype, plot, cycle_tm, cycle_interval,
         cycle_tm (datetime): Cycle time of plot
         cycle_interval (int): number of hours between cycles
         data_location (str): path to directory containing data files
-        net (str): model run NET value
+        model (str): model|experiment name
     Return:
         config(dict): Dictionary containing configuration information
     """
@@ -71,9 +71,9 @@ def loadConfig(satname, instrument, obstype, plot, cycle_tm, cycle_interval,
         'OBSTYPE': obstype,
         'LEVELS': plot.get('levels'),
         'CHANNELS': plot.get('channels'),
-        'NET': net,
+        'MODEL': model,
         'RUN': plot.get('run'),
-        'STEP': plot.get('step'),
+        'COMPONENT': plot.get('component'),
         'PDATE': cycle_tm,
         'PLOT_TEMPLATE': camelCase(plot.get('plot')),
         'DATA': data_location
@@ -134,7 +134,7 @@ if __name__ == "__main__":
         logger.abort('plotObsMon is expecting a valid yaml file, but it encountered ' +
                      f'errors when attempting to load: {mon_sources}, error: {e}')
 
-    net = mon_dict.get('net')
+    model = mon_dict.get('model')
     cycle_interval = mon_dict.get('cycle_interval')
     data_location = mon_dict.get('data')
 
@@ -150,11 +150,12 @@ if __name__ == "__main__":
 
                 for plot in inst.get('plot_list'):
                     config = loadConfig(satname, instrument, obstype, plot, cycle_tm,
-                                        cycle_interval, data_location, net)
+                                        cycle_interval, data_location, model)
                     plot_template = f"{config['PLOT_TEMPLATE']}.yaml"
                     plot_yaml = f"{config['SENSOR']}_{config['SAT']}_{plot_template}"
 
-                    parm_location = f"../parm/{net}/"
+                    parm = os.environ.get('PARMobsmon', '../parm')
+                    parm_location = os.path.join(parm, model)
                     plot_template = os.path.join(parm_location, plot_template)
 
                     genYaml(plot_template, plot_yaml, config)
@@ -165,16 +166,20 @@ if __name__ == "__main__":
     if 'minimization' in mon_dict.keys():
         satname = None
         instrument = None
+        obstype = None
+
         for min in mon_dict.get('minimization'):
-            net = min.get('net')
+            model = min.get('model')
 
             for plot in min.get('plot_list'):
                 config = loadConfig(satname, instrument, obstype, plot, cycle_tm, cycle_interval,
-                                    data_location, net)
+                                    data_location, model)
 
                 plot_template = f"{config['PLOT_TEMPLATE']}.yaml"
-                plot_yaml = f"{config['NET']}_{config['RUN']}_{plot_template}"
-                parm_location = f"../parm/{net}/"
+                plot_yaml = f"{config['MODEL']}_{config['RUN']}_{plot_template}"
+
+                parm = os.environ.get('PARMobsmon', '../parm')
+                parm_location = os.path.join(parm, model)
                 plot_template = os.path.join(parm_location, plot_template)
 
                 genYaml(plot_template, plot_yaml, config)
@@ -194,7 +199,9 @@ if __name__ == "__main__":
 
                 plot_template = f"{config['PLOT_TEMPLATE']}.yaml"
                 plot_yaml = f"{config['OBSTYPE']}_{plot_template}"
-                parm_location = f"../parm/{net}/"
+                   
+                parm = os.environ.get('PARMobsmon', '../parm')
+                parm_location = os.path.join(parm, model)
                 plot_template = os.path.join(parm_location, plot_template)
 
                 genYaml(plot_template, plot_yaml, config)

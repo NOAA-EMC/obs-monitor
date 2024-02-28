@@ -1,0 +1,42 @@
+
+readonly om_dir_root=$(cd "$(dirname "$(readlink -f -n "${BASH_SOURCE[0]}" )" )/.." && pwd -P)
+export HOMEobsmon=${om_dir_root}
+export JOBSobsmon=${om_dir_root}/jobs
+
+#--------------------------------------------
+# Export job submission vars per MACHINE_ID
+#
+source ${om_dir_root}/ush/detect_machine.sh
+MACHINE_ID=`echo "${MACHINE_ID%%.*}"`
+
+case ${MACHINE_ID} in
+
+   hera)
+      export SUB=/apps/slurm/default/bin/sbatch
+      export SERVICE_PARTITION="service"
+
+      ptmp="/scratch2/NCEPDEV/stmp3/$USER"
+      stmp="/scratch2/NCEPDEV/stmp1/$USER"
+      queue=""
+      project=""
+      account="da-cpu"
+      ;;
+
+   wcoss2)
+      export SUB="qsub"
+
+      ptmp="/lfs/h2/emc/ptmp/$USER"
+      stmp="/lfs/h2/emc/stmp/$USER"
+      queue="dev"
+      project="GDAS-DEV"
+      account="GFS-DEV"
+      ;;
+esac
+
+export ACCOUNT=${ACCOUNT:-$account}
+export PROJECT=${PROJECT:-$project}
+export JOB_QUEUE=${JOB_QUEUE:-$queue}
+
+export OM_LOGS="${ptmp}/logs/OM_logs"
+export DATAROOT=${DATAROOT:-${stmp}}
+export COMOUT=${COMOUT:-${ptmp}}
