@@ -199,7 +199,7 @@ if __name__ == "__main__":
 
                 plot_template = f"{config['PLOT_TEMPLATE']}.yaml"
                 plot_yaml = f"{config['OBSTYPE']}_{plot_template}"
-                   
+
                 parm = os.environ.get('PARMobsmon', '../parm')
                 parm_location = os.path.join(parm, model)
                 plot_template = os.path.join(parm_location, plot_template)
