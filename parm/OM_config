@@ -20,6 +20,7 @@ case ${MACHINE_ID} in
       queue=""
       project=""
       account="da-cpu"
+      aprun_py="python"
       ;;
 
    wcoss2)
@@ -30,6 +31,7 @@ case ${MACHINE_ID} in
       queue="dev"
       project="GDAS-DEV"
       account="GFS-DEV"
+      aprun_py="python"
       ;;
 esac
 
@@ -40,3 +42,4 @@ export JOB_QUEUE=${JOB_QUEUE:-$queue}
 export OM_LOGS="${ptmp}/logs/OM_logs"
 export DATAROOT=${DATAROOT:-${stmp}}
 export COMOUT=${COMOUT:-${ptmp}}
+export APRUN_PY=${APRUN_PY:-${aprun_py}}

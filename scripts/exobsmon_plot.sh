@@ -7,7 +7,7 @@
 #---------------------------
 # Generate requested plots
 #
-python ${USHobsmon}/plotObsMon.py -i ${PARMobsmon}/${MODEL}/gfs_plots.yaml  -p ${PDATE}
+${APRUN_PY} ${USHobsmon}/plotObsMon.py -i ${PARMobsmon}/${MODEL}/gfs_plots.yaml  -p ${PDATE}
 
 #-----------------------------
 # Copy output to COMOUTplots
