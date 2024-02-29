@@ -70,7 +70,7 @@ graphics:
         figure size: [20,18]
         tight layout:
         title: "Valid: {{ PDATE | to_YMDH }}"
-        output name: line_plots/minimization/{{NET}}_{{RUN}}.{{ PDATE | to_YMDH }}.gnorms.png
+        output name: line_plots/minimization/{{MODEL}}_{{RUN}}.{{ PDATE | to_YMDH }}.gnorms.png
         plot logo:
           which: 'noaa/nws'
           loc: 'upper right'
@@ -108,7 +108,7 @@ graphics:
         figure size: [20,18]
         tight layout:
         title: "Valid: {{ PDATE | to_YMDH }}"
-        output name: line_plots/minimization/{{NET}}_{{RUN}}.{{ PDATE | to_YMDH }}.reduction.png
+        output name: line_plots/minimization/{{MODEL}}_{{RUN}}.{{ PDATE | to_YMDH }}.reduction.png
         plot logo:
           which: 'noaa/nws'
           loc: 'upper right'
