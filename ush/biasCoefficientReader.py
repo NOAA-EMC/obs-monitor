@@ -15,7 +15,7 @@ def read_ncfile(file):
         for var in ['predictors', 'nchannels', 'bias_coefficients']:
             data = f.variables[var][:]
             d[var] = data
-    
+
     return d
 
 
@@ -28,7 +28,7 @@ def datetime2epoch(cycle):
 
     # Convert datetime object to Unix epoch time (seconds since January 1, 1970)
     epoch_time = np.array([int(dt_object.timestamp())])
-    
+
     return epoch_time
 
 
@@ -55,7 +55,7 @@ def write_ncfile(outfile, outdata, epoch_time, nchannels):
 
     # Close the netCDF file
     nc_file.close()
-    
+
     return
 
 
@@ -64,17 +64,17 @@ def main(input_file, cycle, outfile):
     Extract bias coefficient information from a netCDF4 file and output it
     to a new netCDF file with time information.
     """
-    
+
     data_dict = read_ncfile(input_file)
-    
+
     outdata = {pred: data_dict['bias_coefficients'][i] for i, pred in enumerate(data_dict['predictors'])}
-    
+
     # Datetime to epoch time
     epoch_time = datetime2epoch(cycle)
-    
+
     # Grab number of channels
     nchannels = len(data_dict['nchannels'])
-    
+
     # Write out ncfile
     write_ncfile(outfile, outdata, epoch_time, nchannels)
 

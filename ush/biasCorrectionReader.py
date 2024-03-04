@@ -1,5 +1,3 @@
-%%time
-
 import argparse
 import yaml
 from netCDF4 import Dataset
@@ -13,7 +11,7 @@ def read_ncfile(file, group_list):
     Read and extract data from ncfile based on inputted groups.
     """
     d = {}
-    
+
     with Dataset(file, mode='r') as f:
         for g in group_list:
             md = f.groups[g]
@@ -23,7 +21,7 @@ def read_ncfile(file, group_list):
             for var in md.variables:
                 data = md.variables[var][:]
                 d[g][var] = data
-    
+
     return d
 
 
@@ -41,7 +39,7 @@ def calculate_omf(data_dict, input1, variable, biascorrection=True, input2=None)
 
     except KeyError as error:
         print(f"Calculation failed. Missing input group variable: {error}")
-        
+
 
 def calculate_penalty(data_dict, omf, input1, variable):
     """
@@ -49,7 +47,7 @@ def calculate_penalty(data_dict, omf, input1, variable):
     """
     try:
         penalty = omf / data_dict[input1][variable]
-        
+
         return penalty
 
     except KeyError as error:
@@ -65,7 +63,7 @@ def datetime2epoch(cycle):
 
     # Convert datetime object to Unix epoch time (seconds since January 1, 1970)
     epoch_time = np.array([int(dt_object.timestamp())])
-    
+
     return epoch_time
 
 
@@ -99,7 +97,7 @@ def write_ncfile(outfile, outdata, epoch_time):
 
     # Close the netCDF file
     nc_file.close()
-    
+
     return
 
 
@@ -108,10 +106,10 @@ def main(input_file, cycle, satellite, channels, outvars, outfile, group_names, 
     Read in config file contaiting bias corrected data, calculate counts, averages, and standard
     deviation, and output results to a new netCDF file with time information.
     """
-    ## Grab config info ##
-    
+    # Grab config info ##
+
     data_dict = read_ncfile(input_file, group_names)
-    
+
     omgbc0 = calculate_omf(data_dict, input1='hofx0', variable=group_variable)
     omgbc1 = calculate_omf(data_dict, input1='hofx1', variable=group_variable)
     omgnbc0 = calculate_omf(data_dict, input1='hofx0', variable=group_variable,
@@ -130,14 +128,14 @@ def main(input_file, cycle, satellite, channels, outvars, outfile, group_names, 
     scanangle2 = data_dict['scan_angle_order_2Predictor'][group_variable]
     scanangle3 = data_dict['scan_angle_order_3Predictor'][group_variable]
     scanangle4 = data_dict['scan_angle_order_4Predictor'][group_variable]
-    
+
     data_list = [omgbc0, omgbc1, omgnbc0, omgnbc1, penalty0, penalty1,
                  obsbias0, obsbias1, lapserate1, lapserate2, constant,
                  emissivity, scanangle, scanangle2, scanangle3, scanangle4]
-    
+
     # Create outdata dictionary
     outdata = {i: {} for i in outvars}
-    
+
     # Loop through data to clean data and calculate counts, mean, and std
     for i, data in enumerate(data_list):
         # Get list of out dict keys
@@ -156,14 +154,14 @@ def main(input_file, cycle, satellite, channels, outvars, outfile, group_names, 
         outdata[key]['count'] = counts
         outdata[key]['mean'] = mean
         outdata[key]['std'] = std
-          
+
     # Get epoch time
     epoch_time = datetime2epoch(cycle)
-    
+
     # Write out ncfile
     write_ncfile(outfile, outdata, epoch_time)
-    
-    
+
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
@@ -181,7 +179,6 @@ if __name__ == "__main__":
     except Exception as e:
         print('dead')
 
-
     for data in config_dict.get('datasets'):
         satellite = data.get('satellite')
         filename = data.get('filename')
@@ -197,4 +194,4 @@ if __name__ == "__main__":
 
             main(filename, cycle, satellite, channels,
                  outvars, outfile, group_names, group_variable)
-    
+
