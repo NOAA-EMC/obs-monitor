@@ -194,4 +194,3 @@ if __name__ == "__main__":
 
             main(filename, cycle, satellite, channels,
                  outvars, outfile, group_names, group_variable)
-

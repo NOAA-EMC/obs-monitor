@@ -207,4 +207,3 @@ if __name__ == "__main__":
                 genYaml(plot_template, plot_yaml, config)
                 eva(plot_yaml)
                 os.remove(plot_yaml)
-
