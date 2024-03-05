@@ -184,7 +184,7 @@ def main(input_file, cycle, satellite, channels, outvars, outfile, group_names, 
     data_list = [omgbc0, omgbc1, omgnbc0, omgnbc1, penalty0, penalty1,
                  obsbias0, obsbias1, lapserate1, lapserate2, constant,
                  emissivity, scanangle, scanangle2, scanangle3, scanangle4]
- 
+
     #########################################################################
 
     # Create outdata dictionary
