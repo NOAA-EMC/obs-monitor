@@ -12,7 +12,7 @@ def read_ncfile(file):
     Parameters:
         file (str): path to input netCDF4 file
     Return:
-        d (dict): dictionary of data 
+        d (dict): dictionary of data
     """
     d = {}
 
@@ -49,7 +49,7 @@ def write_ncfile(outfile, outdata, epoch_time, nchannels):
     Parameters:
         outfile (str): path and file name of where the data is to be written to specified
                        in input yaml
-        outdata (dict): data collected from input netCDF file with calculated statistics 
+        outdata (dict): data collected from input netCDF file with calculated statistics
         epoch_time (str): cycle time as seconds from Jan. 1, 1970
         nchannels (int): total number of channels
     Return:
