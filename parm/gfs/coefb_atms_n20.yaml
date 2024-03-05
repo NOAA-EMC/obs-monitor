@@ -1,0 +1,23 @@
+diagnostics:
+
+# Data read
+# ---------
+datasets:
+  - name: bcoef
+    satellite: atms
+    sensor: n20
+    type: RadDataSpace
+    filename: /path/to/diag_atms_n20_2021032500.nc
+    channels: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22]
+    groups:
+      - names: ['hofx0', 'hofx1', 'ObsBias0', 'ObsBias1', 'ObsValue',
+                'EffectiveError0', 'EffectiveError1', 'lapse_ratePredictor',
+                'lapse_rate_order_2Predictor', 'constantPredictor',
+                'emissivityPredictor', 'scan_angle_order_4Predictor',
+                'scan_angle_order_3Predictor', 'scan_angle_order_2Predictor',
+                'scan_anglePredictor']
+        variable: brightnessTemperature
+    outvars: ['omgbc0', 'omgbc1', 'omgnbc0', 'omgnbc1', 'penalty0', 'penalty1',
+              'obsBias0', 'obsBias1', 'lapseRate', 'lapseRate2', 'constant',
+              'emissivity', 'scanAngle', 'scanAngle2', 'scanAngle3', 'scanAngle4']
+    outfile: /path/to/atms_n20_stat_outfile.nc
