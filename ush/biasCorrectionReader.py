@@ -9,44 +9,70 @@ from datetime import datetime
 def read_ncfile(file, group_list):
     """
     Read and extract data from ncfile based on inputted groups.
+
+    Parameters:
+        file (str): path to input netCDF4 file
+        group_list (list): list of strings representing the groups needed in
+                           nc file
+    Return:
+        d (dict): dictionary of data 
     """
     d = {}
 
     with Dataset(file, mode='r') as f:
         for g in group_list:
-            md = f.groups[g]
+            gd = f.groups[g]
 
             d[g] = {}
 
-            for var in md.variables:
-                data = md.variables[var][:]
+            for var in gd.variables:
+                data = gd.variables[var][:]
                 d[g][var] = data
 
     return d
 
 
-def calculate_omf(data_dict, input1, variable, biascorrection=True, input2=None):
+def calculate_omf(data_dict, hofx, variable, biascorrection=True, obsbias=None):
     """
     Calculate observation minus forecast for data that is bias corrected and not bias corrected.
+
+    Parameters:
+        data_dict (dict): dictionary of data from input nc file
+        hofx (str): the hofx variable to be used (i.e. hofx0, hofx1)
+        variable (str): group variable specified in input yaml file
+        biascorrection (bool): if using bias corrected data, set to True. If using no bias
+                               corrected data, set to False
+        obsbias (str): the obs bias variable to be used (i.e. ObsBias0, ObsBias1). Only needed
+                       if biascorrection=False
+    Return:
+        omf (array): the observation minus forecast result
     """
     try:
-        omf = data_dict['ObsValue'][variable] - data_dict[input1][variable]
+        omf = data_dict['ObsValue'][variable] - data_dict[hofx][variable]
 
         if biascorrection:
             return omf
         else:
-            return omf - data_dict[input2][variable]
+            return omf - data_dict[obsbias][variable]
 
     except KeyError as error:
         print(f"Calculation failed. Missing input group variable: {error}")
 
 
-def calculate_penalty(data_dict, omf, input1, variable):
+def calculate_penalty(data_dict, omf, obsbias, variable):
     """
     Calculates penalty by observation minus forecast by effective error.
+
+    Parameters:
+        data_dict (dict):  dictionary of data from input nc file
+        omf (array): observation minus forecast array
+        obsbias (str): the obs bias variable to be used (i.e. ObsBias0, ObsBias1)
+        variable (str): group variable specified in input yaml file
+    Return:
+        penalty (array): observation minus forecast divided by observation bias array
     """
     try:
-        penalty = omf / data_dict[input1][variable]
+        penalty = omf / data_dict[obsbias][variable]
 
         return penalty
 
@@ -57,25 +83,39 @@ def calculate_penalty(data_dict, omf, input1, variable):
 def datetime2epoch(cycle):
     """
     Convert a datetime in str to epoch time.
+
+    Parameters:
+        cycle (str): date of cycle in YYYYMMDDHH
+    Return:
+        epoch_time (int): value of time in seconds since Jan. 1, 1970
     """
     # Convert string to datetime object
     dt_object = datetime.strptime(cycle, '%Y%m%d%H')
 
     # Convert datetime object to Unix epoch time (seconds since January 1, 1970)
-    epoch_time = np.array([int(dt_object.timestamp())])
+    epoch_time = [int(dt_object.timestamp())]
 
     return epoch_time
 
 
-def write_ncfile(outfile, outdata, epoch_time):
+def write_ncfile(outfile, outdata, epoch_time, nchannels):
     """
     Write an ncfile from dictionary.
+
+    Parameters:
+        outfile (str): path and file name of where the data is to be written to specified
+                       in input yaml
+        outdata (dict): data collected from input netCDF file with calculated statistics 
+        epoch_time (str): cycle time as seconds from Jan. 1, 1970
+        nchannels (int): total number of channels
+    Return:
+        None
     """
     # Create a new netCDF file
     nc_file = nc.Dataset(outfile, 'w', format='NETCDF4')
 
     valid_time_dim = nc_file.createDimension('validTime', 1)
-    channel_dim = nc_file.createDimension('Channel', 22)
+    channel_dim = nc_file.createDimension('Channel', nchannels)
 
     # Loop through the keys in the dictionary
     for key, value in outdata.items():
@@ -105,17 +145,29 @@ def main(input_file, cycle, satellite, channels, outvars, outfile, group_names, 
     """
     Read in config file contaiting bias corrected data, calculate counts, averages, and standard
     deviation, and output results to a new netCDF file with time information.
-    """
-    # Grab config info ##
 
+    Parameters:
+        input_file (str): input path and filename to netCDF file to be read
+        cycle (str): cycle in YYYYMMDDHH
+        satellite (str): name of satellite from input data
+        channels (str): channels where data should be grabbed
+        outvars (list): list of strings of the desired variables to be saved to new .nc file
+        outfile (file): path and filename for new .nc file
+        group_names (list): list of strings that contains group names from input .nc file
+        group_variable (str): variable within input .nc file groups
+    Return:
+        None
+    """
+    # Grab config info
     data_dict = read_ncfile(input_file, group_names)
 
-    omgbc0 = calculate_omf(data_dict, input1='hofx0', variable=group_variable)
-    omgbc1 = calculate_omf(data_dict, input1='hofx1', variable=group_variable)
-    omgnbc0 = calculate_omf(data_dict, input1='hofx0', variable=group_variable,
-                            biascorrection=False, input2='ObsBias0')
-    omgnbc1 = calculate_omf(data_dict, input1='hofx1', variable=group_variable,
-                            biascorrection=False, input2='ObsBias1')
+    # Can this block be better??
+    omgbc0 = calculate_omf(data_dict, hofx='hofx0', variable=group_variable)
+    omgbc1 = calculate_omf(data_dict, hofx='hofx1', variable=group_variable)
+    omgnbc0 = calculate_omf(data_dict, hofx='hofx0', variable=group_variable,
+                            biascorrection=False, obsbias='ObsBias0')
+    omgnbc1 = calculate_omf(data_dict, hofx='hofx1', variable=group_variable,
+                            biascorrection=False, obsbias='ObsBias1')
     penalty0 = calculate_penalty(data_dict, omgbc0, input1='ObsBias0', variable=group_variable)
     penalty1 = calculate_penalty(data_dict, omgbc1, input1='ObsBias1', variable=group_variable)
     obsbias0 = data_dict['ObsBias0'][group_variable]
@@ -132,6 +184,8 @@ def main(input_file, cycle, satellite, channels, outvars, outfile, group_names, 
     data_list = [omgbc0, omgbc1, omgnbc0, omgnbc1, penalty0, penalty1,
                  obsbias0, obsbias1, lapserate1, lapserate2, constant,
                  emissivity, scanangle, scanangle2, scanangle3, scanangle4]
+    
+    #########################################################################
 
     # Create outdata dictionary
     outdata = {i: {} for i in outvars}
@@ -141,9 +195,8 @@ def main(input_file, cycle, satellite, channels, outvars, outfile, group_names, 
         # Get list of out dict keys
         key = list(outdata.keys())[i]
 
+        # Find and replace bad values with nans
         extreme_indices = np.where((data > 1e6) | (data < -1e6))
-
-        # Replace bad data with nans
         data[extreme_indices] = np.nan
 
         # Calculate counts, mean, standard deviation not including nans
@@ -156,10 +209,13 @@ def main(input_file, cycle, satellite, channels, outvars, outfile, group_names, 
         outdata[key]['std'] = std
 
     # Get epoch time
-    epoch_time = datetime2epoch(cycle)
+    epoch_time = np.array(datetime2epoch(cycle))
+
+    # Grab number of channels
+    nchannels = len(data_dict['nchannels'])
 
     # Write out ncfile
-    write_ncfile(outfile, outdata, epoch_time)
+    write_ncfile(outfile, outdata, epoch_time, nchannels)
 
 
 if __name__ == "__main__":
@@ -167,7 +223,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument('-i', '--input', type=str, help='Input YAML file', required=True)
-    parser.add_argument('-c', '--cycle', type=str, help='Plot time YYYYMMDDHH', required=True)
+    parser.add_argument('-c', '--cycle', type=str, help='Cycle time YYYYMMDDHH', required=True)
     args = parser.parse_args()
 
     cycle = args.cycle
@@ -188,6 +244,7 @@ if __name__ == "__main__":
 
         for group in data.get('groups'):
             group_names = group.get('names')
+            # This will need to be tested in future
             if satellite == 'ssmis':
                 group_names.append('cos', 'sin')
             group_variable = group.get('variable')

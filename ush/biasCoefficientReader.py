@@ -8,6 +8,11 @@ from datetime import datetime
 def read_ncfile(file):
     """
     Read and extract bias coefficient data.
+
+    Parameters:
+        file (str): path to input netCDF4 file
+    Return:
+        d (dict): dictionary of data 
     """
     d = {}
 
@@ -22,6 +27,11 @@ def read_ncfile(file):
 def datetime2epoch(cycle):
     """
     Convert a datetime in str to epoch time.
+
+    Parameters:
+        cycle (str): date of cycle in YYYYMMDDHH
+    Return:
+        epoch_time (int): value of time in seconds since Jan. 1, 1970
     """
     # Convert string to datetime object
     dt_object = datetime.strptime(cycle, '%Y%m%d%H')
@@ -35,6 +45,15 @@ def datetime2epoch(cycle):
 def write_ncfile(outfile, outdata, epoch_time, nchannels):
     """
     Write an ncfile from dictionary.
+
+    Parameters:
+        outfile (str): path and file name of where the data is to be written to specified
+                       in input yaml
+        outdata (dict): data collected from input netCDF file with calculated statistics 
+        epoch_time (str): cycle time as seconds from Jan. 1, 1970
+        nchannels (int): total number of channels
+    Return:
+        None
     """
     # Create a new netCDF file
     nc_file = nc.Dataset(outfile, 'w', format='NETCDF4')
@@ -63,6 +82,13 @@ def main(input_file, cycle, outfile):
     """
     Extract bias coefficient information from a netCDF4 file and output it
     to a new netCDF file with time information.
+
+    Parameters:
+        input_file (str): input bias coefficient .nc file
+        cycle (str): cycle in YYYYMMDDHH
+        outfile (str):  path and filename for new .nc file
+    Return:
+        None
     """
 
     data_dict = read_ncfile(input_file)
