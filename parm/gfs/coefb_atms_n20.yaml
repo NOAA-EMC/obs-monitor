@@ -1,0 +1,42 @@
+diagnostics:
+
+# Data read
+# ---------
+datasets:
+  - name: bcoef
+    satellite: atms
+    sensor: n20
+    type: RadDataSpace
+    filename: /path/to/diag_atms_n20_2021032500.nc
+    channels: &chans [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22]
+    outfile: /path/to/outfile.nc
+    variables to process:
+    - function: calculate_omf
+      groups: ['hofx0', 'hofx1']
+      variable: 'brightnessTemperature'
+      channels: *chans
+      bias corrected: 
+      - bias correction used: True
+        bias groups: ['obsBias0', 'obsBias1']
+      groups out: [omgbc0, omgbc1]
+
+    - function: calculate_omf
+      groups: ['hofx0', 'hofx1']
+      variable: 'brightnessTemperature'
+      channels: *chans
+      bias corrected: 
+      - bias correction used: False
+        bias groups: ['ObsBias0', 'ObsBias1']
+      groups out: [omgnbc0, omgnbc1]
+
+    - function: calculate_penalty
+      groups: ['hofx0', 'hofx1']
+      variable: 'brightnessTemperature'
+      channels: *chans
+      groups out: [penalty0, penalty1]
+
+    - function: grab_data
+      groups: ['ObsBias0']
+      variable: 'brightnessTemperature'
+      channels: *chans
+      groups out: [obsBias0]
