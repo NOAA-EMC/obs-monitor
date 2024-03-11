@@ -3,9 +3,10 @@ from netCDF4 import Dataset
 import numpy as np
 import netCDF4 as nc
 from datetime import datetime
+from eva.utilities.logger import Logger
 
 
-def read_ncfile(file, groups, variable):
+def read_ncfile(file, groups, variable, logger):
     """
     Read and extract data from ncfile based on inputted groups.
 
@@ -27,9 +28,9 @@ def read_ncfile(file, groups, variable):
                 data = gd.variables[variable][:]
                 d[g][variable] = data
 
-    except KeyError as e:
-        print(f"Extraction of data failed. {e} does not exist in .ncfile ")
-        # Force exit
+    except Exception as e:
+        logger.abort("Extraction of data failed. Ensure group exists " +
+                     f"in input .ncfile. Error: {e}")
 
     return d
 
@@ -95,7 +96,7 @@ def datetime2epoch(cycle):
     return epoch_time
 
 
-def calculate_omf(filename, groups, variable, channels, outgroups, bias_corr, bias_groups):
+def calculate_omf(filename, groups, variable, channels, outgroups, bias_corr, bias_groups, logger):
     """
     Calculate observation minus forecast for data that is bias corrected and not bias corrected.
 
@@ -114,7 +115,7 @@ def calculate_omf(filename, groups, variable, channels, outgroups, bias_corr, bi
     groups.append('ObsValue')
 
     # Grab data from .nc file
-    data_dict = read_ncfile(filename, groups, variable)
+    data_dict = read_ncfile(filename, groups, variable, logger)
 
     # Calculate omf
     return_dict = {}
@@ -136,7 +137,7 @@ def calculate_omf(filename, groups, variable, channels, outgroups, bias_corr, bi
     return return_dict
 
 
-def calculate_penalty(filename, groups, variable, channels, outgroups):
+def calculate_penalty(filename, groups, variable, channels, outgroups, logger):
     """
     Calculates penalty by observation minus forecast by effective error.
 
@@ -151,7 +152,8 @@ def calculate_penalty(filename, groups, variable, channels, outgroups):
     """
     return_dict = {}
 
-    omf_dict = calculate_omf(filename, groups, variable, channels, outgroups, bias_corr=True, bias_groups=None)
+    omf_dict = calculate_omf(filename, groups, variable, channels, outgroups, bias_corr=True,
+                             bias_groups=None, logger)
 
     # logic check to see how many effective errors you need?
     efferr = ['EffectiveError0', 'EffectiveError1']
@@ -168,7 +170,7 @@ def calculate_penalty(filename, groups, variable, channels, outgroups):
     return return_dict
 
 
-def grab_data(filename, groups, variable, channels, outgroups):
+def grab_data(filename, groups, variable, channels, outgroups, logger):
     """
     Grabs data from input .nc file
 
@@ -187,7 +189,7 @@ def grab_data(filename, groups, variable, channels, outgroups):
         outgroup_key = outgroups[i]
         return_dict[outgroup_key] = {}
 
-        data_dict = read_ncfile(filename, [group], variable)
+        data_dict = read_ncfile(filename, [group], variable, logger)
 
         return_dict[outgroup_key]['data'] = data_dict[group][variable]
 
@@ -236,10 +238,11 @@ def main(filename, cycle, satellite, config_data, outfile):
             bias_corr = bc_dict.get('bias correction used')
             bias_groups = bc_dict.get('bias groups')
 
-            data = factory[function](filename, groups, variable, channels, out_groups, bias_corr, bias_groups)
+            data = factory[function](filename, groups, variable, channels, out_groups, bias_corr,
+                                     bias_groups, logger)
 
         else:
-            data = factory[function](filename, groups, variable, channels, out_groups)
+            data = factory[function](filename, groups, variable, channels, out_groups, logger)
 
         outdata.update(data)
 
@@ -280,6 +283,7 @@ def main(filename, cycle, satellite, config_data, outfile):
 
 if __name__ == "__main__":
 
+    logger = Logger('biasCorrectionReader')
     parser = argparse.ArgumentParser()
 
     parser.add_argument('-i', '--input', type=str, help='Input YAML file', required=True)
@@ -293,7 +297,7 @@ if __name__ == "__main__":
         with open(infile, 'r') as infile_opened:
             config_dict = yaml.safe_load(infile_opened)
     except Exception as e:
-        print(e)
+        logger.abort(f"Input yaml file unable to load. See error: {e}")
 
     for data in config_dict.get('datasets'):
         satellite = data.get('satellite')
@@ -301,4 +305,4 @@ if __name__ == "__main__":
         config_data = data.get('variables to process')
         outfile = data.get('outfile')
 
-    main(filename, cycle, satellite, config_data, outfile)
+    main(filename, cycle, satellite, config_data, outfile, logger)
