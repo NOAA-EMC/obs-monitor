@@ -24,7 +24,7 @@ def read_ncfile(file, groups, variable, channels, logger):
             # Grab index of input channels
             chan_numbers = f.groups['MetaData'].variables['sensorChannelNumber'][:][0]
             chan_idx = np.where(np.in1d(chan_numbers, channels))[0]
-            
+
             for g in groups:
                 d[g] = {}
                 gd = f.groups[g]
