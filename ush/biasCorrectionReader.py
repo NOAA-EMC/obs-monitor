@@ -6,7 +6,7 @@ from datetime import datetime
 from eva.utilities.logger import Logger
 
 
-def read_ncfile(file, groups, variable, logger):
+def read_ncfile(file, groups, variable, channels, logger):
     """
     Read and extract data from ncfile based on inputted groups.
 
@@ -21,12 +21,16 @@ def read_ncfile(file, groups, variable, logger):
 
     try:
         with Dataset(file, mode='r') as f:
+            # Grab index of input channels
+            chan_numbers = f.groups['MetaData'].variables['sensorChannelNumber'][:][0]
+            chan_idx = np.where(np.in1d(chan_numbers, channels))[0]
+            
             for g in groups:
                 d[g] = {}
                 gd = f.groups[g]
 
                 data = gd.variables[variable][:]
-                d[g][variable] = data
+                d[g][variable] = data[:, chan_idx]
 
     except Exception as e:
         logger.abort("Extraction of data failed. Ensure group exists " +
@@ -115,7 +119,7 @@ def calculate_omf(filename, groups, variable, channels, outgroups, bias_corr, bi
     groups.append('ObsValue')
 
     # Grab data from .nc file
-    data_dict = read_ncfile(filename, groups, variable, logger)
+    data_dict = read_ncfile(filename, groups, variable, channels, logger)
 
     # Calculate omf
     return_dict = {}
@@ -129,7 +133,7 @@ def calculate_omf(filename, groups, variable, channels, outgroups, bias_corr, bi
         if bias_corr:
             return_dict[output]['data'] = omf
         else:
-            bias_dict = read_ncfile(filename, bias_groups, variable)
+            bias_dict = read_ncfile(filename, bias_groups, variable, channels, logger)
             obsbias = bias_groups[i]
 
             return_dict[output]['data'] = omf - bias_dict[obsbias][variable]
@@ -158,7 +162,7 @@ def calculate_penalty(filename, groups, variable, channels, outgroups, logger):
     # logic check to see how many effective errors you need?
     efferr = ['EffectiveError0', 'EffectiveError1']
 
-    efferr_dict = read_ncfile(filename, efferr, variable)
+    efferr_dict = read_ncfile(filename, efferr, variable, channels, logger)
 
     for i, output in enumerate(outgroups):
         return_dict[output] = {}
@@ -189,7 +193,7 @@ def grab_data(filename, groups, variable, channels, outgroups, logger):
         outgroup_key = outgroups[i]
         return_dict[outgroup_key] = {}
 
-        data_dict = read_ncfile(filename, [group], variable, logger)
+        data_dict = read_ncfile(filename, [group], variable, channels, logger)
 
         return_dict[outgroup_key]['data'] = data_dict[group][variable]
 
@@ -254,7 +258,7 @@ def main(filename, cycle, satellite, config_data, outfile):
         # Find and replace bad values with nans
         # This is tricky: How can I do this for the correct EffectiveQC value?
         # What is the correct QC value?
-        effective_qc = read_ncfile(filename, ['EffectiveQC0'], variable)
+        effective_qc = read_ncfile(filename, ['EffectiveQC0'], variable, channels, logger)
         qc_indices = np.where(effective_qc['EffectiveQC0']['brightnessTemperature'] != 0)
 
         data[qc_indices] = np.nan
