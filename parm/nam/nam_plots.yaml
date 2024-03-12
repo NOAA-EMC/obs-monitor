@@ -2,7 +2,7 @@
 
 cycle_interval: 1
 data: '/scratch1/NCEPDEV/da/Edward.Safford/noscrub/git/eva/src/eva/tests/data/nam/rad_data'
-net: nam
+model: nam
 
 satellites:
   - name: metop-b

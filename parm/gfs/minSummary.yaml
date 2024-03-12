@@ -39,7 +39,7 @@ graphics:
         figure size: [20,18]
         tight layout:
         title: "Valid: {{ PDATE | to_YMDH }}"
-        output name: line_plots/minimization/{{NET}}_{{RUN}}.summary.gnorms.png
+        output name: line_plots/minimization/{{MODEL}}_{{RUN}}.summary.gnorms.png
         plot logo:
           which: 'noaa/nws'
           loc: 'upper left'

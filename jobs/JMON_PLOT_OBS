@@ -1,0 +1,54 @@
+#!/bin/bash 
+
+###########################
+# J-job for Mon Plot Obs
+###########################
+
+export NET="obsmon"
+export PDATE="${PDY}${cyc}"
+
+############################
+# Define package locations
+############################
+export HOMEobsmon=${HOMEobsmon:-${PACKAGEROOT}/${NET}.${obsmon_ver}}
+export SCRIPTSobsmon=${SCRIPTSobsmon:-$HOMEobsmon/scripts}
+export PARMobsmon=${PARMobsmon:-$HOMEobsmon/parm}
+export USHobsmon=${USHobsmon:-$HOMEobsmon/ush}
+
+################################
+# Define plot output location
+################################
+export COMOUT=${COMOUT:-$(compath.py -o ${NET}/${obsmon_ver})}
+export COMOUTplots=${COMOUTplots:-${COMOUT}/${MODEL}/${PDATE}}
+mkdir -m 775 -p $COMOUTplots
+
+###################################
+# Create $DATA for temp workspace
+###################################
+export DATA=${DATA:-${DATAROOT}/${NET}/${MODEL}/Plot}
+if [[ -d ${DATA} ]]; then rm -rf ${DATA}; fi
+
+mkdir -p ${DATA}
+cd ${DATA}
+
+################
+# Run exscript
+################
+${OBSMON_PLOT:-${SCRIPTSobsmon}/exobsmon_plot.sh}
+status=$?
+[[ ${status} -ne 0 ]] && exit ${status}
+
+####################
+# Final processing
+####################
+if [[ -e "${pgmout}" ]] ; then
+  cat "${pgmout}"
+fi
+
+####################
+# Remove workspace
+####################
+KEEPDATA=${KEEPDATA:-"NO"}
+cd ${DATAROOT}
+[[ ${KEEPDATA} = "NO" ]] && rm -rf ${DATA}
+
