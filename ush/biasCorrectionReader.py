@@ -18,7 +18,7 @@ def read_ncfile(file, groups, variable, channels, logger):
         channels (list): channels where data should be grabbed
         logger : logging variable that tracks progress of source code
     Return:
-        d (dict): dictionary of data
+        return_dict (dict): dictionary of data
     """
     return_dict = {}
 
