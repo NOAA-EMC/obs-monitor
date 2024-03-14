@@ -7,10 +7,10 @@ datasets:
     satellite: atms
     sensor: n20
     type: RadDataSpace
-    filename: /scratch1/NCEPDEV/da/Kevin.Dougherty/data_processing_tool/data/diag_atms_n20_2021032500.nc
+    filename: /path/to/diag_atms_n20_2021032500.nc
     channels: &chans [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
     qc variable: &qcvar EffectiveQC0
-    outfile: /scratch1/NCEPDEV/da/Kevin.Dougherty/obs-monitor/outfile.nc
+    outfile: /path/to/outfile.nc
     variables to process:
     - function: calculate_omf
       groups: ['hofx0', 'hofx1']
