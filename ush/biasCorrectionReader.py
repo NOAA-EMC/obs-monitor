@@ -17,7 +17,7 @@ def read_ncfile(file, groups, variable, channels, logger):
     Return:
         d (dict): dictionary of data
     """
-    d = {}
+    return_dict = {}
 
     try:
         with Dataset(file, mode='r') as f:
@@ -26,17 +26,17 @@ def read_ncfile(file, groups, variable, channels, logger):
             chan_idx = np.where(np.in1d(chan_numbers, channels))[0]
 
             for g in groups:
-                d[g] = {}
+                return_dict[g] = {}
                 gd = f.groups[g]
 
                 data = gd.variables[variable][:]
-                d[g][variable] = data[:, chan_idx]
+                return_dict[g][variable] = data[:, chan_idx]
 
     except Exception as e:
         logger.abort("Extraction of data failed. Ensure group exists " +
                      f"in input .ncfile. Error: {e}")
 
-    return d
+    return return_dict
 
 
 def write_ncfile(outfile, outdata, epoch_time, nchannels):
