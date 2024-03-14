@@ -3,10 +3,7 @@
 ###########################
 # J-job for Mon Plot Obs
 ###########################
-<<<<<<< HEAD
 st=`date`
-=======
->>>>>>> develop
 
 export NET="obsmon"
 export PDATE="${PDY}${cyc}"
@@ -56,9 +53,6 @@ KEEPDATA=${KEEPDATA:-"NO"}
 cd ${DATAROOT}
 [[ ${KEEPDATA} = "NO" ]] && rm -rf ${DATA}
 
-<<<<<<< HEAD
 en=`date`
 echo start: $st
 echo end:   $en
-=======
->>>>>>> develop

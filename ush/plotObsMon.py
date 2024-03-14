@@ -49,7 +49,7 @@ def camelCase(s):
 
 
 def loadConfig(satname, instrument, obstype, plot, cycle_tm, cycle_interval,
-               data_location, model=None):
+               data_location, model=None, chan_dict=None):
     """
     Load configuration dictionary.
 
@@ -85,11 +85,15 @@ def loadConfig(satname, instrument, obstype, plot, cycle_tm, cycle_interval,
             date_str = f"PDATEm{x*cycle_interval}"
             config[date_str] = add_to_datetime(cycle_tm, to_timedelta(f"-{cycle_interval*x}H"))
 
-    # Some plots with channels require a configuration value of XTICKS (tick marks on the
-    # plotted x axis).  The x axis tick marks indicate the actual channel number, which can
-    # be > 8000 for iasi.  Use the actual channel numbers as tick marks, if the last channel
-    # is < 30 (all but cris-fsr and iasis are), or use a resonable interval if larger.
     if config['CHANNELS'] is not None:
+
+        if config['CHANNELS'] == 'all':
+            config['CHANNELS'] = chan_dict[config['SENSOR']]
+
+        # Some plots with channels require a configuration value of XTICKS (tick marks on the
+        # plotted x axis).  The x axis tick marks indicate the actual channel number, which can
+        # be > 8000 for iasi.  Use the actual channel numbers as tick marks, if the last channel
+        # is < 30 (all but cris-fsr and iasis are), or use a resonable interval if larger.
         last_chan = int(config['CHANNELS'].split(',')[-1])
 
         if last_chan < 30:
@@ -141,6 +145,19 @@ if __name__ == "__main__":
     # Generate template YAMLS and figures for specified satellite instruments
     # minimization stats, and conventional observations
     if 'satellites' in mon_dict.keys():
+
+        # Load the chan_dict, which will contain all the channels for a given
+        # instrument.  This is used if the input yaml file uses 'all' for channels.
+        try:
+            parm_location = os.environ.get('PARMobsmon', '../parm')
+            chan_sources = os.path.join(parm_location, 'instrument_channels.yaml')
+            with open(chan_sources, 'r') as chan_sources_opened:
+                chan_dict = yaml.safe_load(chan_sources_opened)
+
+        except Exception as e:
+            logger.info('Warning: unable to load channel information ' +
+                        f'errors when attempting to load: {chan_sources}, error: {e}')
+
         for sat in mon_dict.get('satellites'):
             satname = sat.get('name')
             obstype = None
@@ -150,7 +167,8 @@ if __name__ == "__main__":
 
                 for plot in inst.get('plot_list'):
                     config = loadConfig(satname, instrument, obstype, plot, cycle_tm,
-                                        cycle_interval, data_location, model)
+                                        cycle_interval, data_location, model, chan_dict)
+
                     plot_template = f"{config['PLOT_TEMPLATE']}.yaml"
                     plot_yaml = f"{config['SENSOR']}_{config['SAT']}_{plot_template}"
 
