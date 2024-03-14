@@ -97,8 +97,14 @@ if [[ -e ${logfile} ]]; then rm ${logfile}; fi
 
 case ${MACHINE_ID} in
    hera)
-      echo "submitting job on hera"
-      ${SUB} --account ${ACCOUNT}  --ntasks=1 --mem=500M --time=45:00 \
+      # Note: Will have to subdivide the plot runs.  Wall times to plot all the radiance
+      #       time-series are taking 1:45:00 now.  That doesn't include Rad bcoef and angle,
+      #       let alone Ozn, Con, and Min plots.  I'm thinking of making separate templates
+      #       for groups of plots that can run in < 2 hrs.  I tried adding additional tasks,
+      #       which does improve runtimes but more than 2 tasks can mean quite a wait for
+      #       queues on hera, while there's almost never a delay to run on the service
+      #       partition.
+      ${SUB} --account ${ACCOUNT}  --ntasks=1 --mem=500M --time=3:00:00 \
              -J ${jobname} --partition service -o ${logfile} ${jobfile}
       ;;
 
