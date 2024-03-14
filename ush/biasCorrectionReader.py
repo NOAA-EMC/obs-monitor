@@ -1,3 +1,4 @@
+import argparse
 import yaml
 from netCDF4 import Dataset
 import numpy as np
@@ -12,8 +13,10 @@ def read_ncfile(file, groups, variable, channels, logger):
 
     Parameters:
         file (str): path to input netCDF4 file
-        group_list (list): list of strings representing the groups needed in
-                           nc file
+        groups (list): list of strings that contains group names from input .nc file
+        variable (str): variable within input .nc file groups
+        channels (list): channels where data should be grabbed
+        logger : logging variable that tracks progress of source code
     Return:
         d (dict): dictionary of data
     """
@@ -108,10 +111,11 @@ def calculate_omf(filename, groups, variable, channels, outgroups, bias_corr, bi
         filename (str): input path and filename to netCDF file to be read
         groups (list): list of strings that contains group names from input .nc file
         variable (str): variable within input .nc file groups
-        channels (array): channels where data should be grabbed
+        channels (list): channels where data should be grabbed
         outgroups (list): list of strings that contains the group names for the output .nc file
         bias_corr (bool): boolean value to determine if bias correction was used or not
         bias_groups (list): list of observation bias values to be used from input .nc file
+        logger : logging variable that tracks progress of source code
     Return:
         return_dict (dict): dictionary of observation minus forecast values
     """
@@ -143,21 +147,22 @@ def calculate_omf(filename, groups, variable, channels, outgroups, bias_corr, bi
 
 def calculate_penalty(filename, groups, variable, channels, outgroups, logger):
     """
-    Calculates penalty by observation minus forecast by effective error.
+    Calculates penalty by dividing observation minus forecast by effective error.
 
     Parameters:
         filename (str): input path and filename to netCDF file to be read
         groups (list): list of strings that contains group names from input .nc file
         variable (str): variable within input .nc file groups
-        channels (array): channels where data should be grabbed
+        channels (list): channels where data should be grabbed
         outgroups (list): list of strings that contains the group names for the output .nc file
+        logger : logging variable that tracks progress of source code
     Return:
         return_dict (dict): dictionary of penalty values
     """
     return_dict = {}
 
     omf_dict = calculate_omf(filename, groups, variable, channels, outgroups, bias_corr=True,
-                             bias_groups=None, logger)
+                             bias_groups=None, logger=logger)
 
     # logic check to see how many effective errors you need?
     efferr = ['EffectiveError0', 'EffectiveError1']
@@ -182,8 +187,9 @@ def grab_data(filename, groups, variable, channels, outgroups, logger):
         filename (str): input path and filename to netCDF file to be read
         groups (list): list of strings that contains group names from input .nc file
         variable (str): variable within input .nc file groups
-        channels (array): channels where data should be grabbed
+        channels (list): channels where data should be grabbed
         outgroups (list): list of strings that contains the group names for the output .nc file
+        logger : logging variable that tracks progress of source code
     Return:
         return_dict (dict): dictionary of data values
     """
@@ -200,9 +206,9 @@ def grab_data(filename, groups, variable, channels, outgroups, logger):
     return return_dict
 
 
-def main(filename, cycle, satellite, config_data, outfile):
+def main(filename, cycle, satellite, config_data, outfile, logger):
     """
-    Read in JEDI diagnostic config file, calculate counts, averages, and standard
+    Read in JEDI diagnostic file, calculate counts, averages, and standard
     deviation, and output results to a new netCDF file with time information.
 
     Parameters:
@@ -211,6 +217,7 @@ def main(filename, cycle, satellite, config_data, outfile):
         satellite (str): name of satellite from input data
         config_data (dict): dictionary of related information pulled from input yaml file
         outfile (str): path and filename for new .nc file
+        logger : logging variable that tracks progress of source code
     Return:
         None
     """
@@ -228,13 +235,13 @@ def main(filename, cycle, satellite, config_data, outfile):
         groups = inputdict.get('groups')
         variable = inputdict.get('variable')
         channels = inputdict.get('channels')
+        qcvar = inputdict.get('qc var')
         out_groups = inputdict.get('groups out')
 
-        # I think I am going to need a logic check
-        # i.e. len(groups) == len(groups out)
-        # if calling penalty, omf needs to exist? Have same inputs
-        # as `calculate_omf` and then just call omf, and then subtract
-        # effective error?
+        # Input `groups` and `out_groups` must be same len
+        if len(groups) != len(out_groups):
+            logger.abort("In the input .yaml file, `groups` must be the same " +
+                         "len as `groups out`. Exiting ...")
 
         if 'bias corrected' in inputdict.keys():
             bc_dict = inputdict.get('bias corrected')[0]
@@ -255,11 +262,9 @@ def main(filename, cycle, satellite, config_data, outfile):
 
         data = outdata[key]['data']
 
-        # Find and replace bad values with nans
-        # This is tricky: How can I do this for the correct EffectiveQC value?
-        # What is the correct QC value?
-        effective_qc = read_ncfile(filename, ['EffectiveQC0'], variable, channels, logger)
-        qc_indices = np.where(effective_qc['EffectiveQC0']['brightnessTemperature'] != 0)
+        # TEMP FIX: User submitted QC variable in input yaml
+        effective_qc = read_ncfile(filename, [qcvar], variable, channels, logger)
+        qc_indices = np.where(effective_qc[qcvar][variable] != 0)
 
         data[qc_indices] = np.nan
 
@@ -279,7 +284,7 @@ def main(filename, cycle, satellite, config_data, outfile):
     epoch_time = np.array(datetime2epoch(cycle))
 
     # Grab number of channels
-    nchannels = len(data_dict['nchannels'])
+    nchannels = len(channels)
 
     # Write out ncfile
     write_ncfile(outfile, outdata, epoch_time, nchannels)
