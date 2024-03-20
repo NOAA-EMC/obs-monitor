@@ -103,96 +103,107 @@ def datetime2epoch(cycle):
     return epoch_time
 
 
-def calculate_omf(filename, groups, variable, channels, outgroups, bias_corr, bias_groups, logger):
+def calculate_omf(filename, inputdict, logger):
     """
     Calculate observation minus forecast for data that is bias corrected and not bias corrected.
 
     Parameters:
         filename (str): input path and filename to netCDF file to be read
-        groups (list): list of strings that contains group names from input .nc file
-        variable (str): variable within input .nc file groups
-        channels (list): channels where data should be grabbed
-        outgroups (list): list of strings that contains the group names for the output .nc file
-        bias_corr (bool): boolean value to determine if bias correction was used or not
-        bias_groups (list): list of observation bias values to be used from input .nc file
+        inputdict (dict): dictionary of input variables needed to extract data
         logger : logging variable that tracks progress of source code
     Return:
         return_dict (dict): dictionary of observation minus forecast values
     """
-    # Add 'ObsValue' to groups to calculate omf
-    groups.append('ObsValue')
 
-    # Grab data from .nc file
-    data_dict = read_ncfile(filename, groups, variable, channels, logger)
+    loops = inputdict.get('loops')
+    variable = inputdict.get('variable')
+    channels = inputdict.get('channels')
+    bias_corr = inputdict.get('bias correction')
+    outgroups = inputdict.get('groups out')
 
-    # Calculate omf
+    if len(loops) != len(outgroups):
+        logger.abort("In the input .yaml file, `loops` must be the same " +
+                     "len as `groups out`. Exiting ...")
+
     return_dict = {}
 
-    for i, output in enumerate(outgroups):
-        return_dict[output] = {}
+    for i, loop in enumerate(loops):
+        groups = [f'hofx{loop}', 'ObsValue', f'ObsBias{loop}'] 
 
-        hofx = groups[i]
-        omf = data_dict['ObsValue'][variable] - data_dict[hofx][variable]
+        # Grab data from .nc file
+        data_dict = read_ncfile(filename, groups, variable, channels, logger)
+
+        return_dict[outgroups[i]] = {}
+
+        omf = data_dict['ObsValue'][variable] - data_dict[f'hofx{loop}'][variable]
 
         if bias_corr:
-            return_dict[output]['data'] = omf
+            return_dict[outgroups[i]]['data'] = omf
         else:
-            bias_dict = read_ncfile(filename, bias_groups, variable, channels, logger)
-            obsbias = bias_groups[i]
-
-            return_dict[output]['data'] = omf - bias_dict[obsbias][variable]
+            return_dict[outgroups[i]]['data'] = omf - bias_dict[f'obsBias{loop}'][variable]
 
     return return_dict
 
 
-def calculate_penalty(filename, groups, variable, channels, outgroups, logger):
+def calculate_penalty(filename, inputdict, logger):
     """
     Calculates penalty by dividing observation minus forecast by effective error.
 
     Parameters:
         filename (str): input path and filename to netCDF file to be read
-        groups (list): list of strings that contains group names from input .nc file
-        variable (str): variable within input .nc file groups
-        channels (list): channels where data should be grabbed
-        outgroups (list): list of strings that contains the group names for the output .nc file
+        inputdict (dict): dictionary of input variables needed to extract data
         logger : logging variable that tracks progress of source code
     Return:
         return_dict (dict): dictionary of penalty values
     """
+
+    loops = inputdict.get('loops')
+    variable = inputdict.get('variable')
+    channels = inputdict.get('channels')
+    outgroups = inputdict.get('groups out')
+
+    if len(loops) != len(outgroups):
+        logger.abort("In the input .yaml file, `loops` must be the same " +
+                     "len as `groups out`. Exiting ...")
+
     return_dict = {}
 
-    omf_dict = calculate_omf(filename, groups, variable, channels, outgroups, bias_corr=True,
-                             bias_groups=None, logger=logger)
+    omf_dict = calculate_omf(filename, inputdict, logger)
 
-    # logic check to see how many effective errors you need?
-    efferr = ['EffectiveError0', 'EffectiveError1']
+    for i, loop in enumerate(loops):
 
-    efferr_dict = read_ncfile(filename, efferr, variable, channels, logger)
+        efferr_dict = read_ncfile(filename, [f'EffectiveError{loop}'], variable, channels, logger)
 
-    for i, output in enumerate(outgroups):
-        return_dict[output] = {}
+        return_dict[outgroups[i]] = {}
 
-        for k, key in enumerate(omf_dict.keys()):
+        for key in omf_dict.keys():
 
-            return_dict[output]['data'] = omf_dict[key]['data'] / efferr_dict[efferr[k]][variable]
+            return_dict[outgroups[i]]['data'] = omf_dict[key]['data'] / efferr_dict[f'EffectiveError{loop}'][variable]
 
     return return_dict
 
 
-def grab_data(filename, groups, variable, channels, outgroups, logger):
+def grab_data(filename, inputdict, logger):
     """
     Grabs data from input .nc file
 
     Paramaters:
         filename (str): input path and filename to netCDF file to be read
-        groups (list): list of strings that contains group names from input .nc file
-        variable (str): variable within input .nc file groups
-        channels (list): channels where data should be grabbed
-        outgroups (list): list of strings that contains the group names for the output .nc file
+        inputdict (dict): dictionary of input variables needed to extract data
         logger : logging variable that tracks progress of source code
     Return:
         return_dict (dict): dictionary of data values
     """
+
+    groups = inputdict.get('groups')
+    variable = inputdict.get('variable')
+    channels = inputdict.get('channels')
+    outgroups = inputdict.get('groups out')
+
+    if len(groups) != len(outgroups):
+        logger.abort("In the input .yaml file, `groups` must be the same " +
+                     "len as `groups out`. Exiting ...")
+
     return_dict = {}
 
     for i, group in enumerate(groups):
@@ -231,29 +242,12 @@ def main(filename, cycle, satellite, config_data, outfile, logger):
     outdata = {}
 
     for inputdict in config_data:
+        # Extract function name
         function = inputdict.get('function')
-        groups = inputdict.get('groups')
-        variable = inputdict.get('variable')
-        channels = inputdict.get('channels')
         qcvar = inputdict.get('qc var')
-        out_groups = inputdict.get('groups out')
-
-        # Input `groups` and `out_groups` must be same len
-        if len(groups) != len(out_groups):
-            logger.abort("In the input .yaml file, `groups` must be the same " +
-                         "len as `groups out`. Exiting ...")
-
-        if 'bias corrected' in inputdict.keys():
-            bc_dict = inputdict.get('bias corrected')[0]
-
-            bias_corr = bc_dict.get('bias correction used')
-            bias_groups = bc_dict.get('bias groups')
-
-            data = factory[function](filename, groups, variable, channels, out_groups, bias_corr,
-                                     bias_groups, logger)
-
-        else:
-            data = factory[function](filename, groups, variable, channels, out_groups, logger)
+        
+        # Call function from factory
+        data = factory[function](filename, inputdict, logger)
 
         outdata.update(data)
 

@@ -13,88 +13,87 @@ datasets:
     outfile: /path/to/outfile.nc
     variables to process:
     - function: calculate_omf
-      groups: ['hofx0', 'hofx1']
+      loops: [0, 1]
       variable: 'brightnessTemperature'
       channels: *chans
       qc var: *qcvar
-      bias corrected: 
-      - bias correction used: True
-        bias groups: ['obsBias0', 'obsBias1']
-      groups out: [omgbc0, omgbc1]
+      bias correction: True
+      groups out: ['omgbc0', 'omgbc1']
 
     - function: calculate_penalty
-      groups: ['hofx0', 'hofx1']
+      loops: [0, 1]
       variable: 'brightnessTemperature'
       channels: *chans
       qc var: *qcvar
-      groups out: [penalty0, penalty1]
+      bias correction: True
+      groups out: ['penalty0', 'penalty1']
 
     - function: grab_data
       groups: ['ObsBias0']
       variable: 'brightnessTemperature'
       channels: *chans
       qc var: *qcvar
-      groups out: [obsBias0]
+      groups out: ['obsBias0']
 
     - function: grab_data
       groups: ['ObsBias1']
       variable: 'brightnessTemperature'
       channels: *chans
       qc var: *qcvar
-      groups out: [obsBias1]
+      groups out: ['obsBias1']
 
     - function: grab_data
       groups: ['lapse_ratePredictor']
       variable: 'brightnessTemperature'
       channels: *chans
       qc var: *qcvar
-      groups out: [lapserate1]
+      groups out: ['lapserate1']
 
     - function: grab_data
       groups: ['lapse_rate_order_2Predictor']
       variable: 'brightnessTemperature'
       channels: *chans
       qc var: *qcvar
-      groups out: [lapserate2]
+      groups out: ['lapserate2']
 
     - function: grab_data
       groups: ['constantPredictor']
       variable: 'brightnessTemperature'
       channels: *chans
       qc var: *qcvar
-      groups out: [constant]
+      groups out: ['constant']
 
     - function: grab_data
       groups: ['emissivityPredictor']
       variable: 'brightnessTemperature'
       channels: *chans
       qc var: *qcvar
-      groups out: [emissivity]
+      groups out: ['emissivity']
 
     - function: grab_data
       groups: ['scan_anglePredictor']
       variable: 'brightnessTemperature'
       channels: *chans
       qc var: *qcvar
-      groups out: [scanangle]
+      groups out: ['scanangle']
 
     - function: grab_data
       groups: ['scan_angle_order_2Predictor']
       variable: 'brightnessTemperature'
       channels: *chans
       qc var: *qcvar
-      groups out: [scanangle2]
+      groups out: ['scanangle2']
 
     - function: grab_data
       groups: ['scan_angle_order_3Predictor']
       variable: 'brightnessTemperature'
       channels: *chans
       qc var: *qcvar
-      groups out: [scanangle3]
+      groups out: ['scanangle3']
 
     - function: grab_data
       groups: ['scan_angle_order_4Predictor']
       variable: 'brightnessTemperature'
       channels: *chans
       qc var: *qcvar
-      groups out: [scanangle4]
+      groups out: ['scanangle4']
