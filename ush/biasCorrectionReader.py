@@ -128,7 +128,7 @@ def calculate_omf(filename, inputdict, logger):
     return_dict = {}
 
     for i, loop in enumerate(loops):
-        groups = [f'hofx{loop}', 'ObsValue', f'ObsBias{loop}'] 
+        groups = [f'hofx{loop}', 'ObsValue', f'ObsBias{loop}']
 
         # Grab data from .nc file
         data_dict = read_ncfile(filename, groups, variable, channels, logger)
@@ -245,7 +245,7 @@ def main(filename, cycle, satellite, config_data, outfile, logger):
         # Extract function name
         function = inputdict.get('function')
         qcvar = inputdict.get('qc var')
-        
+
         # Call function from factory
         data = factory[function](filename, inputdict, logger)
 
