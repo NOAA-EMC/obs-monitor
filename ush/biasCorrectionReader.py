@@ -217,7 +217,7 @@ def grab_data(filename, inputdict, logger):
     return return_dict
 
 
-def main(filename, cycle, satellite, config_data, outfile, logger):
+def main(filename, cycle, satellite, channels, variable, qcvar, config_data, outfile, logger):
     """
     Read in JEDI diagnostic file, calculate counts, averages, and standard
     deviation, and output results to a new netCDF file with time information.
@@ -226,6 +226,9 @@ def main(filename, cycle, satellite, config_data, outfile, logger):
         filename (str): input path and filename to netCDF file to be read
         cycle (str): forecast run cycle in YYYYMMDDHH
         satellite (str): name of satellite from input data
+        channels (list): channels where data should be grabbed
+        variable (str): variable used within input .nc file to extract data
+        qcvar (str): quality control variable to use to clean data
         config_data (dict): dictionary of related information pulled from input yaml file
         outfile (str): path and filename for new .nc file
         logger : logging variable that tracks progress of source code
@@ -244,7 +247,6 @@ def main(filename, cycle, satellite, config_data, outfile, logger):
     for inputdict in config_data:
         # Extract function name
         function = inputdict.get('function')
-        qcvar = inputdict.get('qc var')
 
         # Call function from factory
         data = factory[function](filename, inputdict, logger)
@@ -305,7 +307,10 @@ if __name__ == "__main__":
     for data in config_dict.get('datasets'):
         satellite = data.get('satellite')
         filename = data.get('filename')
+        channels = data.get('channels')
+        variable = data.get('variable')
+        qcvar = data.get('qc variable')
         config_data = data.get('variables to process')
         outfile = data.get('outfile')
 
-    main(filename, cycle, satellite, config_data, outfile, logger)
+    main(filename, cycle, satellite, channels, variable, qcvar, config_data, outfile, logger)
