@@ -7,17 +7,16 @@ datasets:
     satellite: atms
     sensor: n20
     type: RadDataSpace
-    filename: /scratch1/NCEPDEV/da/Kevin.Dougherty/data_processing_tool/data/diag_atms_n20_2021032500.nc
+    filename: /path/to/diag_atms_n20_2021032500.nc
     channels: &chans [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
     variable: &var brightnessTemperature
     qc variable: &qcvar EffectiveQC0
-    outfile: /scratch1/NCEPDEV/da/Kevin.Dougherty/outfile.nc
+    outfile: /path/to/outfile.nc
     variables to process:
     - function: calculate_omf
       loops: [0, 1]
       variable: *var
       channels: *chans
-      qc var: *qcvar
       bias correction: True
       groups out: ['omgbc0', 'omgbc1']
 
@@ -25,7 +24,6 @@ datasets:
       loops: [0, 1]
       variable: *var
       channels: *chans
-      qc var: *qcvar
       bias correction: True
       groups out: ['penalty0', 'penalty1']
 
@@ -40,7 +38,7 @@ datasets:
       groups: ['ObsBias1']
       variable: *var
       channels: *chans
-      qc var: *qcvar
+      qc var: EffectiveQC1
       groups out: ['obsBias1']
 
     - function: grab_data

@@ -98,7 +98,7 @@ def datetime2epoch(cycle):
     dt_object = datetime.strptime(cycle, '%Y%m%d%H')
 
     # Convert datetime object to Unix epoch time (seconds since January 1, 1970)
-    epoch_time = [int(dt_object.timestamp())]
+    epoch_time = int(dt_object.timestamp())
 
     return epoch_time
 
@@ -142,6 +142,8 @@ def calculate_omf(filename, inputdict, logger):
         else:
             return_dict[outgroups[i]]['data'] = omf - bias_dict[f'obsBias{loop}'][variable]
 
+        return_dict[outgroups[i]]['qc var'] = f'EffectiveQC{loop}'
+
     return return_dict
 
 
@@ -179,6 +181,7 @@ def calculate_penalty(filename, inputdict, logger):
         for key in omf_dict.keys():
 
             return_dict[outgroups[i]]['data'] = omf_dict[key]['data'] / efferr_dict[f'EffectiveError{loop}'][variable]
+            return_dict[outgroups[i]]['qc var'] = f'EffectiveQC{loop}'
 
     return return_dict
 
@@ -198,6 +201,7 @@ def grab_data(filename, inputdict, logger):
     groups = inputdict.get('groups')
     variable = inputdict.get('variable')
     channels = inputdict.get('channels')
+    qcvar = inputdict.get('qc var')
     outgroups = inputdict.get('groups out')
 
     if len(groups) != len(outgroups):
@@ -213,11 +217,12 @@ def grab_data(filename, inputdict, logger):
         data_dict = read_ncfile(filename, [group], variable, channels, logger)
 
         return_dict[outgroup_key]['data'] = data_dict[group][variable]
+        return_dict[outgroup_key]['qc var'] = qcvar
 
     return return_dict
 
 
-def main(filename, cycle, satellite, channels, variable, qcvar, config_data, outfile, logger):
+def main(filename, cycle, satellite, channels, variable, config_data, outfile, logger):
     """
     Read in JEDI diagnostic file, calculate counts, averages, and standard
     deviation, and output results to a new netCDF file with time information.
@@ -257,6 +262,8 @@ def main(filename, cycle, satellite, channels, variable, qcvar, config_data, out
     for key in outdata.keys():
 
         data = outdata[key]['data']
+        qcvar = outdata[key]['qc var']
+        outdata[key].pop('qc var', None)
 
         # TEMP FIX: User submitted QC variable in input yaml
         effective_qc = read_ncfile(filename, [qcvar], variable, channels, logger)
@@ -277,7 +284,7 @@ def main(filename, cycle, satellite, channels, variable, qcvar, config_data, out
         outdata[key].pop('data', None)
 
     # Get epoch time
-    epoch_time = np.array(datetime2epoch(cycle))
+    epoch_time = np.array([datetime2epoch(cycle)])
 
     # Grab number of channels
     nchannels = len(channels)
@@ -309,8 +316,7 @@ if __name__ == "__main__":
         filename = data.get('filename')
         channels = data.get('channels')
         variable = data.get('variable')
-        qcvar = data.get('qc variable')
         config_data = data.get('variables to process')
         outfile = data.get('outfile')
 
-    main(filename, cycle, satellite, channels, variable, qcvar, config_data, outfile, logger)
+    main(filename, cycle, satellite, channels, variable, config_data, outfile, logger)
