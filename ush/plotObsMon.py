@@ -123,7 +123,6 @@ if __name__ == "__main__":
     Example calling sequence: >python plotObsMon.py -i ../parm/gfs/gfs_plots.yaml -p 2023122000
     """
 
-    start = subprocess.check_output('date')
     logger = Logger('plotObsMon')
     parser = argparse.ArgumentParser()
 
@@ -227,7 +226,3 @@ if __name__ == "__main__":
                 genYaml(plot_template, plot_yaml, config)
                 eva(plot_yaml)
                 os.remove(plot_yaml)
-
-    end = subprocess.check_output('date')
-    logger.info(f'start: {start}')
-    logger.info(f'end:   {end}')
