@@ -12,6 +12,7 @@ from wxflow import parse_j2yaml, save_as_yaml
 from wxflow import add_to_datetime, to_timedelta, to_datetime
 from eva.eva_driver import eva
 from eva.utilities.logger import Logger
+import subprocess
 
 
 def genYaml(input_yaml, output_yaml, config):
@@ -122,6 +123,7 @@ if __name__ == "__main__":
     Example calling sequence: >python plotObsMon.py -i ../parm/gfs/gfs_plots.yaml -p 2023122000
     """
 
+    start = subprocess.check_output('date')
     logger = Logger('plotObsMon')
     parser = argparse.ArgumentParser()
 
@@ -225,3 +227,8 @@ if __name__ == "__main__":
                 genYaml(plot_template, plot_yaml, config)
                 eva(plot_yaml)
                 os.remove(plot_yaml)
+
+    
+    end = subprocess.check_output('date')
+    logger.info(f'start: {start}')
+    logger.info(f'end:   {end}')

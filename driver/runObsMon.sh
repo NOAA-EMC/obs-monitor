@@ -104,14 +104,17 @@ case ${MACHINE_ID} in
       #       which does improve runtimes but more than 2 tasks can mean quite a wait for
       #       queues on hera, while there's almost never a delay to run on the service
       #       partition.
-      ${SUB} --account ${ACCOUNT}  --ntasks=1 --mem=500M --time=3:00:00 \
+#      ${SUB} --account ${ACCOUNT}  --ntasks=1 --mem=40000M --time=3:00:00 \
+#             -J ${jobname} --partition service -o ${logfile} ${jobfile}
+#      ;;
+      ${SUB} --account ${ACCOUNT}  --ntasks=1 --mem=400M --time=0:05:00 \
              -J ${jobname} --partition service -o ${logfile} ${jobfile}
       ;;
 
    wcoss2)	# NOTE:  this has not been tested; eva doesn't yet run on wcoss2
       echo "submitting job on wcoss2"
       $SUB -q $JOB_QUEUE -A $ACCOUNT -o ${logfile} -e ${logfile} \
-           -V -l select=1:mem=500M -l walltime=20:00 -N ${jobname} ${jobfile}
+           -V -l select=1:mem=500M -l walltime=3:00:00 -N ${jobname} ${jobfile}
       ;;
 esac
 
