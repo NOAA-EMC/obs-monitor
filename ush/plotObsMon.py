@@ -228,7 +228,6 @@ if __name__ == "__main__":
                 eva(plot_yaml)
                 os.remove(plot_yaml)
 
-    
     end = subprocess.check_output('date')
     logger.info(f'start: {start}')
     logger.info(f'end:   {end}')

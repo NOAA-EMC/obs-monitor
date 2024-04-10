@@ -11,12 +11,12 @@ from eva.utilities.logger import Logger
 
 def removeKey(d, keys):
     """
-    Remove keys from a dictionary 
-   
+    Remove keys from a dictionary
+
     Parameters:
         d (dict): input dictionary
         keys (list): keys to remove from dictionary
- 
+
     Return:
         modified dictionary if key(s) are found or input dictionary if no keys
         are in input dictionary
@@ -29,7 +29,6 @@ def removeKey(d, keys):
     return r
 
 
-
 if __name__ == "__main__":
     """
     splitPlotYaml
@@ -39,7 +38,7 @@ if __name__ == "__main__":
     files spliting by satellite/instrument or satellite/instrument/plot and keeping all
     the additional data (model name, time interval, etc).
 
-    Example calling sequence: >python splitPlotYaml.py -i ../parm/gfs/gfs_plots.yaml 
+    Example calling sequence: >python splitPlotYaml.py -i ../parm/gfs/gfs_plots.yaml
                                   -c ../parm/instrument_channels.py
     """
 
@@ -47,7 +46,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument('-i', '--input', type=str, help='Input YAML plot file', required=True)
-    parser.add_argument('-c', '--chan', type=str, help='Input YAML instrument channel file', required=True)
+    parser.add_argument('-c', '--chan', type=str,
+                        help='Input YAML instrument channel file', required=True)
 
     args = parser.parse_args()
     try:
@@ -55,7 +55,7 @@ if __name__ == "__main__":
         with open(mon_sources, 'r') as mon_sources_opened:
             mon_dict = yaml.safe_load(mon_sources_opened)
     except Exception as e:
-        logger.abort('splitPlotYaml is expecting a valid model plot yaml file, but it encountered ' +
+        logger.abort('splitPlotYaml is expecting a valid model plot yaml file, but encountered ' +
                      f'errors when attempting to load: {mon_sources}, error: {e}')
 
     try:
@@ -70,7 +70,7 @@ if __name__ == "__main__":
     cycle_interval = mon_dict.get('cycle_interval')
     data = mon_dict.get('data')
 
-    if 'satellites' in mon_dict.keys(): 
+    if 'satellites' in mon_dict.keys():
         sd = removeKey(mon_dict, ['minimization', 'observations'])
 
         for sat in mon_dict.get('satellites'):
@@ -80,7 +80,7 @@ if __name__ == "__main__":
                 iname = inst.get('name')
                 plist = inst.get('plot_list')
 
-                #---------------------------------------------------------------------
+                # --------------------------------------------------------------------
                 # For instruments with a large number of channels split the plot_list
                 #
                 channels = chan_dict.get(iname)
@@ -89,24 +89,24 @@ if __name__ == "__main__":
                     nchans = len(channels.split(","))
 
                 if nchans > 100:
-                    ctr=0
+                    ctr = 0
                     for pl in inst.get('plot_list'):
                         pd = sd
-                        pd['satellites'] = [{'name': satname, 
+                        pd['satellites'] = [{'name': satname,
                                              'instruments': [{'name': iname,
                                                               'plot_list': [pl]}]}]
                         fname = f'sat_{satname}_{iname}_{ctr}.yaml'
-                        file=open(fname,"w")
-                        yaml.dump(pd,file)
-                        file.close()                    
-                        ctr+=1
- 
-                else: 
-                    pd = sd 
-                    pd['satellites'] = [{'name': satname, 
+                        file = open(fname, "w")
+                        yaml.dump(pd, file)
+                        file.close()
+                        ctr += 1
+
+                else:
+                    pd = sd
+                    pd['satellites'] = [{'name': satname,
                                          'instruments': [{'name': iname,
                                                           'plot_list': plist}]}]
                     fname = f'sat_{satname}_{iname}.yaml'
-                    file=open(fname,"w")
-                    yaml.dump(pd,file)
-                    file.close()                    
+                    file = open(fname, "w")
+                    yaml.dump(pd, file)
+                    file.close()
