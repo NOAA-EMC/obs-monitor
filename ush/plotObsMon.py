@@ -12,7 +12,6 @@ from wxflow import parse_j2yaml, save_as_yaml
 from wxflow import add_to_datetime, to_timedelta, to_datetime
 from eva.eva_driver import eva
 from eva.utilities.logger import Logger
-import subprocess
 
 
 def genYaml(input_yaml, output_yaml, config):
