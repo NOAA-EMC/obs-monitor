@@ -3,7 +3,6 @@
 ###########################
 # J-job for Mon Plot Obs
 ###########################
-
 export NET="obsmon"
 export PDATE="${PDY}${cyc}"
 
@@ -52,3 +51,4 @@ KEEPDATA=${KEEPDATA:-"NO"}
 cd ${DATAROOT}
 [[ ${KEEPDATA} = "NO" ]] && rm -rf ${DATA}
 
+report-mem

@@ -97,15 +97,13 @@ if [[ -e ${logfile} ]]; then rm ${logfile}; fi
 
 case ${MACHINE_ID} in
    hera)
-      echo "submitting job on hera"
-      ${SUB} --account ${ACCOUNT}  --ntasks=1 --mem=500M --time=45:00 \
+      ${SUB} --account ${ACCOUNT}  --ntasks=1 --mem=400M --time=0:05:00 \
              -J ${jobname} --partition service -o ${logfile} ${jobfile}
       ;;
 
    wcoss2)	# NOTE:  this has not been tested; eva doesn't yet run on wcoss2
-      echo "submitting job on wcoss2"
       $SUB -q $JOB_QUEUE -A $ACCOUNT -o ${logfile} -e ${logfile} \
-           -V -l select=1:mem=500M -l walltime=20:00 -N ${jobname} ${jobfile}
+           -V -l select=1:mem=500M -l walltime=0:05:00 -N ${jobname} ${jobfile}
       ;;
 esac
 
