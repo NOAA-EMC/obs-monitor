@@ -1,0 +1,98 @@
+diagnostics:
+
+# Data read
+# ---------
+datasets:
+  - name: bcoef
+    satellite: atms
+    sensor: n20
+    type: RadDataSpace
+    filename: /path/to/diag_atms_n20_2021032500.nc
+    channels: &chans [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+    variable: &var brightnessTemperature
+    qc variable: &qcvar EffectiveQC0
+    outfile: /path/to/outfile.nc
+    variables to process:
+    - function: calculate_omf
+      loops: [0, 1]
+      variable: *var
+      channels: *chans
+      bias correction: True
+      groups out: ['omgbc0', 'omgbc1']
+
+    - function: calculate_penalty
+      loops: [0, 1]
+      variable: *var
+      channels: *chans
+      bias correction: True
+      groups out: ['penalty0', 'penalty1']
+
+    - function: grab_data
+      groups: ['ObsBias0']
+      variable: *var
+      channels: *chans
+      qc var: *qcvar
+      groups out: ['obsBias0']
+
+    - function: grab_data
+      groups: ['ObsBias1']
+      variable: *var
+      channels: *chans
+      qc var: EffectiveQC1
+      groups out: ['obsBias1']
+
+    - function: grab_data
+      groups: ['lapse_ratePredictor']
+      variable: *var
+      channels: *chans
+      qc var: *qcvar
+      groups out: ['lapserate1']
+
+    - function: grab_data
+      groups: ['lapse_rate_order_2Predictor']
+      variable: *var
+      channels: *chans
+      qc var: *qcvar
+      groups out: ['lapserate2']
+
+    - function: grab_data
+      groups: ['constantPredictor']
+      variable: *var
+      channels: *chans
+      qc var: *qcvar
+      groups out: ['constant']
+
+    - function: grab_data
+      groups: ['emissivityPredictor']
+      variable: *var
+      channels: *chans
+      qc var: *qcvar
+      groups out: ['emissivity']
+
+    - function: grab_data
+      groups: ['scan_anglePredictor']
+      variable: *var
+      channels: *chans
+      qc var: *qcvar
+      groups out: ['scanangle']
+
+    - function: grab_data
+      groups: ['scan_angle_order_2Predictor']
+      variable: *var
+      channels: *chans
+      qc var: *qcvar
+      groups out: ['scanangle2']
+
+    - function: grab_data
+      groups: ['scan_angle_order_3Predictor']
+      variable: *var
+      channels: *chans
+      qc var: *qcvar
+      groups out: ['scanangle3']
+
+    - function: grab_data
+      groups: ['scan_angle_order_4Predictor']
+      variable: *var
+      channels: *chans
+      qc var: *qcvar
+      groups out: ['scanangle4']
