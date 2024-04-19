@@ -4,9 +4,6 @@
 # exobsmon_plot.sh
 #------------------
 
-jobname="OM_test"
-logfile="${OM_LOGS}/${MODEL}/OM_log_test"
-if [[ -e ${logfile} ]]; then rm ${logfile}; fi
 
 #-------------------------------------------------------------
 # locate $model_plots.yaml and instrument_channels.yaml files
@@ -24,31 +21,89 @@ if [[ ! -e ${chan_yaml} ]]; then
    exit 2
 fi
 
-#----------------------------------------
-# split $plot_yaml into sat/instr[/plot]
+#-----------------------------------------------------------
+# split $plot_yaml into sat/instr[/plot], minimization, obs
 #
 ${APRUN_PY} ${USHobsmon}/splitPlotYaml.py -i ${plot_yaml} -c ${chan_yaml}
 
-#exit 0
 
-cmdfile="OM_test_jobscript"
->$cmdfile
+#--------------------------------------------------------------
+# Submit OM_sat_plots job if split yields any sat_*.yaml files
+#
+if compgen -G "./sat_*.yaml" > /dev/null; then
 
-ctr=0
-for yaml in ./sat_*.yaml; do
-   echo "${ctr} $yaml"
-   echo "${ctr} ${APRUN_PY} ${USHobsmon}/plotObsMon.py -i ${yaml}  -p ${PDATE}" >> $cmdfile
-   ((ctr+=1))
-done 
-chmod 755 $cmdfile
+   jobname="OM_sat_plots"
+   logfile="${OM_LOGS}/${MODEL}/OM_sat_plot.log"
+   if [[ -e ${logfile} ]]; then rm ${logfile}; fi
 
-echo "submitting job $jobname"
+   cmdfile="OM_sat_jobscript"
+   >$cmdfile
+   ctr=0
 
-if [[ ${ctr} > 0 ]]; then
-   $SUB --account ${ACCOUNT} -n ${ctr}  -o ${logfile} -D . -J ${jobname} --time=1:00:00 \
+   for yaml in ./sat_*.yaml; do
+      echo "${ctr} $yaml"
+      echo "${ctr} ${APRUN_PY} ${USHobsmon}/plotObsMon.py -i ${yaml}  -p ${PDATE}" >> $cmdfile
+      ((ctr+=1))
+   done 
+   chmod 755 $cmdfile
+
+   echo "ctr: $ctr"
+   echo "submitting job ${jobname}"
+
+   if [[ ${ctr} > 0 ]]; then
+      $SUB --account ${ACCOUNT} -n ${ctr}  -o ${logfile} -D . -J ${jobname} --time=1:00:00 \
+           --mem=80000M --wrap "srun -l --multi-prog ${cmdfile}"
+   fi
+
+fi
+
+#------------------------------------------------------------------
+# Submit OM_min_plots job if split yields a minimization.yaml file
+#
+if compgen -G "./minimization.yaml" > /dev/null; then
+
+   jobname="OM_min_plots"
+   logfile="${OM_LOGS}/${MODEL}/OM_min_plot.log"
+   if [[ -e ${logfile} ]]; then rm ${logfile}; fi
+
+   cmdfile="OM_min_jobscript"
+   echo "0 ${APRUN_PY} ${USHobsmon}/plotObsMon.py -i ./minimization.yaml  -p ${PDATE}" > $cmdfile
+   chmod 755 $cmdfile
+
+   echo "submitting job ${jobname}"
+
+   $SUB --account ${ACCOUNT} -n 1  -o ${logfile} -D . -J ${jobname} --time=0:05:00 \
         --mem=80000M --wrap "srun -l --multi-prog ${cmdfile}"
 fi
 
+#------------------------------------------------------------------
+# Submit OM_con_plots job if split yields any obs_*.yaml files
+#
+if compgen -G "./obs*.yaml" > /dev/null; then
+   echo "have OBS plots"
+   jobname="OM_obs_plots"
+   logfile="${OM_LOGS}/${MODEL}/OM_obs_plot.log"
+   if [[ -e ${logfile} ]]; then rm ${logfile}; fi
+
+   cmdfile="OM_obs_jobscript"
+   >$cmdfile
+   ctr=0
+
+   for yaml in ./obs*.yaml; do
+      echo "${ctr} $yaml"
+      echo "${ctr} ${APRUN_PY} ${USHobsmon}/plotObsMon.py -i ${yaml}  -p ${PDATE}" >> $cmdfile
+      ((ctr+=1))
+   done 
+   chmod 755 $cmdfile
+
+   echo "ctr: $ctr"
+   echo "submitting job ${jobname}"
+
+   if [[ ${ctr} > 0 ]]; then
+      $SUB --account ${ACCOUNT} -n ${ctr}  -o ${logfile} -D . -J ${jobname} --time=1:00:00 \
+           --mem=80000M --wrap "srun -l --multi-prog ${cmdfile}"
+   fi
+fi
 
 #-----------------------------
 # Copy output to COMOUTplots
