@@ -180,7 +180,8 @@ def calculate_penalty(filename, inputdict, logger):
 
         for key in omf_dict.keys():
 
-            return_dict[outgroups[i]]['data'] = omf_dict[key]['data'] / efferr_dict[f'EffectiveError{loop}'][variable]
+            return_dict[outgroups[i]]['data'] = omf_dict[key]['data'] /
+            efferr_dict[f'EffectiveError{loop}'][variable]
             return_dict[outgroups[i]]['qc var'] = f'EffectiveQC{loop}'
 
     return return_dict
