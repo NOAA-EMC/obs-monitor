@@ -29,7 +29,7 @@ ${APRUN_PY} ${USHobsmon}/splitPlotYaml.py -i ${plot_yaml} -c ${chan_yaml}
 #--------------------------------------------------------------
 # Submit OM_sat_plots job if split yields any sat_*.yaml files
 #
-if compgen -G "./sat_*.yaml" > /dev/null; then
+if compgen -G "${DATA}/sat_*.yaml" > /dev/null; then
 
    jobname="OM_sat_plots"
    logfile="${OM_LOGS}/${MODEL}/OM_sat_plot.log"
@@ -39,7 +39,7 @@ if compgen -G "./sat_*.yaml" > /dev/null; then
    >$cmdfile
    ctr=0
 
-   for yaml in ./sat_*.yaml; do
+   for yaml in ${DATA}/sat_*.yaml; do
       echo "${ctr} $yaml"
       echo "${ctr} ${APRUN_PY} ${USHobsmon}/plotObsMon.py -i ${yaml}  -p ${PDATE}" >> $cmdfile
       ((ctr+=1))
@@ -59,14 +59,14 @@ fi
 #------------------------------------------------------------------
 # Submit OM_min_plots job if split yields a minimization.yaml file
 #
-if compgen -G "./minimization.yaml" > /dev/null; then
+if compgen -G "${DATA}/minimization.yaml" > /dev/null; then
 
    jobname="OM_min_plots"
    logfile="${OM_LOGS}/${MODEL}/OM_min_plot.log"
    if [[ -e ${logfile} ]]; then rm ${logfile}; fi
 
    cmdfile="OM_min_jobscript"
-   echo "0 ${APRUN_PY} ${USHobsmon}/plotObsMon.py -i ./minimization.yaml  -p ${PDATE}" > $cmdfile
+   echo "0 ${APRUN_PY} ${USHobsmon}/plotObsMon.py -i ${DATA}/minimization.yaml  -p ${PDATE}" > $cmdfile
    chmod 755 $cmdfile
 
    echo "submitting job ${jobname}"
@@ -78,7 +78,7 @@ fi
 #------------------------------------------------------------------
 # Submit OM_con_plots job if split yields any obs_*.yaml files
 #
-if compgen -G "./obs*.yaml" > /dev/null; then
+if compgen -G "${DATA}/obs*.yaml" > /dev/null; then
    echo "have OBS plots"
    jobname="OM_obs_plots"
    logfile="${OM_LOGS}/${MODEL}/OM_obs_plot.log"
@@ -88,7 +88,7 @@ if compgen -G "./obs*.yaml" > /dev/null; then
    >$cmdfile
    ctr=0
 
-   for yaml in ./obs*.yaml; do
+   for yaml in ${DATA}/obs*.yaml; do
       echo "${ctr} $yaml"
       echo "${ctr} ${APRUN_PY} ${USHobsmon}/plotObsMon.py -i ${yaml}  -p ${PDATE}" >> $cmdfile
       ((ctr+=1))
