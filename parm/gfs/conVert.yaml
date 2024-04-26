@@ -24,6 +24,8 @@ datasets:
 
     regions: 1
 
+    datatypes: {{DATATYPES}}
+
     groups:
       - name: ges
 
@@ -37,7 +39,7 @@ datasets:
 
     regions: 1
 
-    datatypes: &datatypes ['q120_0', 'q130_0']
+    datatypes: {{DATATYPES}}
 
     groups:
       - name: anl
@@ -59,7 +61,7 @@ graphics:
     # 4 plot ConMon time series
     # -------------------------
     - batch figure:
-        datatypes: *datatypes
+        datatypes: {{DATATYPES}}
         variables:  ['count1', 'count2', 'count_vqc1', 'count3']
 
       figure:

@@ -110,3 +110,18 @@ if __name__ == "__main__":
                     file = open(fname, "w")
                     yaml.dump(pd, file)
                     file.close()
+
+    if 'minimization' in mon_dict.keys():
+        md = removeKey(mon_dict, ['satellites', 'observations'])
+        fname = f'minimization.yaml'
+        file = open(fname, "w")
+        yaml.dump(md, file)
+        file.close()
+
+    if 'observations' in mon_dict.keys():
+        logger.info(f'HAVE OBS')
+        od = removeKey(mon_dict, ['satellites', 'minimization'])
+        fname = f'observations.yaml'
+        file = open(fname, "w")
+        yaml.dump(od, file)
+        file.close()

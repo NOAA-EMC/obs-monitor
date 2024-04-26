@@ -49,7 +49,7 @@ def camelCase(s):
 
 
 def loadConfig(satname, instrument, obstype, plot, cycle_tm, cycle_interval,
-               data_location, model=None, chan_dict=None):
+               data_location, model=None, chan_dict=None, datatype_dict=None):
     """
     Load configuration dictionary.
 
@@ -62,6 +62,8 @@ def loadConfig(satname, instrument, obstype, plot, cycle_tm, cycle_interval,
         cycle_interval (int): number of hours between cycles
         data_location (str): path to directory containing data files
         model (str): model|experiment name
+        chan_dict (dict): dictionary with full channel definitions
+        datatype_dict (dict): dictionary with full datatype definitions
     Return:
         config(dict): Dictionary containing configuration information
     """
@@ -71,6 +73,7 @@ def loadConfig(satname, instrument, obstype, plot, cycle_tm, cycle_interval,
         'OBSTYPE': obstype,
         'LEVELS': plot.get('levels'),
         'CHANNELS': plot.get('channels'),
+        'DATATYPES': plot.get('datatypes'),
         'MODEL': model,
         'RUN': plot.get('run'),
         'COMPONENT': plot.get('component'),
@@ -106,6 +109,10 @@ def loadConfig(satname, instrument, obstype, plot, cycle_tm, cycle_interval,
                 xticks = xticks + str(ctr) + ','
                 ctr += interval
             config['XTICKS'] = xticks[:-1]
+
+    if config['DATATYPES'] is not None:
+        if config['DATATYPES'] == 'all':
+            config['DATATYPES'] = obs_dict[config['OBSTYPE']]
 
     return config
 
@@ -208,12 +215,26 @@ if __name__ == "__main__":
         satname = None
         instrument = None
         obstype = None
+        chan_dict = None
+
+        # Load the obs_dict, which will contain all the datatypes for a given
+        # observation.  This is used if the input yaml file uses 'all' for datatypes.
+        try:
+            parm_location = os.environ.get('PARMobsmon', '../parm')
+            obs_types = os.path.join(parm_location, 'observation_datatypes.yaml')
+            with open(obs_types, 'r') as obs_types_opened:
+                obs_dict = yaml.safe_load(obs_types_opened)
+
+        except Exception as e:
+            logger.info('Warning: unable to load observation datatype information ' +
+                        f'errors when attempting to load: {obs_types}, error: {e}')
+
         for obs in mon_dict.get('observations'):
             obstype = obs.get('obstype')
 
             for plot in obs.get('plot_list'):
                 config = loadConfig(satname, instrument, obstype, plot, cycle_tm, cycle_interval,
-                                    data_location)
+                                    data_location, model, chan_dict, obs_dict)
 
                 plot_template = f"{config['PLOT_TEMPLATE']}.yaml"
                 plot_yaml = f"{config['OBSTYPE']}_{plot_template}"
