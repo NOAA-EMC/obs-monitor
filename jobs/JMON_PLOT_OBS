@@ -10,9 +10,10 @@ export PDATE="${PDY}${cyc}"
 # Define package locations
 ############################
 export HOMEobsmon=${HOMEobsmon:-${PACKAGEROOT}/${NET}.${obsmon_ver}}
-export SCRIPTSobsmon=${SCRIPTSobsmon:-$HOMEobsmon/scripts}
-export PARMobsmon=${PARMobsmon:-$HOMEobsmon/parm}
-export USHobsmon=${USHobsmon:-$HOMEobsmon/ush}
+export SCRIPTSobsmon=${SCRIPTSobsmon:-${HOMEobsmon}/scripts}
+export PARMobsmon=${PARMobsmon:-${HOMEobsmon}/parm}
+export CNTRLobsmon=${CNTRLobsmon:-${PARMobsmon}/cntrl}
+export USHobsmon=${USHobsmon:-${HOMEobsmon}/ush}
 
 ################################
 # Define plot output location

@@ -18,7 +18,7 @@ datasets:
     sensor: {{SENSOR}}
     type: MonDataSpace
     control_file:
-      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.{{COMPONENT}}.ctl
+      - {{CONTROL}}/ozn_time.{{SENSOR}}.{{COMPONENT}}.ctl
     filenames:
       - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.{{COMPONENT}}.{{ PDATE | to_YMDH }}.ieee_d
       - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.{{COMPONENT}}.{{ PDATEm6 | to_YMDH }}.ieee_d
@@ -166,7 +166,7 @@ graphics:
         figure size: [20,18]
         tight layout:
         title: "${variable}, {{SENSOR}}_{{SAT}} level ${level}  \n Valid: {{ PDATE | to_YMDH }}"
-        output name: line_plots/{{SENSOR}}_{{SAT}}/ozn/time/{{SENSOR}}_{{SAT}}.${level}.${variable}.png
+        output name: line_plots/ozn/time/{{SENSOR}}_{{SAT}}.${level}.${variable}.png
         plot logo:
           which: 'noaa/nws'
           loc: 'upper right'
@@ -200,7 +200,7 @@ graphics:
         figure size: [20,18]
         tight layout:
         title: "obs-{{COMPONENT}} {{SENSOR}}_{{SAT}} level ${level}  \n Valid: {{ PDATE | to_YMDH }}"
-        output name: line_plots/{{SENSOR}}_{{SAT}}/ozn/time/{{SENSOR}}_{{SAT}}.${level}.omg.png
+        output name: line_plots/ozn/time/{{SENSOR}}_{{SAT}}.${level}.omg.png
         plot logo:
           which: 'noaa/nws'
           loc: 'upper right'

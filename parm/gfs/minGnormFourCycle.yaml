@@ -11,7 +11,7 @@ datasets:
   - name: gnorm
     type: MonDataSpace
     control_file:
-      - {{DATA}}/min_data/glb_allgnorm.ctl
+      - {{CONTROL}}/min_allgnorm.ctl
     filenames:
       - {{DATA}}/min_data/{{ PDATE | to_YMDH }}.gnorms.ieee_d
       - {{DATA}}/min_data/{{ PDATEm6 | to_YMDH }}.gnorms.ieee_d
@@ -96,7 +96,7 @@ graphics:
         figure size: [20,18]
         tight layout:
         title: "Valid: {{ PDATE | to_YMDH }}"
-        output name: line_plots/minimization/{{MODEL}}_{{RUN}}.4cycle.gnorms.png
+        output name: line_plots/min/{{MODEL}}_{{RUN}}.4cycle.gnorms.png
         plot logo:
           which: 'noaa/nws'
           loc: 'upper center'

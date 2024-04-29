@@ -69,7 +69,7 @@ graphics:
         figure size: [20,18]
         tight layout:
         title: "Valid: {{ PDATE | to_YMDH }} \n ${datatype}, Global"
-        output name: line_plots/conmon/vert/${datatype}.vert.png
+        output name: line_plots/con/vert/${datatype}.vert.png
         plot logo:
           which: 'noaa/nws'
           loc: 'upper left'
