@@ -12,7 +12,7 @@ datasets:
   - name: gnorm
     type: MonDataSpace
     control_file:
-      - {{CONTROL}}/min_allgnorm.ctl
+      - {{CONTROL}}/minAllGnorm.ctl
     filenames:
       - {{DATA}}/min_data/{{ PDATE | to_YMDH }}.gnorms.ieee_d
       - {{DATA}}/min_data/{{ PDATEm24 | to_YMDH }}.gnorms.ieee_d
