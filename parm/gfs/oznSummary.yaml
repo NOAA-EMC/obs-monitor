@@ -15,7 +15,7 @@ datasets:
     sensor: {{SENSOR}}
     type: MonDataSpace
     control_file:
-      - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.{{COMPONENT}}.ctl
+      - {{DATA}}/ozn_data/time/{{SENSOR}}.{{COMPONENT}}.ges.ctl
     filenames:
       - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.{{COMPONENT}}.{{ PDATE | to_YMDH }}.ieee_d
       - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.{{COMPONENT}}.{{ PDATEm6 | to_YMDH }}.ieee_d
@@ -297,7 +297,7 @@ graphics:
         figure size: [20,18]
         tight layout:
         title: "Summary Plot {{SENSOR}}_{{SAT}} \n Valid: {{ PDATE | to_YMDH }}"
-        output name: line_plots/{{SENSOR}}_{{SAT}}/ozn/summary/summary.{{SENSOR}}_{{SAT}}.png
+        output name: line_plots/ozn/summary/{{SENSOR}}_{{SAT}}.summary.png
         plot logo:
           which: 'noaa/nws'
           loc: 'upper left'

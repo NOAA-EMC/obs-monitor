@@ -42,7 +42,7 @@ datasets:
     sensor: {{SENSOR}}
     type: MonDataSpace
     control_file:
-      - {{CONTROL}}/rad_angle.{{SENSOR}}_{{SAT}}.ges.ctl
+      - {{DATA}}/rad_data/angle.{{SENSOR}}_{{SAT}}.ctl
     filenames:
       - {{DATA}}/rad_data/angle.{{SENSOR}}_{{SAT}}.{{ PDATE | to_YMDH }}.ieee_d
       - {{DATA}}/rad_data/angle.{{SENSOR}}_{{SAT}}.{{ PDATEm6 | to_YMDH }}.ieee_d

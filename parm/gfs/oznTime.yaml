@@ -18,7 +18,7 @@ datasets:
     sensor: {{SENSOR}}
     type: MonDataSpace
     control_file:
-      - {{CONTROL}}/ozn_time.{{SENSOR}}.{{COMPONENT}}.ctl
+      - {{DATA}}/ozn_data/time/{{SENSOR}}.{{COMPONENT}}.ges.ctl
     filenames:
       - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.{{COMPONENT}}.{{ PDATE | to_YMDH }}.ieee_d
       - {{DATA}}/ozn_data/time/{{SENSOR}}_{{SAT}}.{{COMPONENT}}.{{ PDATEm6 | to_YMDH }}.ieee_d
