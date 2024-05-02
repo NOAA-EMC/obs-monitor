@@ -100,14 +100,14 @@ satellites:
     instruments:
       - name: abi
         plot_list:
-#          - plot: rad time
-#            times: 121
-#            channels: 'all'
-#            component: ges
-#          - plot: rad bcoef
-#            times: 121
-#            channels: 'all'
-#            component: ges
+          - plot: rad time
+            times: 121
+            channels: 'all'
+            component: ges
+          - plot: rad bcoef
+            times: 121
+            channels: 'all'
+            component: ges
           - plot: rad angle
             times: 121
             channels: 'all'
@@ -117,14 +117,14 @@ satellites:
     instruments:
       - name: abi
         plot_list:
-#          - plot: rad time
-#            times: 121
-#            channels: 'all'
-#            component: ges
-#          - plot: rad bcoef
-#            times: 121
-#            channels: 'all'
-#            component: ges
+          - plot: rad time
+            times: 121
+            channels: 'all'
+            component: ges
+          - plot: rad bcoef
+            times: 121
+            channels: 'all'
+            component: ges
           - plot: rad angle
             times: 121
             channels: 'all'
@@ -134,14 +134,14 @@ satellites:
     instruments:
       - name: ahi
         plot_list:
-#          - plot: rad time
-#            times: 121
-#            channels: 'all'
-#            component: ges
-#          - plot: rad bcoef
-#            times: 121
-#            channels: 'all'
-#            component: ges
+          - plot: rad time
+            times: 121
+            channels: 'all'
+            component: ges
+          - plot: rad bcoef
+            times: 121
+            channels: 'all'
+            component: ges
           - plot: rad angle
             times: 121
             channels: 'all'
@@ -151,45 +151,45 @@ satellites:
     instruments:
       - name: amsua
         plot_list:
-#          - plot: rad time
-#            times: 121
-#            channels: 'all'
-#            component: ges
-#          - plot: rad bcoef
-#            times: 121
-#            channels: 'all'
-#            component: ges
+          - plot: rad time
+            times: 121
+            channels: 'all'
+            component: ges
+          - plot: rad bcoef
+            times: 121
+            channels: 'all'
+            component: ges
           - plot: rad angle
             times: 121
             channels: 'all'
             component: ges
 
-#      - name: iasi
-#        plot_list:
-#          - plot: rad time
+      - name: iasi
+        plot_list:
+          - plot: rad time
+            times: 121
+            channels: 'all'
+            component: ges
+          - plot: rad bcoef
+            times: 121
+            channels: 'all'
+            component: ges
+#     file corruption here?
+#          - plot: rad angle
 #            times: 121
 #            channels: 'all'
 #            component: ges
-#          - plot: rad bcoef
-#            times: 121
-#            channels: 'all'
-#            component: ges
-##     file corruption here?
-##          - plot: rad angle
-##            times: 121
-##            channels: 'all'
-##            component: ges
-#
+
       - name: mhs
         plot_list:
-#          - plot: rad time
-#            times: 121
-#            channels: 'all'
-#            component: ges
-#          - plot: rad bcoef
-#            times: 121
-#            channels: '1,2,3,4,5'
-#            component: ges
+          - plot: rad time
+            times: 121
+            channels: 'all'
+            component: ges
+          - plot: rad bcoef
+            times: 121
+            channels: '1,2,3,4,5'
+            component: ges
           - plot: rad angle
             times: 121
             channels: 'all'
@@ -197,14 +197,14 @@ satellites:
 
       - name: avhrr
         plot_list:
-#          - plot: rad time
-#            times: 121
-#            channels: 'all'
-#            component: ges
-#          - plot: rad bcoef
-#            times: 121
-#            channels: 'all'
-#            component: ges
+          - plot: rad time
+            times: 121
+            channels: 'all'
+            component: ges
+          - plot: rad bcoef
+            times: 121
+            channels: 'all'
+            component: ges
           - plot: rad angle
             times: 121
             channels: 'all'
@@ -214,14 +214,14 @@ satellites:
     instruments:
       - name: amsua
         plot_list:
-#          - plot: rad time
-#            times: 121
-#            channels: 'all'
-#            component: ges
-#          - plot: rad bcoef
-#            times: 121
-#            channels: 'all'
-#            component: ges
+          - plot: rad time
+            times: 121
+            channels: 'all'
+            component: ges
+          - plot: rad bcoef
+            times: 121
+            channels: 'all'
+            component: ges
           - plot: rad angle
             times: 121
             channels: 'all'
@@ -229,14 +229,14 @@ satellites:
 
       - name: iasi
         plot_list:
-#          - plot: rad time
-#            times: 121
-#            channels: 'all'
-#            component: ges
-#          - plot: rad bcoef
-#            times: 121
-#            channels: 'all'
-#            component: ges
+          - plot: rad time
+            times: 121
+            channels: 'all'
+            component: ges
+          - plot: rad bcoef
+            times: 121
+            channels: 'all'
+            component: ges
           - plot: rad angle
             times: 121
             channels: 'all'
@@ -244,14 +244,14 @@ satellites:
 
       - name: avhrr
         plot_list:
-#          - plot: rad time
-#            times: 121
-#            channels: 'all'
-#            component: ges
-#          - plot: rad bcoef
-#            times: 121
-#            channels: 'all'
-#            component: ges
+          - plot: rad time
+            times: 121
+            channels: 'all'
+            component: ges
+          - plot: rad bcoef
+            times: 121
+            channels: 'all'
+            component: ges
           - plot: rad angle
             times: 121
             channels: 'all'
@@ -259,55 +259,73 @@ satellites:
 
       - name: mhs
         plot_list:
-#          - plot: rad time
-#            times: 121
-#            channels: 'all'
-#            component: ges
-#          - plot: rad bcoef
-#            times: 121
-#            channels: 'all'
-#            component: ges
+          - plot: rad time
+            times: 121
+            channels: 'all'
+            component: ges
+          - plot: rad bcoef
+            times: 121
+            channels: 'all'
+            component: ges
           - plot: rad angle
             times: 121
             channels: 'all'
             component: ges
 
-#  - name: n15
-#    instruments:
-#      - name: amsua
-#        plot_list:
-#          - plot: rad time
-#            times: 121
-#            channels: 'all'
-#            component: ges
-#          - plot: rad bcoef
-#            times: 121
-#            channels: 'all'
-#            component: ges
-#          - plot: rad angle
-#            times: 121
-#            channels: 'all'
-#            component: ges
-#
-#  - name: n18
-#    instruments:
-#      - name: amsua
-#        plot_list:
-#          - plot: rad time
-#            times: 121
-#            channels: 'all'
-#            component: ges
-#          - plot: rad bcoef
-#            times: 121
-#            channels: 'all'
-#            component: ges
-#          - plot: rad angle
-#            times: 121
-#            channels: 'all'
-#            component: ges
-#
+  - name: n15
+    instruments:
+      - name: amsua
+        plot_list:
+          - plot: rad time
+            times: 121
+            channels: 'all'
+            component: ges
+          - plot: rad bcoef
+            times: 121
+            channels: 'all'
+            component: ges
+          - plot: rad angle
+            times: 121
+            channels: 'all'
+            component: ges
+
+  - name: n18
+    instruments:
+      - name: amsua
+        plot_list:
+          - plot: rad time
+            times: 121
+            channels: 'all'
+            component: ges
+          - plot: rad bcoef
+            times: 121
+            channels: 'all'
+            component: ges
+          - plot: rad angle
+            times: 121
+            channels: 'all'
+            component: ges
+
       - name: avhrr
         plot_list:
+          - plot: rad time
+            times: 121
+            channels: 'all'
+            component: ges
+          - plot: rad bcoef
+            times: 121
+            channels: 'all'
+            component: ges
+          - plot: rad angle
+            times: 121
+            channels: 'all'
+            component: ges
+
+#  file corruption? 
+#  - name: n19
+#    instruments:
+#      - name: amsua
+#        plot_list:
 #          - plot: rad time
 #            times: 121
 #            channels: 'all'
@@ -316,69 +334,51 @@ satellites:
 #            times: 121
 #            channels: 'all'
 #            component: ges
-          - plot: rad angle
-            times: 121
-            channels: 'all'
-            component: ges
+#          - plot: rad angle
+#            times: 121
+#            channels: 'all'
+#            component: ges
+#
+#      - name: avhrr
+#        plot_list:
+#          - plot: rad time
+#            times: 121
+#            channels: 'all'
+#            component: ges
+#          - plot: rad bcoef
+#            times: 121
+#            channels: 'all'
+#            component: ges
+#          - plot: rad angle
+#            times: 121
+#            channels: 'all'
+#            component: ges
 
-##  file corruption? 
-##  - name: n19
-##    instruments:
-##      - name: amsua
-##        plot_list:
-##          - plot: rad time
-##            times: 121
-##            channels: 'all'
-##            component: ges
-##          - plot: rad bcoef
-##            times: 121
-##            channels: 'all'
-##            component: ges
-##          - plot: rad angle
-##            times: 121
-##            channels: 'all'
-##            component: ges
-##
-##      - name: avhrr
-##        plot_list:
-##          - plot: rad time
-##            times: 121
-##            channels: 'all'
-##            component: ges
-##          - plot: rad bcoef
-##            times: 121
-##            channels: 'all'
-##            component: ges
-##          - plot: rad angle
-##            times: 121
-##            channels: 'all'
-##            component: ges
-#
-##      - name: mhs
-##        plot_list:
-##          - plot: rad time
-##            times: 121
-##            channels: 'all'
-##            component: ges
-##          - plot: rad bcoef
-##            times: 121
-##            channels: 'all'
-##            component: ges
-##          - plot: rad angle
-##            times: 121
-#
+#      - name: mhs
+#        plot_list:
+#          - plot: rad time
+#            times: 121
+#            channels: 'all'
+#            component: ges
+#          - plot: rad bcoef
+#            times: 121
+#            channels: 'all'
+#            component: ges
+#          - plot: rad angle
+#            times: 121
+
   - name: n20
     instruments:
       - name: atms
         plot_list:
-#          - plot: rad time
-#            times: 121
-#            channels: 'all'
-#            component: ges
-#          - plot: rad bcoef
-#            times: 121
-#            channels: 'all'
-#            component: ges
+          - plot: rad time
+            times: 121
+            channels: 'all'
+            component: ges
+          - plot: rad bcoef
+            times: 121
+            channels: 'all'
+            component: ges
           - plot: rad angle
             times: 121
             channels: 'all'
@@ -386,14 +386,14 @@ satellites:
 
       - name: cris-fsr
         plot_list:
-#          - plot: rad time
-#            times: 121
-#            channels: 'all'
-#            component: ges
-#          - plot: rad bcoef
-#            times: 121
-#            channels: 'all'
-#            component: ges
+          - plot: rad time
+            times: 121
+            channels: 'all'
+            component: ges
+          - plot: rad bcoef
+            times: 121
+            channels: 'all'
+            component: ges
           - plot: rad angle
             times: 121
             channels: 'all'
@@ -403,14 +403,14 @@ satellites:
     instruments:
       - name: atms
         plot_list:
-#          - plot: rad time
-#            times: 121
-#            channels: 'all'
-#            component: ges
-#          - plot: rad bcoef
-#            times: 121
-#            channels: 'all'
-#            component: ges
+          - plot: rad time
+            times: 121
+            channels: 'all'
+            component: ges
+          - plot: rad bcoef
+            times: 121
+            channels: 'all'
+            component: ges
           - plot: rad angle
             times: 121
             channels: 'all'
@@ -418,14 +418,14 @@ satellites:
 
       - name: cris-fsr
         plot_list:
-#          - plot: rad time
-#            times: 121
-#            channels: 'all'
-#            component: ges
-#          - plot: rad bcoef
-#            times: 121
-#            channels: 'all'
-#            component: ges
+          - plot: rad time
+            times: 121
+            channels: 'all'
+            component: ges
+          - plot: rad bcoef
+            times: 121
+            channels: 'all'
+            component: ges
           - plot: rad angle
             times: 121
             channels: 'all'
@@ -435,14 +435,14 @@ satellites:
     instruments:
       - name: atms
         plot_list:
-#          - plot: rad time
-#            times: 121
-#            channels: 'all'
-#            component: ges
-#          - plot: rad bcoef
-#            times: 121
-#            channels: 'all'
-#            component: ges
+          - plot: rad time
+            times: 121
+            channels: 'all'
+            component: ges
+          - plot: rad bcoef
+            times: 121
+            channels: 'all'
+            component: ges
           - plot: rad angle
             times: 121
             channels: 'all'
@@ -450,14 +450,14 @@ satellites:
 
       - name: viirs-m
         plot_list:
-#          - plot: rad time
-#            times: 121
-#            channels: 'all'
-#            component: ges
-#          - plot: rad bcoef
-#            times: 121
-#            channels: 'all'
-#            component: ges
+          - plot: rad time
+            times: 121
+            channels: 'all'
+            component: ges
+          - plot: rad bcoef
+            times: 121
+            channels: 'all'
+            component: ges
           - plot: rad angle
             times: 121
             channels: 'all'
@@ -467,14 +467,14 @@ satellites:
     instruments:
       - name: viirs-m
         plot_list:
-#          - plot: rad time
-#            times: 121
-#            channels: 'all'
-#            component: ges
-#          - plot: rad bcoef
-#            times: 121
-#            channels: 'all'
-#            component: ges
+          - plot: rad time
+            times: 121
+            channels: 'all'
+            component: ges
+          - plot: rad bcoef
+            times: 121
+            channels: 'all'
+            component: ges
           - plot: rad angle
             times: 121
             channels: 'all'
@@ -484,14 +484,14 @@ satellites:
     instruments:
       - name: ssmis
         plot_list:
-#          - plot: rad time
-#            times: 121
-#            channels: 'all'
-#            component: ges
-#          - plot: rad bcoef
-#            times: 121
-#            channels: 'all'
-#            component: ges
+          - plot: rad time
+            times: 121
+            channels: 'all'
+            component: ges
+          - plot: rad bcoef
+            times: 121
+            channels: 'all'
+            component: ges
           - plot: rad angle
             times: 121
             channels: 'all'
@@ -501,14 +501,14 @@ satellites:
     instruments:
       - name: ssmis
         plot_list:
-#          - plot: rad time
-#            times: 121
-#            channels: 'all'
-#            component: ges
-#          - plot: rad bcoef
-#            times: 121
-#            channels: 'all'
-#            component: ges
+          - plot: rad time
+            times: 121
+            channels: 'all'
+            component: ges
+          - plot: rad bcoef
+            times: 121
+            channels: 'all'
+            component: ges
           - plot: rad angle
             times: 121
             channels: 'all'
