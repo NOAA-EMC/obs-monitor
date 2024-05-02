@@ -180,7 +180,7 @@ graphics:
         layout: [2,2]
         figure size: [8,7]
         title: "Ozone: Observed Values \n {{SENSOR}}_{{SAT}}, \n level ${level}"
-        output name: map_plots/{{SENSOR}}_{{SAT}}/ozn/horiz/observed_${level}.png
+        output name: map_plots/ozn/horiz/{{SENSOR}}_{{SAT}}_observed_${level}.png
 
       plots:
         - mapping:
@@ -285,7 +285,7 @@ graphics:
         layout: [2,2]
         figure size: [8,7]
         title: "Ozone: Ges Values \n {{SENSOR}}_{{SAT}}, \n level ${level}"
-        output name: map_plots/{{SENSOR}}_{{SAT}}/ozn/horiz/ges_${level}.png
+        output name: map_plots/ozn/horiz/{{SENSOR}}_{{SAT}}_ges_${level}.png
 
       plots:
         - mapping:
@@ -390,7 +390,7 @@ graphics:
         layout: [2,2]
         figure size: [8,7]
         title: "Ozone: Observed - Guess Values \n {{SENSOR}}_{{SAT}}, \n level ${level}"
-        output name: map_plots/{{SENSOR}}_{{SAT}}/ozn/horiz/omg_${level}.png
+        output name: map_plots/ozn/horiz/{{SENSOR}}_{{SAT}}_omg_${level}.png
 
       plots:
         - mapping:

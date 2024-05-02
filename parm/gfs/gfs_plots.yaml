@@ -33,6 +33,12 @@ satellites:
             levels: '1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22'
             component: ges
 
+          - plot: ozn time
+            times: 121 
+            levels: '1'
+            component: ges
+
+
       - name: ompslp
         plot_list:
           - plot: ozn horiz
@@ -87,21 +93,6 @@ satellites:
             times: 121 
             levels: '1'
             component: ges
-
-  - name: n20
-    instruments:
-      - name: ompstc8
-        plot_list:
-          - plot: ozn horiz
-            times: 4
-            levels: '1'
-            component: ges
-
-          - plot: ozn time
-            times: 121 
-            levels: '1'
-            component: ges
-
 
 # Radiance
 
@@ -523,15 +514,6 @@ satellites:
             channels: 'all'
             component: ges
 
-
-  - name: f18
-    instruments:
-      - name: ssmis
-        plot_list:
-          - plot: rad time
-            times: 121
-            channels: 'all'
-            component: ges
 
 
 minimization:

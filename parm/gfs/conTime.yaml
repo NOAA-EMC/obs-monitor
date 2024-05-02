@@ -462,7 +462,7 @@ graphics:
         figure size: [20,18]
         tight layout:
         title: "Valid: {{ PDATE | to_YMDH }} \n ${datatype}, Global, All Levels"
-        output name: line_plots/conmon/time/${datatype}_count.{{ PDATE | to_YMDH }}.png
+        output name: line_plots/con/time/${datatype}_count.{{ PDATE | to_YMDH }}.png
         plot logo:
           which: 'noaa/nws'
           loc: 'upper left'
@@ -586,7 +586,7 @@ graphics:
         figure size: [20,18]
         tight layout:
         title: "Valid: {{ PDATE | to_YMDH }}\n ${datatype}, Global, All Levels"
-        output name: line_plots/conmon/time/${datatype}_bias.{{ PDATE | to_YMDH }}.png
+        output name: line_plots/con/time/${datatype}_bias.{{ PDATE | to_YMDH }}.png
         plot logo:
           which: 'noaa/nws'
           loc: 'upper left'

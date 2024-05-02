@@ -79,7 +79,8 @@ def loadConfig(satname, instrument, obstype, plot, cycle_tm, cycle_interval,
         'COMPONENT': plot.get('component'),
         'PDATE': cycle_tm,
         'PLOT_TEMPLATE': camelCase(plot.get('plot')),
-        'DATA': data_location
+        'DATA': data_location,
+        'CONTROL': os.environ.get('CNTRLobsmon', data_location)
     }
 
     times = int(plot.get('times')) if plot.get('times') else None
