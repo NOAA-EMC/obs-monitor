@@ -99,7 +99,7 @@ graphics:
             y:
               variable: gnorm::GsiIeee::log_gnorm_7d
             color: 'gray'
-            label: '7 day mean of 06z cycles'
+            label: '7 day mean of {{ PDATE | strftime("%H") }}z cycles'
 
     # Reduction single cycle & 7 day hourly mean
     # ------------------------------------------
@@ -108,7 +108,7 @@ graphics:
         figure size: [20,18]
         tight layout:
         title: "Valid: {{ PDATE | to_YMDH }}"
-        output name: line_plots/minimization/{{MODEL}}_{{RUN}}.{{ PDATE | to_YMDH }}.reduction.png
+        output name: line_plots/min/{{MODEL}}_{{RUN}}.{{ PDATE | to_YMDH }}.reduction.png
         plot logo:
           which: 'noaa/nws'
           loc: 'upper right'
@@ -138,5 +138,5 @@ graphics:
             y:
               variable: gnorm::GsiIeee::allgnorm_7d
             color: 'gray'
-            label: '7 day mean of 06z cycles'     # NEED {{HH}} value for 06
+            label: '7 day mean of {{ PDATE | strftime("%H") }}z cycles'
 
