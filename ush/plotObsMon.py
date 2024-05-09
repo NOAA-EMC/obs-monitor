@@ -198,6 +198,7 @@ if __name__ == "__main__":
             model = min.get('model')
 
             for plot in min.get('plot_list'):
+                logger.info(f"cycle_interval: {cycle_interval}")
                 config = loadConfig(satname, instrument, obstype, plot, cycle_tm, cycle_interval,
                                     data_location, model)
 

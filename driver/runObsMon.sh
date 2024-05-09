@@ -89,7 +89,7 @@ export COMOUT=${COMOUT}/${NET}
 jobname="PlotObsMon"
 jobfile="${JOBSobsmon}/JMON_PLOT_OBS"
 
-logdir="${OM_LOGS}/${MODEL}"
+LOGDIR="${OM_LOGS}/${MODEL}"
 if [[ ! -d ${logdir} ]]; then mkdir -p ${logdir}; fi
 
 logfile="${OM_LOGS}/${MODEL}/OM_log"
@@ -101,9 +101,13 @@ case ${MACHINE_ID} in
              -J ${jobname} --partition service -o ${logfile} ${jobfile}
       ;;
 
-   wcoss2)	# NOTE:  this has not been tested; eva doesn't yet run on wcoss2
-      $SUB -q $JOB_QUEUE -A $ACCOUNT -o ${logfile} -e ${logfile} \
-           -V -l select=1:mem=500M -l walltime=0:05:00 -N ${jobname} ${jobfile}
+   wcoss2)	
+      $SUB -q ${JOB_QUEUE} -A ${ACCOUNT} -o ${logfile} -e ${logfile} \
+	   -v "PYTHONPATH=${PYTHONPATH}, PATH=${PATH}, HOMEobsmon=${HOMEobsmon}, COMOUT=${COMOUT}, \
+	       MODEL=${MODEL}, PDY=${PDY}, cyc=${cyc}, DATAROOT=${DATAROOT}, APRUN_PY=${APRUN_PY}, \
+	       MACHINE_ID=${MACHINE_ID}, ACCOUNT=${ACCOUNT}, JOB_QUEUE=${JOB_QUEUE}, SUB=${SUB},
+	       OM_LOGS=${OM_LOGS}" \
+           -l select=1:mem=500M -l walltime=0:05:00 -N ${jobname} ${jobfile}
       ;;
 esac
 

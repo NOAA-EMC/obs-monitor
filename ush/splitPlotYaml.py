@@ -43,6 +43,7 @@ if __name__ == "__main__":
     """
 
     logger = Logger('splitPlotYaml')
+    logger.info('test message')
     parser = argparse.ArgumentParser()
 
     parser.add_argument('-i', '--input', type=str, help='Input YAML plot file', required=True)
@@ -50,6 +51,8 @@ if __name__ == "__main__":
                         help='Input YAML instrument channel file', required=True)
 
     args = parser.parse_args()
+    logger.info(f'args: {args}')
+    
     try:
         mon_sources = args.input
         with open(mon_sources, 'r') as mon_sources_opened:
@@ -63,7 +66,7 @@ if __name__ == "__main__":
         with open(chan_data, 'r') as chan_data_opened:
             chan_dict = yaml.safe_load(chan_data_opened)
     except Exception as e:
-        logger.abort('plotObsMon is expecting a valid satellite channel file, but it encountered ' +
+        logger.abort('splitPlotYaml is expecting a valid satellite channel file, but encountered ' +
                      f'errors when attempting to load: {chan_data}, error: {e}')
 
     model = mon_dict.get('model')
@@ -112,6 +115,7 @@ if __name__ == "__main__":
                     file.close()
 
     if 'minimization' in mon_dict.keys():
+        logger.info(f'minimization is in the house')
         md = removeKey(mon_dict, ['satellites', 'observations'])
         fname = f'minimization.yaml'
         file = open(fname, "w")
