@@ -460,13 +460,13 @@ graphics:
       figure:
         layout: [4,1]
         figure size: [20,18]
-        tight layout:
+#       tight layout:
         title: "Valid: {{ PDATE | to_YMDH }} \n ${datatype}, Global, All Levels"
         output name: line_plots/con/time/${datatype}_count.{{ PDATE | to_YMDH }}.png
-        plot logo:
-          which: 'noaa/nws'
-          loc: 'upper left'
-          subplot_orientation: 'last'
+#       plot logo:
+#         which: 'noaa/nws'
+#         loc: 'upper left'
+#         subplot_orientation: 'last'
 
       plots:
         - add_xlabel: 'Assimilated'
@@ -584,13 +584,13 @@ graphics:
       figure:
         layout: [6,1]
         figure size: [20,18]
-        tight layout:
+#       tight layout:
         title: "Valid: {{ PDATE | to_YMDH }}\n ${datatype}, Global, All Levels"
         output name: line_plots/con/time/${datatype}_bias.{{ PDATE | to_YMDH }}.png
-        plot logo:
-          which: 'noaa/nws'
-          loc: 'upper left'
-          subplot_orientation: 'last'
+#       plot logo:
+#         which: 'noaa/nws'
+#         loc: 'upper left'
+#         subplot_orientation: 'last'
 
       plots:
         - add_xlabel: 'Obs-Ges Assimilated'

@@ -177,12 +177,12 @@ graphics:
       figure:
         layout: [1,1]
         figure size: [20,18]
-        tight layout:
+#       tight layout:
         title: "${variable}, {{SENSOR}}_{{SAT}} channel ${channel}  \n Valid: {{ PDATE | to_YMDH }}"
         output name: line_plots/rad/bcoef/bcoef.{{SENSOR}}_{{SAT}}.${channel}.${variable}.png
-        plot logo:
-          which: 'noaa/nws'
-          loc: 'upper right'
+#       plot logo:
+#         which: 'noaa/nws'
+#         loc: 'upper right'
 
       plots:
         - add_xlabel: 'Cycle'

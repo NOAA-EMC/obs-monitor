@@ -43,15 +43,12 @@ if __name__ == "__main__":
     """
 
     logger = Logger('splitPlotYaml')
-    logger.info('test message')
     parser = argparse.ArgumentParser()
 
     parser.add_argument('-i', '--input', type=str, help='Input YAML plot file', required=True)
     parser.add_argument('-c', '--chan', type=str,
                         help='Input YAML instrument channel file', required=True)
-
     args = parser.parse_args()
-    logger.info(f'args: {args}')
     
     try:
         mon_sources = args.input
@@ -115,7 +112,6 @@ if __name__ == "__main__":
                     file.close()
 
     if 'minimization' in mon_dict.keys():
-        logger.info(f'minimization is in the house')
         md = removeKey(mon_dict, ['satellites', 'observations'])
         fname = f'minimization.yaml'
         file = open(fname, "w")
@@ -123,7 +119,6 @@ if __name__ == "__main__":
         file.close()
 
     if 'observations' in mon_dict.keys():
-        logger.info(f'HAVE OBS')
         od = removeKey(mon_dict, ['satellites', 'minimization'])
         fname = f'observations.yaml'
         file = open(fname, "w")

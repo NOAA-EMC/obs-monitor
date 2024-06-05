@@ -94,12 +94,12 @@ graphics:
     - figure:
         layout: [1,1]
         figure size: [20,18]
-        tight layout:
+#        tight layout:
         title: "Valid: {{ PDATE | to_YMDH }}"
         output name: line_plots/min/{{MODEL}}_{{RUN}}.4cycle.gnorms.png
-        plot logo:
-          which: 'noaa/nws'
-          loc: 'upper center'
+          #        plot logo:
+          #          which: 'noaa/nws'
+          #          loc: 'upper center'
 
       plots:
         - add_xlabel: 'Iteration Number'

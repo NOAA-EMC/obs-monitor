@@ -68,12 +68,12 @@ graphics:
     - figure:
         layout: [1,1]
         figure size: [20,18]
-        tight layout:
+#        tight layout:
         title: "Valid: {{ PDATE | to_YMDH }}"
         output name: line_plots/min/{{MODEL}}_{{RUN}}.{{ PDATE | to_YMDH }}.gnorms.png
-        plot logo:
-          which: 'noaa/nws'
-          loc: 'upper right'
+          #        plot logo:
+          #          which: 'noaa/nws'
+          #          loc: 'upper right'
 
       plots:
         - add_xlabel: 'Iteration Number'
@@ -106,12 +106,12 @@ graphics:
     - figure:
         layout: [1,1]
         figure size: [20,18]
-        tight layout:
+#        tight layout:
         title: "Valid: {{ PDATE | to_YMDH }}"
-        output name: line_plots/minimization/{{MODEL}}_{{RUN}}.{{ PDATE | to_YMDH }}.reduction.png
-        plot logo:
-          which: 'noaa/nws'
-          loc: 'upper right'
+        output name: line_plots/min/{{MODEL}}_{{RUN}}.{{ PDATE | to_YMDH }}.reduction.png
+          #        plot logo:
+          #          which: 'noaa/nws'
+          #          loc: 'upper right'
 
       plots:
         - add_xlabel: 'Iteration Number'
