@@ -194,8 +194,6 @@ if __name__ == "__main__":
                     os.remove(plot_yaml)
 
     if 'minimization' in mon_dict.keys():
-        cwd = os.getcwd()
-
         satname = None
         instrument = None
         obstype = None
