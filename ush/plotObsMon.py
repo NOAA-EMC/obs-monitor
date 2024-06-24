@@ -188,8 +188,6 @@ if __name__ == "__main__":
                     plot_template = os.path.join(parm_location, plot_template)
 
                     genYaml(plot_template, plot_yaml, config)
-
-                    idx = os.environ.get('PBS_ARRAY_INDEX', 'nada')
                     eva(plot_yaml)
                     os.remove(plot_yaml)
 
