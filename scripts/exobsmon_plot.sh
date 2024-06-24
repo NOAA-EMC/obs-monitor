@@ -26,8 +26,8 @@ fi
 #
 ${APRUN_PY} ${USHobsmon}/splitPlotYaml.py -i ${plot_yaml} -c ${chan_yaml}
 
-#-------------------------------------------------------
-# Submit OM_plots job if split yielded any *.yaml files
+#--------------------------------------------------------------
+# Submit OM_plots job if split yields any *.yaml files
 #
 if compgen -G "${DATA}/*.yaml" > /dev/null; then
 
@@ -53,7 +53,7 @@ if compgen -G "${DATA}/*.yaml" > /dev/null; then
    done 
 
 
-   if [[ ${ctr} > 0 ]]; then
+   if (( ${ctr} > 0 )); then
       case ${MACHINE_ID} in
          hera)
             ${SUB} --account ${ACCOUNT} -n ${ctr}  -o ${logfile} -D . -J ${jobname} --time=1:00:00 \
@@ -61,6 +61,7 @@ if compgen -G "${DATA}/*.yaml" > /dev/null; then
          ;;
 
 	 wcoss2)  
+            chmod 775 ${cmdfile}
             mem=$((4*${ctr})) 
             echo "submitting ${jobname} on wcoss2, ctr = $ctr, mem = $mem, cmdfile = ${cmdfile}"
 	    cp ${USHobsmon}/runWcoss.sh .
