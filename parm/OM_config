@@ -7,7 +7,7 @@ export JOBSobsmon=${om_dir_root}/jobs
 # Export job submission vars per MACHINE_ID
 #
 source ${om_dir_root}/ush/detect_machine.sh
-MACHINE_ID=`echo "${MACHINE_ID%%.*}"`
+export MACHINE_ID=`echo "${MACHINE_ID%%.*}"`
 
 case ${MACHINE_ID} in
 
