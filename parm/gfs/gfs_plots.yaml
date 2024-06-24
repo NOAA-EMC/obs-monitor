@@ -2,9 +2,100 @@
 
 model: gfs
 cycle_interval: 6
-data: '/lfs/h2/emc/da/noscrub/edward.safford/test_data/gfs'
+data: '/scratch1/NCEPDEV/da/Edward.Safford/noscrub/test_data/gfs'
 
 satellites:
+  - name: aura
+    instruments:
+      - name: omi
+        plot_list:
+          - plot: ozn horiz
+            times: 4
+            levels: '1'
+            component: ges
+
+          - plot: ozn time
+            times: 121 
+            levels: '1'
+            component: ges
+
+  - name: npp
+    instruments:
+      - name: ompsnp
+        plot_list:
+          - plot: ozn horiz
+            times: 4
+            levels: '1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22'
+            component: ges
+
+          - plot: ozn summary
+            times: 121
+            levels: '1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22'
+            component: ges
+
+          - plot: ozn time
+            times: 121 
+            levels: '1'
+            component: ges
+
+
+      - name: ompslp
+        plot_list:
+          - plot: ozn horiz
+            times: 4
+            levels: '1'
+            component: ges
+
+          - plot: ozn time
+            times: 121 
+            levels: '1'
+            component: ges
+
+      - name: ompstc8
+        plot_list:
+          - plot: ozn horiz
+            times: 4
+            levels: '1'
+            component: ges
+
+          - plot: ozn time
+            times: 121 
+            levels: '1'
+            component: ges
+
+  - name: n20
+    instruments:
+      - name: ompsnp
+        plot_list:
+          - plot: ozn horiz
+            times: 4
+            levels: '1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22'
+            component: ges
+
+          - plot: ozn time
+            times: 121 
+            levels: '1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22'
+            component: ges
+
+          - plot: ozn summary
+            times: 121
+            levels: '1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22'
+            component: ges
+
+      - name: ompstc8
+        plot_list:
+          - plot: ozn horiz
+            times: 4
+            levels: '1'
+            component: ges
+
+          - plot: ozn time
+            times: 121 
+            levels: '1'
+            component: ges
+
+# Radiance
+
   - name: g16
     instruments:
       - name: abi
@@ -83,10 +174,11 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
-          - plot: rad angle
-            times: 121
-            channels: 'all'
-            component: ges
+#     test data file corruption here?
+#          - plot: rad angle
+#            times: 121
+#            channels: 'all'
+#            component: ges
 
       - name: mhs
         plot_list:
@@ -103,20 +195,20 @@ satellites:
             channels: 'all'
             component: ges
 
-#     - name: avhrr
-#       plot_list:
-#         - plot: rad time
-#           times: 121
-#           channels: 'all'
-#           component: ges
-#         - plot: rad bcoef
-#           times: 121
-#           channels: 'all'
-#           component: ges
-#         - plot: rad angle
-#           times: 121
-#           channels: 'all'
-#           component: ges
+      - name: avhrr
+        plot_list:
+          - plot: rad time
+            times: 121
+            channels: 'all'
+            component: ges
+          - plot: rad bcoef
+            times: 121
+            channels: 'all'
+            component: ges
+          - plot: rad angle
+            times: 121
+            channels: 'all'
+            component: ges
 
   - name: metop-c
     instruments:
@@ -229,52 +321,51 @@ satellites:
             channels: 'all'
             component: ges
 
-  - name: n19
-    instruments:
-      - name: amsua
-        plot_list:
-          - plot: rad time
-            times: 121
-            channels: 'all'
-            component: ges
-          - plot: rad bcoef
-            times: 121
-            channels: 'all'
-            component: ges
-          - plot: rad angle
-            times: 121
-            channels: 'all'
-            component: ges
- 
-      - name: avhrr
-        plot_list:
-          - plot: rad time
-            times: 121
-            channels: 'all'
-            component: ges
-          - plot: rad bcoef
-            times: 121
-            channels: 'all'
-            component: ges
-          - plot: rad angle
-            times: 121
-            channels: 'all'
-            component: ges
+#  test data file corruption here 
+#  - name: n19
+#    instruments:
+#      - name: amsua
+#        plot_list:
+#          - plot: rad time
+#            times: 121
+#            channels: 'all'
+#            component: ges
+#          - plot: rad bcoef
+#            times: 121
+#            channels: 'all'
+#            component: ges
+#          - plot: rad angle
+#            times: 121
+#            channels: 'all'
+#            component: ges
+#
+#      - name: avhrr
+#        plot_list:
+#          - plot: rad time
+#            times: 121
+#            channels: 'all'
+#            component: ges
+#          - plot: rad bcoef
+#            times: 121
+#            channels: 'all'
+#            component: ges
+#          - plot: rad angle
+#            times: 121
+#            channels: 'all'
+#            component: ges
 
-      - name: mhs
-        plot_list:
-          - plot: rad time
-            times: 121
-            channels: 'all'
-            component: ges
-          - plot: rad bcoef
-            times: 121
-            channels: 'all'
-            component: ges
-          - plot: rad angle
-            times: 121
-            channels: 'all'
-            component: ges
+#      - name: mhs
+#        plot_list:
+#          - plot: rad time
+#            times: 121
+#            channels: 'all'
+#            component: ges
+#          - plot: rad bcoef
+#            times: 121
+#            channels: 'all'
+#            component: ges
+#          - plot: rad angle
+#            times: 121
 
   - name: n20
     instruments:
@@ -324,7 +415,7 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
- 
+
       - name: cris-fsr
         plot_list:
           - plot: rad time
@@ -356,7 +447,7 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
- 
+
       - name: viirs-m
         plot_list:
           - plot: rad time
@@ -422,6 +513,7 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
+
 
 
 minimization:
