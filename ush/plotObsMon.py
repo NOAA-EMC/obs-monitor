@@ -188,14 +188,10 @@ if __name__ == "__main__":
                     plot_template = os.path.join(parm_location, plot_template)
 
                     genYaml(plot_template, plot_yaml, config)
-
-                    idx = os.environ.get('PBS_ARRAY_INDEX', 'nada')
                     eva(plot_yaml)
-#                    os.remove(plot_yaml)
+                    os.remove(plot_yaml)
 
     if 'minimization' in mon_dict.keys():
-        cwd = os.getcwd()
-        
         satname = None
         instrument = None
         obstype = None
@@ -216,7 +212,7 @@ if __name__ == "__main__":
 
                 genYaml(plot_template, plot_yaml, config)
                 eva(plot_yaml)
-#                os.remove(plot_yaml)
+                os.remove(plot_yaml)
 
     if 'observations' in mon_dict.keys():
         satname = None
@@ -252,4 +248,4 @@ if __name__ == "__main__":
 
                 genYaml(plot_template, plot_yaml, config)
                 eva(plot_yaml)
- #               os.remove(plot_yaml)
+                os.remove(plot_yaml)

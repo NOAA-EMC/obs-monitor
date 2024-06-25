@@ -49,7 +49,7 @@ if __name__ == "__main__":
     parser.add_argument('-c', '--chan', type=str,
                         help='Input YAML instrument channel file', required=True)
     args = parser.parse_args()
-    
+
     try:
         mon_sources = args.input
         with open(mon_sources, 'r') as mon_sources_opened:

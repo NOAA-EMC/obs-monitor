@@ -20,8 +20,9 @@ if [[ ! -e ${chan_yaml} ]]; then
    exit 2
 fi
 
-#-----------------------------------------------------------
-# split $plot_yaml into sat/instr[/plot], minimization, obs
+#---------------------------------------------------------------
+# split $plot_yaml into sat/instr[/plot], minimization, and obs
+# in order to reduce the plot jobs to a more managable size 
 #
 ${APRUN_PY} ${USHobsmon}/splitPlotYaml.py -i ${plot_yaml} -c ${chan_yaml}
 
@@ -30,15 +31,16 @@ ${APRUN_PY} ${USHobsmon}/splitPlotYaml.py -i ${plot_yaml} -c ${chan_yaml}
 #
 if compgen -G "${DATA}/*.yaml" > /dev/null; then
 
-   jobname="OM_plot_all"
+   jobname="OM_plots"
    export logfile="${OM_LOGS}/${MODEL}/OM_plot.log"
    if [[ -e ${logfile} ]]; then rm ${logfile}; fi
 
-   cmdfile="OM_sat_jobscript"
+   cmdfile="OM_jobscript"
    >$cmdfile
 
    ctr=0
    for yaml in ${DATA}/*.yaml; do
+      echo "processing yaml: $ctr $yaml"
       case ${MACHINE_ID} in
          hera)
             echo "${ctr} ${APRUN_PY} ${USHobsmon}/plotObsMon.py -i ${yaml}  -p ${PDATE}" >> $cmdfile
@@ -54,8 +56,8 @@ if compgen -G "${DATA}/*.yaml" > /dev/null; then
    if (( ${ctr} > 0 )); then
       case ${MACHINE_ID} in
          hera)
-	    ${SUB} --account ${ACCOUNT}  --ntasks=1 --mem=80000M --time=0:50:00 \
-	           -J ${jobname} --partition service -o ${logfile} ${cmdfile}
+            ${SUB} --account ${ACCOUNT} -n ${ctr}  -o ${logfile} -D . -J ${jobname} --time=1:00:00 \
+                   --mem=80000M --wrap "srun -l --multi-prog ${cmdfile}"
          ;;
 
 	 wcoss2)  
