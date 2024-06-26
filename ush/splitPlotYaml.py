@@ -48,8 +48,8 @@ if __name__ == "__main__":
     parser.add_argument('-i', '--input', type=str, help='Input YAML plot file', required=True)
     parser.add_argument('-c', '--chan', type=str,
                         help='Input YAML instrument channel file', required=True)
-
     args = parser.parse_args()
+
     try:
         mon_sources = args.input
         with open(mon_sources, 'r') as mon_sources_opened:
@@ -63,7 +63,7 @@ if __name__ == "__main__":
         with open(chan_data, 'r') as chan_data_opened:
             chan_dict = yaml.safe_load(chan_data_opened)
     except Exception as e:
-        logger.abort('plotObsMon is expecting a valid satellite channel file, but it encountered ' +
+        logger.abort('splitPlotYaml is expecting a valid satellite channel file, but encountered ' +
                      f'errors when attempting to load: {chan_data}, error: {e}')
 
     model = mon_dict.get('model')
@@ -106,22 +106,21 @@ if __name__ == "__main__":
                     pd['satellites'] = [{'name': satname,
                                          'instruments': [{'name': iname,
                                                           'plot_list': plist}]}]
-                    fname = f'sat_{satname}_{iname}.yaml'
+                    fname = f'OM_PLOT_sat_{satname}_{iname}.yaml'
                     file = open(fname, "w")
                     yaml.dump(pd, file)
                     file.close()
 
     if 'minimization' in mon_dict.keys():
         md = removeKey(mon_dict, ['satellites', 'observations'])
-        fname = f'minimization.yaml'
+        fname = f'OM_PLOT_minimization.yaml'
         file = open(fname, "w")
         yaml.dump(md, file)
         file.close()
 
     if 'observations' in mon_dict.keys():
-        logger.info(f'HAVE OBS')
         od = removeKey(mon_dict, ['satellites', 'minimization'])
-        fname = f'observations.yaml'
+        fname = f'OM_PLOT_observations.yaml'
         file = open(fname, "w")
         yaml.dump(od, file)
         file.close()

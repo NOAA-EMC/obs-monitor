@@ -174,7 +174,7 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
-#     file corruption here?
+#     test data file corruption here?
 #          - plot: rad angle
 #            times: 121
 #            channels: 'all'
@@ -321,7 +321,7 @@ satellites:
             channels: 'all'
             component: ges
 
-#  file corruption? 
+#  test data file corruption here 
 #  - name: n19
 #    instruments:
 #      - name: amsua

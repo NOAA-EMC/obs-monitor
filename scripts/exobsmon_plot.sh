@@ -7,8 +7,8 @@
 #-------------------------------------------------------------
 # locate $model_plots.yaml and instrument_channels.yaml files
 #-------------------------------------------------------------
-plot_yaml=${plot_yaml:-${PARMobsmon}/${MODEL}/${MODEL}_plots.yaml}
 
+plot_yaml=${plot_yaml:-${PARMobsmon}/${MODEL}/${MODEL}_plots.yaml}
 if [[ ! -e ${plot_yaml} ]]; then
    echo "ERROR:  yaml plot file ${plot_yaml} NOT FOUND"
    exit 1
@@ -20,87 +20,61 @@ if [[ ! -e ${chan_yaml} ]]; then
    exit 2
 fi
 
-#-----------------------------------------------------------
-# split $plot_yaml into sat/instr[/plot], minimization, obs
+#---------------------------------------------------------------
+# split $plot_yaml into sat/instr[/plot], minimization, and obs
+# in order to reduce the plot jobs to a more managable size 
 #
 ${APRUN_PY} ${USHobsmon}/splitPlotYaml.py -i ${plot_yaml} -c ${chan_yaml}
 
-
 #--------------------------------------------------------------
-# Submit OM_sat_plots job if split yields any sat_*.yaml files
+# Submit OM_plots job if split yields any *.yaml files
 #
-if compgen -G "${DATA}/sat_*.yaml" > /dev/null; then
+if compgen -G "${DATA}/OM_PLOT*.yaml" > /dev/null; then
 
-   jobname="OM_sat_plots"
-   logfile="${OM_LOGS}/${MODEL}/OM_sat_plot.log"
+   jobname="OM_plots"
+   export logfile="${OM_LOGS}/${MODEL}/OM_plot.log"
    if [[ -e ${logfile} ]]; then rm ${logfile}; fi
 
-   cmdfile="OM_sat_jobscript"
-   >$cmdfile
-   ctr=0
+   cmdfile="OM_jobscript"
+   >${cmdfile}
 
-   for yaml in ${DATA}/sat_*.yaml; do
-      echo "${ctr} $yaml"
-      echo "${ctr} ${APRUN_PY} ${USHobsmon}/plotObsMon.py -i ${yaml}  -p ${PDATE}" >> $cmdfile
+   ctr=0
+   for yaml in ${DATA}/OM_PLOT*.yaml; do
+      echo "processing yaml: $ctr $yaml"
+      case ${MACHINE_ID} in
+         hera)
+            echo "${ctr} ${APRUN_PY} ${USHobsmon}/plotObsMon.py -i ${yaml}  -p ${PDATE}" >> ${cmdfile}
+	 ;;
+ 	 wcoss2)  
+            echo "${APRUN_PY} ${USHobsmon}/plotObsMon.py -i ${yaml}  -p ${PDATE}" >> ${cmdfile}
+  	 ;;
+      esac
       ((ctr+=1))
    done 
-   chmod 755 $cmdfile
 
-   echo "ctr: $ctr"
-   echo "submitting job ${jobname}"
 
-   if [[ ${ctr} > 0 ]]; then
-      $SUB --account ${ACCOUNT} -n ${ctr}  -o ${logfile} -D . -J ${jobname} --time=1:00:00 \
-           --mem=80000M --wrap "srun -l --multi-prog ${cmdfile}"
-   fi
+   if (( ${ctr} > 0 )); then
+      case ${MACHINE_ID} in
+         hera)
+            ${SUB} --account ${ACCOUNT} -n ${ctr}  -o ${logfile} -D . -J ${jobname} --time=1:00:00 \
+                   --mem=80000M --wrap "srun -l --multi-prog ${cmdfile}"
+         ;;
 
-fi
+	 wcoss2)  
+	    # prepend setup script to $cmdfile
+            echo -e ". ${USHobsmon}/setup_wcoss2.sh\n $(cat ${cmdfile})" > ${cmdfile}
+            chmod 775 ${cmdfile}
 
-#------------------------------------------------------------------
-# Submit OM_min_plots job if split yields a minimization.yaml file
-#
-if compgen -G "${DATA}/minimization.yaml" > /dev/null; then
+            mem=$((4*${ctr})) 
+            echo "submitting ${jobname} on wcoss2, ctr = $ctr, mem = $mem, cmdfile = ${cmdfile}"
 
-   jobname="OM_min_plots"
-   logfile="${OM_LOGS}/${MODEL}/OM_min_plot.log"
-   if [[ -e ${logfile} ]]; then rm ${logfile}; fi
-
-   cmdfile="OM_min_jobscript"
-   echo "0 ${APRUN_PY} ${USHobsmon}/plotObsMon.py -i ${DATA}/minimization.yaml  -p ${PDATE}" > $cmdfile
-   chmod 755 $cmdfile
-
-   echo "submitting job ${jobname}"
-
-   $SUB --account ${ACCOUNT} -n 1  -o ${logfile} -D . -J ${jobname} --time=0:05:00 \
-        --mem=80000M --wrap "srun -l --multi-prog ${cmdfile}"
-fi
-
-#------------------------------------------------------------------
-# Submit OM_con_plots job if split yields any obs_*.yaml files
-#
-if compgen -G "${DATA}/obs*.yaml" > /dev/null; then
-   echo "have OBS plots"
-   jobname="OM_obs_plots"
-   logfile="${OM_LOGS}/${MODEL}/OM_obs_plot.log"
-   if [[ -e ${logfile} ]]; then rm ${logfile}; fi
-
-   cmdfile="OM_obs_jobscript"
-   >$cmdfile
-   ctr=0
-
-   for yaml in ${DATA}/obs*.yaml; do
-      echo "${ctr} $yaml"
-      echo "${ctr} ${APRUN_PY} ${USHobsmon}/plotObsMon.py -i ${yaml}  -p ${PDATE}" >> $cmdfile
-      ((ctr+=1))
-   done 
-   chmod 755 $cmdfile
-
-   echo "ctr: $ctr"
-   echo "submitting job ${jobname}"
-
-   if [[ ${ctr} > 0 ]]; then
-      $SUB --account ${ACCOUNT} -n ${ctr}  -o ${logfile} -D . -J ${jobname} --time=1:00:00 \
-           --mem=80000M --wrap "srun -l --multi-prog ${cmdfile}"
+	    ${SUB} -q $JOB_QUEUE -A $ACCOUNT -o ${logfile} -e ${logfile} \
+	        -v "PYTHONPATH=${PYTHONPATH}, PATH=${PATH}, HOMEobsmon=${HOMEobsmon}, MODEL=${MODEL}, \
+		    CNTRLobsmon=${CNTRLobsmon}, PARMobsmon=${PARMobsmon}, DATA=${DATA}, \
+		    LD_LIBRARY_PATH=${LD_LIBRARY_PATH}, cmdfile=${cmdfile}, ncpus=${ctr}" \
+                -l place=vscatter,select=1:ncpus=${ctr}:mem=${mem}gb,walltime=1:30:00 -N ${jobname} ${cmdfile}
+         ;;     
+      esac
    fi
 fi
 

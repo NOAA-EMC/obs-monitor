@@ -164,12 +164,12 @@ graphics:
       figure:
         layout: [1,1]
         figure size: [20,18]
-        tight layout:
+#       tight layout:
         title: "${variable}, {{SENSOR}}_{{SAT}} level ${level}  \n Valid: {{ PDATE | to_YMDH }}"
         output name: line_plots/ozn/time/{{SENSOR}}_{{SAT}}.${level}.${variable}.png
-        plot logo:
-          which: 'noaa/nws'
-          loc: 'upper right'
+#       plot logo:
+#         which: 'noaa/nws'
+#         loc: 'upper right'
 
       plots:
         - add_xlabel: 'Cycle'
@@ -198,12 +198,12 @@ graphics:
       figure:
         layout: [2,1]
         figure size: [20,18]
-        tight layout:
+#       tight layout:
         title: "obs-{{COMPONENT}} {{SENSOR}}_{{SAT}} level ${level}  \n Valid: {{ PDATE | to_YMDH }}"
         output name: line_plots/ozn/time/{{SENSOR}}_{{SAT}}.${level}.omg.png
-        plot logo:
-          which: 'noaa/nws'
-          loc: 'upper right'
+#       plot logo:
+#         which: 'noaa/nws'
+#         loc: 'upper right'
 
       plots:
         - add_xlabel: 'Cycle'

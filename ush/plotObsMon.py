@@ -86,7 +86,7 @@ def loadConfig(satname, instrument, obstype, plot, cycle_tm, cycle_interval,
     times = int(plot.get('times')) if plot.get('times') else None
     if times is not None:
         for x in range(1, times+1):
-            date_str = f"PDATEm{x*cycle_interval}"
+            date_str = f'PDATEm{x*cycle_interval}'
             config[date_str] = add_to_datetime(cycle_tm, to_timedelta(f"-{cycle_interval*x}H"))
 
     if config['CHANNELS'] is not None:
@@ -138,6 +138,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
     cycle_tm = to_datetime(args.pdate)
 
+    data = os.environ.get('DATA', '.')
+    os.chdir(data)
+
     try:
         mon_sources = args.input
         with open(mon_sources, 'r') as mon_sources_opened:
@@ -185,7 +188,6 @@ if __name__ == "__main__":
                     plot_template = os.path.join(parm_location, plot_template)
 
                     genYaml(plot_template, plot_yaml, config)
-
                     eva(plot_yaml)
                     os.remove(plot_yaml)
 

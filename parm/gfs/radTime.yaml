@@ -328,12 +328,12 @@ graphics:
       figure:
         layout: [1,1]
         figure size: [20,18]
-        tight layout:
+#       tight layout:
         title: "${variable}, {{SENSOR}}_{{SAT}} channel ${channel}  \n Valid: {{ PDATE | to_YMDH }}"
         output name: line_plots/rad/time/time.{{SENSOR}}_{{SAT}}.${channel}.${variable}.png
-        plot logo:
-          which: 'noaa/nws'
-          loc: 'upper right'
+#       plot logo:
+#         which: 'noaa/nws'
+#         loc: 'upper right'
 
       plots:
         - add_xlabel: 'Cycle'
@@ -356,12 +356,12 @@ graphics:
       figure:
         layout: [1,1]
         figure size: [20,18]
-        tight layout:
+#       tight layout:
         title: "${variable}, {{SENSOR}}_{{SAT}} channel ${channel}  \n Valid: {{ PDATE | to_YMDH }}"
         output name: line_plots/rad/time/time.{{SENSOR}}_{{SAT}}.${channel}.${variable}.png
-        plot logo:
-          which: 'noaa/nws'
-          loc: 'upper right'
+#       plot logo:
+#         which: 'noaa/nws'
+#         loc: 'upper right'
 
       plots:
         - add_xlabel: 'Cycle'
@@ -378,13 +378,13 @@ graphics:
     - figure:
         layout: [4,1]
         figure size: [20,18]
-        tight layout:
+#       tight layout:
         title: "Summary Plot {{SENSOR}}_{{SAT}} \n Valid: {{ PDATE | to_YMDH }}"
         output name: line_plots/rad/summary/summary.{{SENSOR}}_{{SAT}}.png
-        plot logo:
-          which: 'noaa/nws'
-          loc: 'upper center'
-          subplot_orientation: 'first'
+#       plot logo:
+#         which: 'noaa/nws'
+#         loc: 'upper center'
+#         subplot_orientation: 'first'
       plots:
         # Obs counts, last 4 cycles
         # -------------------------
