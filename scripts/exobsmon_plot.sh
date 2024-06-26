@@ -29,24 +29,24 @@ ${APRUN_PY} ${USHobsmon}/splitPlotYaml.py -i ${plot_yaml} -c ${chan_yaml}
 #--------------------------------------------------------------
 # Submit OM_plots job if split yields any *.yaml files
 #
-if compgen -G "${DATA}/*.yaml" > /dev/null; then
+if compgen -G "${DATA}/OM_PLOT*.yaml" > /dev/null; then
 
    jobname="OM_plots"
    export logfile="${OM_LOGS}/${MODEL}/OM_plot.log"
    if [[ -e ${logfile} ]]; then rm ${logfile}; fi
 
    cmdfile="OM_jobscript"
-   >$cmdfile
+   >${cmdfile}
 
    ctr=0
-   for yaml in ${DATA}/*.yaml; do
+   for yaml in ${DATA}/OM_PLOT*.yaml; do
       echo "processing yaml: $ctr $yaml"
       case ${MACHINE_ID} in
          hera)
-            echo "${ctr} ${APRUN_PY} ${USHobsmon}/plotObsMon.py -i ${yaml}  -p ${PDATE}" >> $cmdfile
+            echo "${ctr} ${APRUN_PY} ${USHobsmon}/plotObsMon.py -i ${yaml}  -p ${PDATE}" >> ${cmdfile}
 	 ;;
  	 wcoss2)  
-            echo "${APRUN_PY} ${USHobsmon}/plotObsMon.py -i ${yaml}  -p ${PDATE}" >> $cmdfile
+            echo "${APRUN_PY} ${USHobsmon}/plotObsMon.py -i ${yaml}  -p ${PDATE}" >> ${cmdfile}
   	 ;;
       esac
       ((ctr+=1))

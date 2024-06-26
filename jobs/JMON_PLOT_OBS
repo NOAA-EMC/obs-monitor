@@ -26,7 +26,7 @@ mkdir -m 775 -p $COMOUTplots
 # Create $DATA for temp workspace
 ###################################
 export DATA=${DATA:-${DATAROOT}/${NET}/${MODEL}/Plot}
-if [[ -d ${DATA} ]]; then rm -rf ${DATA}; fi
+if [[ -d ${DATAROOT}/${NET} ]]; then rm -rf ${DATAROOT}/${NET}; fi
 
 mkdir -p ${DATA}
 cd ${DATA}

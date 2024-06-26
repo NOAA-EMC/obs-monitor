@@ -106,21 +106,21 @@ if __name__ == "__main__":
                     pd['satellites'] = [{'name': satname,
                                          'instruments': [{'name': iname,
                                                           'plot_list': plist}]}]
-                    fname = f'sat_{satname}_{iname}.yaml'
+                    fname = f'OM_PLOT_sat_{satname}_{iname}.yaml'
                     file = open(fname, "w")
                     yaml.dump(pd, file)
                     file.close()
 
     if 'minimization' in mon_dict.keys():
         md = removeKey(mon_dict, ['satellites', 'observations'])
-        fname = f'minimization.yaml'
+        fname = f'OM_PLOT_minimization.yaml'
         file = open(fname, "w")
         yaml.dump(md, file)
         file.close()
 
     if 'observations' in mon_dict.keys():
         od = removeKey(mon_dict, ['satellites', 'minimization'])
-        fname = f'observations.yaml'
+        fname = f'OM_PLOT_observations.yaml'
         file = open(fname, "w")
         yaml.dump(od, file)
         file.close()
