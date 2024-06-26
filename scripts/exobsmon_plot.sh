@@ -61,15 +61,18 @@ if compgen -G "${DATA}/OM_PLOT*.yaml" > /dev/null; then
          ;;
 
 	 wcoss2)  
+	    # prepend setup script to $cmdfile
+            echo -e ". ${USHobsmon}/setup_wcoss2.sh\n $(cat ${cmdfile})" > ${cmdfile}
             chmod 775 ${cmdfile}
+
             mem=$((4*${ctr})) 
             echo "submitting ${jobname} on wcoss2, ctr = $ctr, mem = $mem, cmdfile = ${cmdfile}"
-	    cp ${USHobsmon}/runWcoss.sh .
+
 	    ${SUB} -q $JOB_QUEUE -A $ACCOUNT -o ${logfile} -e ${logfile} \
 	        -v "PYTHONPATH=${PYTHONPATH}, PATH=${PATH}, HOMEobsmon=${HOMEobsmon}, MODEL=${MODEL}, \
 		    CNTRLobsmon=${CNTRLobsmon}, PARMobsmon=${PARMobsmon}, DATA=${DATA}, \
 		    LD_LIBRARY_PATH=${LD_LIBRARY_PATH}, cmdfile=${cmdfile}, ncpus=${ctr}" \
-                -l place=vscatter,select=1:ncpus=${ctr}:mem=${mem}gb,walltime=1:30:00 -N ${jobname} ./runWcoss.sh
+                -l place=vscatter,select=1:ncpus=${ctr}:mem=${mem}gb,walltime=1:30:00 -N ${jobname} ${cmdfile}
          ;;     
       esac
    fi

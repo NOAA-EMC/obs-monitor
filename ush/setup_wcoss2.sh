@@ -1,7 +1,5 @@
 #!/bin/bash
 
-st=`date`
-
 module reset
 
 module load libfabric/1.11.0.0.
@@ -18,8 +16,3 @@ export PYTHONPATH=${PYTHONPATH}:/lfs/h2/emc/da/noscrub/edward.safford/eva/opt/
 
 if [ ! -z ${PBS_O_WORKDIR} ]; then cd ${PBS_O_WORKDIR}; fi
 
-./${cmdfile}
-
-end=`date`
-echo "start: ${st}"
-echo "end:   ${end}"
