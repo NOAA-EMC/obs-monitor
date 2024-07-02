@@ -95,7 +95,7 @@ if __name__ == "__main__":
                         pd['satellites'] = [{'name': satname,
                                              'instruments': [{'name': iname,
                                                               'plot_list': [pl]}]}]
-                        fname = f'sat_{satname}_{iname}_{ctr}.yaml'
+                        fname = f'OM_PLOT_sat_{satname}_{iname}_{ctr}.yaml'
                         file = open(fname, "w")
                         yaml.dump(pd, file)
                         file.close()
