@@ -5,12 +5,11 @@
 #------------------
 
 #-------------------------------------------------------------
-# locate $model_plots.yaml and instrument_channels.yaml files
+# locate yaml_file and instrument_channels.yaml files
 #-------------------------------------------------------------
-
-plot_yaml=${plot_yaml:-${PARMobsmon}/${MODEL}/${MODEL}_plots.yaml}
-if [[ ! -e ${plot_yaml} ]]; then
-   echo "ERROR:  yaml plot file ${plot_yaml} NOT FOUND"
+yaml_file=${YAML_FILE:-${PARMobsmon}/${MODEL}/${MODEL}_plots.yaml}
+if [[ ! -e ${yaml_file} ]]; then
+   echo "ERROR:  yaml plot file ${yaml_file} NOT FOUND"
    exit 1
 fi
 
@@ -21,10 +20,10 @@ if [[ ! -e ${chan_yaml} ]]; then
 fi
 
 #---------------------------------------------------------------
-# split $plot_yaml into sat/instr[/plot], minimization, and obs
+# split $yaml_file into sat/instr[/plot], minimization, and obs
 # in order to reduce the plot jobs to a more managable size 
 #
-${APRUN_PY} ${USHobsmon}/splitPlotYaml.py -i ${plot_yaml} -c ${chan_yaml}
+${APRUN_PY} ${USHobsmon}/splitPlotYaml.py -i ${yaml_file} -c ${chan_yaml}
 
 #--------------------------------------------------------------
 # Submit OM_plots job if split yields any *.yaml files
