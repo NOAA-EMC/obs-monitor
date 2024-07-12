@@ -10,11 +10,13 @@
 #  usage
 #--------------------------------------------------------------------
 function usage {
-  echo "Usage:  runObsMon.sh -p|--pdate pdate -m|--model, [-r|--run]"
-  echo "            -p | --pdate 	cycle time to be processed, format yyyymmddhh"
-  echo "              			if unspecified the last available date will be processed"
-  echo "            -m | --model	model or experiment name (i.e. gfs, nam)"
-  echo "	    -r | --run		optional, name of run (i.e. gfs, gdas)"
+  echo "Usage:  runObsMon.sh -p|--pdate pdate -m|--model, [-y|--yaml]"
+  echo "            -p | --pdate 	cycle time to be processed, format yyyymmddhh."
+  echo "              			If unspecified the last available date will be processed."
+  echo "            -m | --model	model or experiment name (i.e. gfs, exp1, etc.)"
+  echo "            -y | --yaml 	yaml plot file, with full or relative path."
+  echo "                                If no yaml file is specified the default is "
+  echo "                                parm/[model]/[model]_plot.yaml"
   echo " "
 }
 
@@ -35,7 +37,7 @@ fi
 
 pdate=""
 model=""
-run=""
+yaml_file=""
 
 while [[ $# -ge 1 ]]
 do
@@ -51,8 +53,8 @@ do
          model="$2"
          shift # past argument
       ;;
-      -r|--run)
-         run="$2"
+      -y|--yaml)
+         yaml_file="$2"
          shift # past argument
       ;;
    esac
@@ -62,13 +64,21 @@ done
 
 echo pdate: $pdate
 echo model: $model
-echo run:   $run
+
+if [ -n "${yaml_file}" ]; then 
+   if  [ ! -e ${yaml_file} ]; then
+      echo "ERROR:  input yaml file ${yaml_file} not found"
+      exit 1 
+   fi
+   yaml_file=`realpath ${yaml_file}`
+fi
+echo yaml_file:  $yaml_file
 
 export PDY=`echo ${pdate}|cut -c1-8`
 export cyc=`echo ${pdate}|cut -c9-10`
 export NET=obsmon
 export MODEL=${model}
-export RUN=${run}
+export YAML_FILE=${yaml_file}
 export KEEPDATA="YES"
 
 #--------------------------------
@@ -106,7 +116,7 @@ case ${MACHINE_ID} in
 	   -v "PYTHONPATH=${PYTHONPATH}, PATH=${PATH}, HOMEobsmon=${HOMEobsmon}, COMOUT=${COMOUT}, \
 	       MODEL=${MODEL}, PDY=${PDY}, cyc=${cyc}, DATAROOT=${DATAROOT}, APRUN_PY=${APRUN_PY}, \
 	       MACHINE_ID=${MACHINE_ID}, ACCOUNT=${ACCOUNT}, JOB_QUEUE=${JOB_QUEUE}, SUB=${SUB},
-	       OM_LOGS=${OM_LOGS}" \
+	       OM_LOGS=${OM_LOGS}, YAML_FILE=${YAML_FILE}" \
            -l select=1:mem=500mb -l walltime=0:05:00 -N ${jobname} ${jobfile}
       ;;
 esac
