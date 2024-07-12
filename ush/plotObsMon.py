@@ -184,7 +184,7 @@ if __name__ == "__main__":
                     plot_yaml = f"{config['SENSOR']}_{config['SAT']}_{plot_template}"
 
                     parm = os.environ.get('PARMobsmon', '../parm')
-                    parm_location = os.path.join(parm, model)
+                    parm_location = os.path.join(parm, 'templates')
                     plot_template = os.path.join(parm_location, plot_template)
 
                     genYaml(plot_template, plot_yaml, config)
@@ -207,7 +207,7 @@ if __name__ == "__main__":
                 plot_yaml = f"{config['MODEL']}_{config['RUN']}_{plot_template}"
 
                 parm = os.environ.get('PARMobsmon', '../parm')
-                parm_location = os.path.join(parm, model)
+                parm_location = os.path.join(parm, 'templates')
                 plot_template = os.path.join(parm_location, plot_template)
 
                 genYaml(plot_template, plot_yaml, config)
@@ -243,7 +243,7 @@ if __name__ == "__main__":
                 plot_yaml = f"{config['OBSTYPE']}_{plot_template}"
 
                 parm = os.environ.get('PARMobsmon', '../parm')
-                parm_location = os.path.join(parm, model)
+                parm_location = os.path.join(parm, 'templates')
                 plot_template = os.path.join(parm_location, plot_template)
 
                 genYaml(plot_template, plot_yaml, config)
