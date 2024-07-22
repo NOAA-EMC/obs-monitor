@@ -41,7 +41,7 @@ if compgen -G "${DATA}/OM_PLOT*.yaml" > /dev/null; then
    for yaml in ${DATA}/OM_PLOT*.yaml; do
       echo "processing yaml: $ctr $yaml"
       case ${MACHINE_ID} in
-         hera)
+         hera|orion|hercules)
             echo "${ctr} ${APRUN_PY} ${USHobsmon}/plotObsMon.py -i ${yaml}  -p ${PDATE}" >> ${cmdfile}
 	 ;;
  	 wcoss2)  
@@ -54,7 +54,7 @@ if compgen -G "${DATA}/OM_PLOT*.yaml" > /dev/null; then
 
    if (( ${ctr} > 0 )); then
       case ${MACHINE_ID} in
-         hera)
+         hera|orion|hercules)
             ${SUB} --account ${ACCOUNT} -n ${ctr}  -o ${logfile} -D . -J ${jobname} --time=1:00:00 \
                    --mem=80000M --wrap "srun -l --multi-prog ${cmdfile}"
          ;;

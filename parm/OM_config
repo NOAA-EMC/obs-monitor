@@ -15,8 +15,8 @@ case ${MACHINE_ID} in
       export SUB="sbatch"
       export SERVICE_PARTITION="service"
 
-      ptmp="/scratch2/NCEPDEV/stmp3/$USER"
-      stmp="/scratch2/NCEPDEV/stmp1/$USER"
+      ptmp="/scratch2/NCEPDEV/stmp3/${USER}"
+      stmp="/scratch2/NCEPDEV/stmp1/${USER}"
       queue=""
       project=""
       account="da-cpu"
@@ -26,12 +26,24 @@ case ${MACHINE_ID} in
    wcoss2)
       export SUB="qsub"
 
-      ptmp="/lfs/h2/emc/ptmp/$USER"
-      stmp="/lfs/h2/emc/stmp/$USER"
+      ptmp="/lfs/h2/emc/ptmp/${USER}"
+      stmp="/lfs/h2/emc/stmp/${USER}"
       queue="dev"
       project="GDAS-DEV"
       account="GFS-DEV"
       aprun_py=`which python`
+      ;;
+
+   orion|hercules)
+      export SUB="sbatch"
+
+      ptmp="/work2/noaa/stmp/${USER}"
+      stmp="/work/noaa/stmp/${USER}" 
+
+      queue=""
+      project=""
+      account="da-cpu"
+      aprun_py="python"
       ;;
 esac
 
