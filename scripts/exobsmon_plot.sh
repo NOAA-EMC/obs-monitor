@@ -77,6 +77,10 @@ if compgen -G "${DATA}/OM_PLOT*.yaml" > /dev/null; then
    fi
 fi
 
+#
+# Need a new job to run following the plot job to clean up $DATA
+#
+
 #-----------------------------
 # Copy output to COMOUTplots
 #
