@@ -22,6 +22,9 @@ local pyenvactivate = pathJoin(pyenvpath, pyenvname, "bin/activate")
 if (mode() == "load") then
   local activate_cmd = "source "..pyenvactivate
   execute{cmd=activate_cmd, modeA={"load"}}
+
+  export PATH=/scratch1/NCEPDEV/da/Edward.Safford/noscrub/python/envs/obs-mon/bin:$PATH
+  export PYTHONPATH=/scratch1/NCEPDEV/da/Edward.Safford/noscrub/python/envs/obs-mon:$PYTHONPATH
 else
   if (mode() == "unload") then
     local deactivate_cmd = "deactivate"
