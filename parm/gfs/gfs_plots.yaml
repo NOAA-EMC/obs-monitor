@@ -2,7 +2,8 @@
 
 model: gfs
 cycle_interval: 6
-data: '/scratch1/NCEPDEV/da/Edward.Safford/noscrub/test_data/gfs'
+#data: '/scratch1/NCEPDEV/da/Edward.Safford/noscrub/test_data/gfs'
+data: '/lfs/h2/emc/da/noscrub/edward.safford/test_data/gfs'
 
 satellites:
   - name: aura
@@ -163,7 +164,7 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
-
+ 
       - name: iasi
         plot_list:
           - plot: rad time
@@ -174,11 +175,10 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
-#     test data file corruption here?
-#          - plot: rad angle
-#            times: 121
-#            channels: 'all'
-#            component: ges
+          - plot: rad angle
+            times: 121
+            channels: 'all'
+            component: ges
 
       - name: mhs
         plot_list:
@@ -194,7 +194,7 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
-
+ 
       - name: avhrr
         plot_list:
           - plot: rad time
@@ -226,7 +226,7 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
-
+ 
       - name: iasi
         plot_list:
           - plot: rad time
@@ -241,7 +241,7 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
-
+ 
       - name: avhrr
         plot_list:
           - plot: rad time
@@ -321,51 +321,51 @@ satellites:
             channels: 'all'
             component: ges
 
-#  test data file corruption here 
-#  - name: n19
-#    instruments:
-#      - name: amsua
-#        plot_list:
-#          - plot: rad time
-#            times: 121
-#            channels: 'all'
-#            component: ges
-#          - plot: rad bcoef
-#            times: 121
-#            channels: 'all'
-#            component: ges
-#          - plot: rad angle
-#            times: 121
-#            channels: 'all'
-#            component: ges
-#
-#      - name: avhrr
-#        plot_list:
-#          - plot: rad time
-#            times: 121
-#            channels: 'all'
-#            component: ges
-#          - plot: rad bcoef
-#            times: 121
-#            channels: 'all'
-#            component: ges
-#          - plot: rad angle
-#            times: 121
-#            channels: 'all'
-#            component: ges
-
-#      - name: mhs
-#        plot_list:
-#          - plot: rad time
-#            times: 121
-#            channels: 'all'
-#            component: ges
-#          - plot: rad bcoef
-#            times: 121
-#            channels: 'all'
-#            component: ges
-#          - plot: rad angle
-#            times: 121
+  - name: n19
+    instruments:
+      - name: amsua
+        plot_list:
+          - plot: rad time
+            times: 121
+            channels: 'all'
+            component: ges
+          - plot: rad bcoef
+            times: 121
+            channels: 'all'
+            component: ges
+          - plot: rad angle
+            times: 121
+            channels: 'all'
+            component: ges
+ 
+      - name: avhrr
+        plot_list:
+          - plot: rad time
+            times: 121
+            channels: 'all'
+            component: ges
+          - plot: rad bcoef
+            times: 121
+            channels: 'all'
+            component: ges
+          - plot: rad angle
+            times: 121
+            channels: 'all'
+            component: ges
+ 
+      - name: mhs
+        plot_list:
+          - plot: rad time
+            times: 121
+            channels: 'all'
+            component: ges
+          - plot: rad bcoef
+            times: 121
+            channels: 'all'
+            component: ges
+          - plot: rad angle
+            times: 121
+            component: ges
 
   - name: n20
     instruments:
@@ -415,7 +415,7 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
-
+ 
       - name: cris-fsr
         plot_list:
           - plot: rad time
@@ -447,7 +447,7 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
-
+ 
       - name: viirs-m
         plot_list:
           - plot: rad time
@@ -462,7 +462,7 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
-
+ 
   - name: j1
     instruments:
       - name: viirs-m
@@ -479,7 +479,7 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
-
+ 
   - name: f17
     instruments:
       - name: ssmis
@@ -496,7 +496,7 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
-
+ 
   - name: f18
     instruments:
       - name: ssmis
@@ -513,7 +513,6 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
-
 
 
 minimization:
@@ -546,43 +545,43 @@ observations:
       - plot: con vert
         times: 1
         datatypes: 'all'
-  - obstype: q
-    plot_list:
-      - plot: con time
-        times: 121
-        datatypes: 'all'
-      - plot: con vert
-        times: 1
-        datatypes: 'all'
-  - obstype: t
-    plot_list:
-      - plot: con time
-        times: 121
-        datatypes: 'all'
-      - plot: con vert
-        times: 1
-        datatypes: 'all'
-  - obstype: u
-    plot_list:
-      - plot: con time
-        times: 121
-        datatypes: 'all'
-      - plot: con vert
-        times: 1
-        datatypes: 'all'
-  - obstype: uv
-    plot_list:
-      - plot: con time
-        times: 121
-        datatypes: 'all'
-      - plot: con vert
-        times: 1
-        datatypes: 'all'
-  - obstype: v
-    plot_list:
-      - plot: con time
-        times: 121
-        datatypes: 'all'
-      - plot: con vert
-        times: 1
-        datatypes: 'all'
+# - obstype: q
+#   plot_list:
+#     - plot: con time
+#       times: 121
+#       datatypes: 'all'
+#     - plot: con vert
+#       times: 1
+#       datatypes: 'all'
+# - obstype: t
+#   plot_list:
+#     - plot: con time
+#       times: 121
+#       datatypes: 'all'
+#     - plot: con vert
+#       times: 1
+#       datatypes: 'all'
+# - obstype: u
+#   plot_list:
+#     - plot: con time
+#       times: 121
+#       datatypes: 'all'
+#     - plot: con vert
+#       times: 1
+#       datatypes: 'all'
+# - obstype: uv
+#   plot_list:
+#     - plot: con time
+#       times: 121
+#       datatypes: 'all'
+#     - plot: con vert
+#       times: 1
+#       datatypes: 'all'
+# - obstype: v
+#   plot_list:
+#     - plot: con time
+#       times: 121
+#       datatypes: 'all'
+#     - plot: con vert
+#       times: 1
+#       datatypes: 'all'

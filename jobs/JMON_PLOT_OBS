@@ -50,3 +50,9 @@ if [[ -e "${pgmout}" ]] ; then
   cat "${pgmout}"
 fi
 
+####################
+# Remove workspace
+####################
+KEEPDATA=${KEEPDATA:-"NO"}
+cd ${DATAROOT}
+[[ ${KEEPDATA} = "NO" ]] && rm -rf ${DATA}
