@@ -21,6 +21,8 @@ case ${MACHINE_ID} in
       project=""
       account="da-cpu"
       aprun_py="python"
+      module use ${HOMEobsmon}/modulefiles
+      module load obs-monitor
       ;;
 
    wcoss2)
