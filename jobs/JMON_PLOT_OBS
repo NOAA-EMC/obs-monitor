@@ -53,6 +53,6 @@ fi
 ####################
 # Remove workspace
 ####################
-KEEPDATA=${KEEPDATA:-"NO"}
-cd ${DATAROOT}
-[[ ${KEEPDATA} = "NO" ]] && rm -rf ${DATA}
+#KEEPDATA=${KEEPDATA:-"NO"}
+#cd ${DATAROOT}
+#[[ ${KEEPDATA} = "NO" ]] && rm -rf ${DATA}

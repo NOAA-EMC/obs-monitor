@@ -33,6 +33,8 @@ case ${MACHINE_ID} in
       queue="dev"
       project="GDAS-DEV"
       account="GFS-DEV"
+      module use ${HOMEobsmon}/modulefiles
+      module load obs-monitor
       aprun_py=`which python`
       ;;
 
