@@ -22,7 +22,7 @@ case ${MACHINE_ID} in
       account="da-cpu"
       aprun_py="python"
       module use ${HOMEobsmon}/modulefiles
-      module load obs-monitor
+      module load obs-monitor/hera
       ;;
 
    wcoss2)
@@ -34,7 +34,7 @@ case ${MACHINE_ID} in
       project="GDAS-DEV"
       account="GFS-DEV"
       module use ${HOMEobsmon}/modulefiles
-      module load obs-monitor
+      module load obs-monitor/wcoss2
       aprun_py=`which python`
       ;;
 
@@ -48,6 +48,8 @@ case ${MACHINE_ID} in
       project=""
       account="da-cpu"
       aprun_py="python"
+      module use ${HOMEobsmon}/modulefiles
+      module load obs-monitor/orion
       ;;
 esac
 

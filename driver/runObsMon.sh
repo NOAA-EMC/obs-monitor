@@ -105,17 +105,19 @@ if [[ ! -d ${logdir} ]]; then mkdir -p ${logdir}; fi
 logfile="${logdir}/OM_setup.log"
 if [[ -e ${logfile} ]]; then rm ${logfile}; fi
 
+echo MACHINE_ID: $MACHINE_ID
+
 case ${MACHINE_ID} in
-   hera)
+   hera|orion|hercules)
       ${SUB} --account ${ACCOUNT}  --ntasks=1 --mem=400M --time=0:05:00 \
              -J ${jobname} --partition service -o ${logfile} ${jobfile}
       ;;
 
-   orion|hercules)
-      echo "on orion"
-      ${SUB} --account ${ACCOUNT}  --ntasks=1 --mem=400M --time=0:05:00 \
-             -J ${jobname} --partition service -o ${logfile} ${jobfile}
-      ;;
+#   orion|hercules)
+#      echo "on orion"
+#      ${SUB} --account ${ACCOUNT}  --ntasks=1 --mem=400M --time=0:05:00 \
+#             -J ${jobname} --partition service -o ${logfile} ${jobfile}
+#      ;;
 
    wcoss2)	
       $SUB -q ${JOB_QUEUE} -A ${ACCOUNT} -o ${logfile} -e ${logfile} \
