@@ -39,7 +39,6 @@ satellites:
             levels: '1'
             component: ges
 
-
       - name: ompslp
         plot_list:
           - plot: ozn horiz
@@ -164,7 +163,7 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
- 
+
       - name: iasi
         plot_list:
           - plot: rad time
@@ -194,7 +193,7 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
- 
+
       - name: avhrr
         plot_list:
           - plot: rad time
@@ -226,7 +225,7 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
- 
+
       - name: iasi
         plot_list:
           - plot: rad time
@@ -241,7 +240,7 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
- 
+
       - name: avhrr
         plot_list:
           - plot: rad time
@@ -337,7 +336,7 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
- 
+
       - name: avhrr
         plot_list:
           - plot: rad time
@@ -352,7 +351,7 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
- 
+
       - name: mhs
         plot_list:
           - plot: rad time
@@ -415,7 +414,7 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
- 
+
       - name: cris-fsr
         plot_list:
           - plot: rad time
@@ -447,7 +446,7 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
- 
+
       - name: viirs-m
         plot_list:
           - plot: rad time
@@ -462,7 +461,7 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
- 
+
   - name: j1
     instruments:
       - name: viirs-m
@@ -479,7 +478,7 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
- 
+
   - name: f17
     instruments:
       - name: ssmis
@@ -496,7 +495,7 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
- 
+
   - name: f18
     instruments:
       - name: ssmis
@@ -514,7 +513,6 @@ satellites:
             channels: 'all'
             component: ges
 
-
 minimization:
   - model: gfs
     plot_list:
@@ -530,7 +528,6 @@ minimization:
         run: gdas
         times: 28
 
-
 observations:
   - obstype: ps
     plot_list:
@@ -545,43 +542,43 @@ observations:
       - plot: con vert
         times: 1
         datatypes: 'all'
-# - obstype: q
-#   plot_list:
-#     - plot: con time
-#       times: 121
-#       datatypes: 'all'
-#     - plot: con vert
-#       times: 1
-#       datatypes: 'all'
-# - obstype: t
-#   plot_list:
-#     - plot: con time
-#       times: 121
-#       datatypes: 'all'
-#     - plot: con vert
-#       times: 1
-#       datatypes: 'all'
-# - obstype: u
-#   plot_list:
-#     - plot: con time
-#       times: 121
-#       datatypes: 'all'
-#     - plot: con vert
-#       times: 1
-#       datatypes: 'all'
-# - obstype: uv
-#   plot_list:
-#     - plot: con time
-#       times: 121
-#       datatypes: 'all'
-#     - plot: con vert
-#       times: 1
-#       datatypes: 'all'
-# - obstype: v
-#   plot_list:
-#     - plot: con time
-#       times: 121
-#       datatypes: 'all'
-#     - plot: con vert
-#       times: 1
-#       datatypes: 'all'
+  - obstype: q
+    plot_list:
+      - plot: con time
+        times: 121
+        datatypes: 'all'
+      - plot: con vert
+        times: 1
+        datatypes: 'all'
+  - obstype: t
+    plot_list:
+      - plot: con time
+        times: 121
+        datatypes: 'all'
+      - plot: con vert
+        times: 1
+        datatypes: 'all'
+  - obstype: u
+    plot_list:
+      - plot: con time
+        times: 121
+        datatypes: 'all'
+      - plot: con vert
+        times: 1
+        datatypes: 'all'
+  - obstype: uv
+    plot_list:
+      - plot: con time
+        times: 121
+        datatypes: 'all'
+      - plot: con vert
+        times: 1
+        datatypes: 'all'
+  - obstype: v
+    plot_list:
+      - plot: con time
+        times: 121
+        datatypes: 'all'
+      - plot: con vert
+        times: 1
+        datatypes: 'all'
