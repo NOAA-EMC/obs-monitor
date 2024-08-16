@@ -9,6 +9,8 @@ export JOBSobsmon=${om_dir_root}/jobs
 source ${om_dir_root}/ush/detect_machine.sh
 export MACHINE_ID=`echo "${MACHINE_ID%%.*}"`
 
+module use ${HOMEobsmon}/modulefiles
+
 case ${MACHINE_ID} in
 
    hera)
@@ -21,7 +23,6 @@ case ${MACHINE_ID} in
       project=""
       account="da-cpu"
       aprun_py="python"
-      module use ${HOMEobsmon}/modulefiles
       module load obs-monitor/hera
       ;;
 
@@ -33,7 +34,6 @@ case ${MACHINE_ID} in
       queue="dev"
       project="GDAS-DEV"
       account="GFS-DEV"
-      module use ${HOMEobsmon}/modulefiles
       module load obs-monitor/wcoss2
       aprun_py=`which python`
       ;;
@@ -48,7 +48,6 @@ case ${MACHINE_ID} in
       project=""
       account="da-cpu"
       aprun_py="python"
-      module use ${HOMEobsmon}/modulefiles
       module load obs-monitor/orion
       ;;
 esac

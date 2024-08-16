@@ -60,7 +60,7 @@ if compgen -G "${DATA}/OM_PLOT*.yaml" > /dev/null; then
          ;;
 
 	 wcoss2)  
-            mem=$((4*${ctr})) 
+            mem=$((8*${ctr})) 
             echo "submitting ${jobname} on wcoss2, ctr = $ctr, mem = $mem, cmdfile = ${cmdfile}"
 
 	    ${SUB} -q $JOB_QUEUE -A $ACCOUNT -o ${logfile} -e ${logfile} \

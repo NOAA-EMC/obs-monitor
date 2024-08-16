@@ -113,12 +113,6 @@ case ${MACHINE_ID} in
              -J ${jobname} --partition service -o ${logfile} ${jobfile}
       ;;
 
-#   orion|hercules)
-#      echo "on orion"
-#      ${SUB} --account ${ACCOUNT}  --ntasks=1 --mem=400M --time=0:05:00 \
-#             -J ${jobname} --partition service -o ${logfile} ${jobfile}
-#      ;;
-
    wcoss2)	
       $SUB -q ${JOB_QUEUE} -A ${ACCOUNT} -o ${logfile} -e ${logfile} \
 	   -v "PYTHONPATH=${PYTHONPATH}, PATH=${PATH}, HOMEobsmon=${HOMEobsmon}, COMOUT=${COMOUT}, \
