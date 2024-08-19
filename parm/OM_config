@@ -38,7 +38,7 @@ case ${MACHINE_ID} in
       aprun_py=`which python`
       ;;
 
-   orion|hercules)
+   orion)
       export SUB="sbatch"
 
       ptmp="/work2/noaa/stmp/${USER}"
@@ -49,6 +49,19 @@ case ${MACHINE_ID} in
       account="da-cpu"
       aprun_py="python"
       module load obs-monitor/orion
+      ;;
+
+   hercules)
+      export SUB="sbatch"
+
+      ptmp="/work2/noaa/stmp/${USER}"
+      stmp="/work/noaa/stmp/${USER}" 
+
+      queue=""
+      project=""
+      account="da-cpu"
+      aprun_py="python"
+      module load obs-monitor/hercules
       ;;
 esac
 
