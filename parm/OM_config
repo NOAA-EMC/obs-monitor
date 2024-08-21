@@ -16,6 +16,7 @@ case ${MACHINE_ID} in
    hera)
       export SUB="sbatch"
       export SERVICE_PARTITION="service"
+      export CARTOPY_DATA_DIR="/scratch1/NCEPDEV/da/Edward.Safford/noscrub/python/envs/obs-mon/share/cartopy"
 
       ptmp="/scratch2/NCEPDEV/stmp3/${USER}"
       stmp="/scratch2/NCEPDEV/stmp1/${USER}"
