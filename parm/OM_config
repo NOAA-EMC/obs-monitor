@@ -53,6 +53,7 @@ case ${MACHINE_ID} in
 
    hercules)
       export SUB="sbatch"
+      export CARTOPY_DATA_DIR="/work/noaa/da/esafford/noscrub/python/envs/obs-mon/share/cartopy"
 
       ptmp="/work2/noaa/stmp/${USER}"
       stmp="/work/noaa/stmp/${USER}" 
