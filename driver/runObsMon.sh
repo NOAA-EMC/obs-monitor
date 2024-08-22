@@ -105,8 +105,6 @@ if [[ ! -d ${logdir} ]]; then mkdir -p ${logdir}; fi
 logfile="${logdir}/OM_setup.log"
 if [[ -e ${logfile} ]]; then rm ${logfile}; fi
 
-echo MACHINE_ID: $MACHINE_ID
-
 case ${MACHINE_ID} in
    hera|orion|hercules)
       ${SUB} --account ${ACCOUNT}  --ntasks=1 --mem=400M --time=0:05:00 \
