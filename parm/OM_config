@@ -58,7 +58,6 @@ case ${MACHINE_ID} in
       queue=""
       project=""
       account="da-cpu"
-#      aprun_py="python"
       ;;
 esac
 
