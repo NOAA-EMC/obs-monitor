@@ -15,7 +15,7 @@ module load netcdf/4.7.4
 module load python/3.10.4
 
 module use ${HOMEobsmon}/modulefiles
-module load obs-monitor
+module load obs-monitor/wcoss2
 
 module list
 

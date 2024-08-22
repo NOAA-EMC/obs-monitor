@@ -29,6 +29,7 @@ case ${MACHINE_ID} in
 
    wcoss2)
       export SUB="qsub"
+      export CARTOPY_DATA_DIR="/lfs/h2/emc/da/noscrub/edward.safford/python/envs/obs-mon/share/cartopy"
 
       ptmp="/lfs/h2/emc/ptmp/${USER}"
       stmp="/lfs/h2/emc/stmp/${USER}"
