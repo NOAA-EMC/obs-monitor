@@ -23,8 +23,7 @@ case ${MACHINE_ID} in
       queue=""
       project=""
       account="da-cpu"
-      aprun_py="python"
-      module load obs-monitor/hera
+#      aprun_py="python"
       ;;
 
    wcoss2)
@@ -36,8 +35,6 @@ case ${MACHINE_ID} in
       queue="dev"
       project="GDAS-DEV"
       account="GFS-DEV"
-      module load obs-monitor/wcoss2
-      aprun_py=`which python`
       ;;
 
    orion)
@@ -50,8 +47,7 @@ case ${MACHINE_ID} in
       queue=""
       project=""
       account="da-cpu"
-      aprun_py="python"
-      module load obs-monitor/orion
+#      aprun_py="python"
       ;;
 
    hercules)
@@ -64,10 +60,12 @@ case ${MACHINE_ID} in
       queue=""
       project=""
       account="da-cpu"
-      aprun_py="python"
-      module load obs-monitor/hercules
+#      aprun_py="python"
       ;;
 esac
+
+module load obs-monitor/${MACHINE_ID}
+export APRUN_PY=`which python`
 
 export ACCOUNT=${ACCOUNT:-$account}
 export PROJECT=${PROJECT:-$project}
@@ -76,4 +74,3 @@ export JOB_QUEUE=${JOB_QUEUE:-$queue}
 export OM_LOGS="${ptmp}/logs/OM_logs"
 export DATAROOT=${DATAROOT:-${stmp}}
 export COMOUT=${COMOUT:-${ptmp}}
-export APRUN_PY=${APRUN_PY:-${aprun_py}}
