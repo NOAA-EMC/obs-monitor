@@ -31,6 +31,11 @@ if [[ -d ${DATAROOT}/${NET} ]]; then rm -rf ${DATAROOT}/${NET}; fi
 mkdir -p ${DATA}
 cd ${DATA}
 
+##################################
+# Remove workspace when finished
+##################################
+KEEPDATA=${KEEPDATA:-"NO"}
+
 ################
 # Run exscript
 ################
@@ -46,8 +51,6 @@ if [[ -e "${pgmout}" ]] ; then
 fi
 
 ####################
-# Remove workspace
+# Remove workspace -- this will have to be a separate job that runs
+# after the OM_plot job is complete.
 ####################
-KEEPDATA=${KEEPDATA:-"NO"}
-cd ${DATAROOT}
-[[ ${KEEPDATA} = "NO" ]] && rm -rf ${DATA}

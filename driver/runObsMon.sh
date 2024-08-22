@@ -106,7 +106,7 @@ logfile="${logdir}/OM_setup.log"
 if [[ -e ${logfile} ]]; then rm ${logfile}; fi
 
 case ${MACHINE_ID} in
-   hera)
+   hera|orion|hercules)
       ${SUB} --account ${ACCOUNT}  --ntasks=1 --mem=400M --time=0:05:00 \
              -J ${jobname} --partition service -o ${logfile} ${jobfile}
       ;;
@@ -116,7 +116,7 @@ case ${MACHINE_ID} in
 	   -v "PYTHONPATH=${PYTHONPATH}, PATH=${PATH}, HOMEobsmon=${HOMEobsmon}, COMOUT=${COMOUT}, \
 	       MODEL=${MODEL}, PDY=${PDY}, cyc=${cyc}, DATAROOT=${DATAROOT}, APRUN_PY=${APRUN_PY}, \
 	       MACHINE_ID=${MACHINE_ID}, ACCOUNT=${ACCOUNT}, JOB_QUEUE=${JOB_QUEUE}, SUB=${SUB},
-	       OM_LOGS=${OM_LOGS}, YAML_FILE=${YAML_FILE}" \
+	       OM_LOGS=${OM_LOGS}, YAML_FILE=${YAML_FILE}, CARTOPY_DATA_DIR=${CARTOPY_DATA_DIR}" \
            -l select=1:mem=500mb -l walltime=0:05:00 -N ${jobname} ${jobfile}
       ;;
 esac

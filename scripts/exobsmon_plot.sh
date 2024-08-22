@@ -41,7 +41,7 @@ if compgen -G "${DATA}/OM_PLOT*.yaml" > /dev/null; then
    for yaml in ${DATA}/OM_PLOT*.yaml; do
       echo "processing yaml: $ctr $yaml"
       case ${MACHINE_ID} in
-         hera)
+         hera|orion|hercules)
             echo "${ctr} ${APRUN_PY} ${USHobsmon}/plotObsMon.py -i ${yaml}  -p ${PDATE}" >> ${cmdfile}
 	 ;;
  	 wcoss2)  
@@ -54,28 +54,28 @@ if compgen -G "${DATA}/OM_PLOT*.yaml" > /dev/null; then
 
    if (( ${ctr} > 0 )); then
       case ${MACHINE_ID} in
-         hera)
+         hera|orion|hercules)
             ${SUB} --account ${ACCOUNT} -n ${ctr}  -o ${logfile} -D . -J ${jobname} --time=1:00:00 \
                    --mem=80000M --wrap "srun -l --multi-prog ${cmdfile}"
          ;;
 
 	 wcoss2)  
-	    # prepend setup script to $cmdfile
-            echo -e ". ${USHobsmon}/setup_wcoss2.sh\n $(cat ${cmdfile})" > ${cmdfile}
-            chmod 775 ${cmdfile}
-
-            mem=$((4*${ctr})) 
+            mem=$((8*${ctr})) 
             echo "submitting ${jobname} on wcoss2, ctr = $ctr, mem = $mem, cmdfile = ${cmdfile}"
 
 	    ${SUB} -q $JOB_QUEUE -A $ACCOUNT -o ${logfile} -e ${logfile} \
 	        -v "PYTHONPATH=${PYTHONPATH}, PATH=${PATH}, HOMEobsmon=${HOMEobsmon}, MODEL=${MODEL}, \
-		    CNTRLobsmon=${CNTRLobsmon}, PARMobsmon=${PARMobsmon}, DATA=${DATA}, \
+		    CNTRLobsmon=${CNTRLobsmon}, PARMobsmon=${PARMobsmon}, DATA=${DATA}, CARTOPY_DATA_DIR=${CARTOPY_DATA_DIR}, \
 		    LD_LIBRARY_PATH=${LD_LIBRARY_PATH}, cmdfile=${cmdfile}, ncpus=${ctr}" \
-                -l place=vscatter,select=1:ncpus=${ctr}:mem=${mem}gb,walltime=1:30:00 -N ${jobname} ${cmdfile}
+                -l place=vscatter,select=1:ncpus=${ctr}:mem=${mem}gb:prepost=true,walltime=1:00:00 -N ${jobname} ${USHobsmon}/plot_wcoss2.sh
          ;;     
       esac
    fi
 fi
+
+#
+# Need a new job to run following the plot job to clean up $DATA
+#
 
 #-----------------------------
 # Copy output to COMOUTplots
