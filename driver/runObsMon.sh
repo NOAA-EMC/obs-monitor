@@ -115,8 +115,9 @@ case ${MACHINE_ID} in
       $SUB -q ${JOB_QUEUE} -A ${ACCOUNT} -o ${logfile} -e ${logfile} \
 	   -v "PYTHONPATH=${PYTHONPATH}, PATH=${PATH}, HOMEobsmon=${HOMEobsmon}, COMOUT=${COMOUT}, \
 	       MODEL=${MODEL}, PDY=${PDY}, cyc=${cyc}, DATAROOT=${DATAROOT}, APRUN_PY=${APRUN_PY}, \
-	       MACHINE_ID=${MACHINE_ID}, ACCOUNT=${ACCOUNT}, JOB_QUEUE=${JOB_QUEUE}, SUB=${SUB},
-	       OM_LOGS=${OM_LOGS}, YAML_FILE=${YAML_FILE}, CARTOPY_DATA_DIR=${CARTOPY_DATA_DIR}" \
+	       MACHINE_ID=${MACHINE_ID}, ACCOUNT=${ACCOUNT}, JOB_QUEUE=${JOB_QUEUE}, SUB=${SUB}, \
+	       OM_LOGS=${OM_LOGS}, YAML_FILE=${YAML_FILE}, CARTOPY_DATA_DIR=${CARTOPY_DATA_DIR}, \
+	       OM_PLOTS=${OM_PLOTS}" \
            -l select=1:mem=500mb -l walltime=0:05:00 -N ${jobname} ${jobfile}
       ;;
 esac
