@@ -79,7 +79,6 @@ export cyc=`echo ${pdate}|cut -c9-10`
 export NET=obsmon
 export MODEL=${model}
 export YAML_FILE=${yaml_file}
-export KEEPDATA="YES"
 
 #--------------------------------
 # locate and source config file

@@ -34,6 +34,9 @@ if compgen -G "${DATA}/OM_PLOT*.yaml" > /dev/null; then
    export logfile="${OM_LOGS}/${MODEL}/OM_plot.log"
    if [[ -e ${logfile} ]]; then rm ${logfile}; fi
 
+   export logfile_clnup="${OM_LOGS}/${MODEL}/OM_cleanup.log"
+   if [[ -e ${logfile_clnup} ]]; then rm ${logfile_clnup}; fi
+
    cmdfile="OM_jobscript"
    >${cmdfile}
 
@@ -55,8 +58,16 @@ if compgen -G "${DATA}/OM_PLOT*.yaml" > /dev/null; then
    if (( ${ctr} > 0 )); then
       case ${MACHINE_ID} in
          hera|orion|hercules)
-            ${SUB} --account ${ACCOUNT} -n ${ctr}  -o ${logfile} -D . -J ${jobname} --time=1:00:00 \
-                   --mem=80000M --wrap "srun -l --multi-prog ${cmdfile}"
+            # submit plot job
+            JOBID1=$(${SUB} --account ${ACCOUNT} -n ${ctr}  -o ${logfile} -D . -J ${jobname} --time=1:00:00 \
+                   --mem=80000M --wrap "srun -l --multi-prog ${cmdfile}")
+
+            # submit cleanup job to run after plot job
+            jobname="OM_cleanup"
+            JOBID1=`echo ${JOBID1} | gawk '{ print $4 }'`
+            ${SUB} --account ${ACCOUNT} -n 1 -o ${logfile_clnup} -D . -J ${jobname} --time=0:10:00 \
+                   -p ${SERVICE_PARTITION} --dependency=afterok:${JOBID1} ${USHobsmon}/om_cleanup.sh
+
          ;;
 
 	 wcoss2)  
@@ -68,27 +79,8 @@ if compgen -G "${DATA}/OM_PLOT*.yaml" > /dev/null; then
 		    CNTRLobsmon=${CNTRLobsmon}, PARMobsmon=${PARMobsmon}, DATA=${DATA}, CARTOPY_DATA_DIR=${CARTOPY_DATA_DIR}, \
 		    LD_LIBRARY_PATH=${LD_LIBRARY_PATH}, cmdfile=${cmdfile}, ncpus=${ctr}, OM_PLOTS=${OM_PLOTS}" \
                 -l place=vscatter,select=1:ncpus=${ctr}:mem=${mem}gb:prepost=true,walltime=1:00:00 -N ${jobname} ${USHobsmon}/plot_wcoss2.sh
+
          ;;     
       esac
    fi
 fi
-
-#
-# Need a new job to run following the plot job to clean up $DATA
-#
-
-#-----------------------------
-# Copy output to COMOUTplots
-#
-#   This will now have to be done in a separate
-#   job set to run after cmdfile completes.
-#
-#if [[ -d ./line_plots ]]; then
-#   cp -r line_plots ${COMOUTplots}
-#fi
-#	
-#if [[ -d ./map_plots ]]; then
-#   cp -r map_plots ${COMOUTplots}
-#fi
-
-

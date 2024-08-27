@@ -72,3 +72,5 @@ export OM_LOGS="${ptmp}/logs/OM_logs"
 export OM_PLOTS="${ptmp}/OM_plots"
 export DATAROOT=${DATAROOT:-${stmp}}
 export COMOUT=${COMOUT:-${ptmp}}
+
+export KEEPDATA=${KEEPDATA:-"NO"}
