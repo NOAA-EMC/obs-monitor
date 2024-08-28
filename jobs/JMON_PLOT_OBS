@@ -34,7 +34,7 @@ cd ${DATA}
 ##################################
 # Remove workspace when finished
 ##################################
-KEEPDATA=${KEEPDATA:-"NO"}
+export KEEPDATA=${KEEPDATA:-"NO"}
 
 ################
 # Run exscript
