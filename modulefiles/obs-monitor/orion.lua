@@ -9,9 +9,9 @@ local pkgNameVer = myModuleFullName()
 conflict(pkgName)
 
 
-prepend_path("MODULEPATH", " /work/noaa/epic/role-epic/spack-stack/orion/spack-stack-1.6.0/envs/unified-env-rocky9/install/modulefiles/Core")
+prepend_path("MODULEPATH", "/work/noaa/epic/role-epic/spack-stack/orion/spack-stack-1.6.0/envs/unified-env-intel-2023.2.4/install/modulefiles/Core")
 
-load ("stack-intel/2021.9.0")
+load ("stack-intel/2021.10.0")
 load ("python/3.10.8")
 
 local pyenvpath = "/work/noaa/da/esafford/noscrub/python/envs/"
