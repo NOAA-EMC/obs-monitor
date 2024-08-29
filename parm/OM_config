@@ -1,4 +1,6 @@
 
+export KEEPDATA=${KEEPDATA:-"NO"}
+
 readonly om_dir_root=$(cd "$(dirname "$(readlink -f -n "${BASH_SOURCE[0]}" )" )/.." && pwd -P)
 export HOMEobsmon=${om_dir_root}
 export JOBSobsmon=${om_dir_root}/jobs
@@ -62,5 +64,3 @@ export OM_LOGS="${ptmp}/logs/OM_logs"
 export OM_PLOTS="${ptmp}/OM_plots"
 export DATAROOT=${DATAROOT:-${stmp}}
 export COMOUT=${COMOUT:-${ptmp}}
-
-export KEEPDATA=${KEEPDATA:-"NO"}
