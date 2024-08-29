@@ -23,5 +23,3 @@ module list
 if [ ! -z ${PBS_O_WORKDIR} ]; then cd ${PBS_O_WORKDIR}; fi
 
 mpiexec -np ${ncpus} --cpu-bind core cfp ${cmdfile}
-
-echo "AFTER CFP"
