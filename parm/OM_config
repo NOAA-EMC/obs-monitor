@@ -1,4 +1,6 @@
 
+export KEEPDATA=${KEEPDATA:-"NO"}
+
 readonly om_dir_root=$(cd "$(dirname "$(readlink -f -n "${BASH_SOURCE[0]}" )" )/.." && pwd -P)
 export HOMEobsmon=${om_dir_root}
 export JOBSobsmon=${om_dir_root}/jobs
@@ -36,8 +38,9 @@ case ${MACHINE_ID} in
       account="GFS-DEV"
       ;;
 
-   orion)
+   orion|hercules)
       export SUB="sbatch"
+      export SERVICE_PARTITION="service"
       export CARTOPY_DATA_DIR="/work/noaa/da/esafford/noscrub/python/envs/obs-mon/share/cartopy"
 
       ptmp="/work2/noaa/stmp/${USER}"
@@ -48,17 +51,6 @@ case ${MACHINE_ID} in
       account="da-cpu"
       ;;
 
-   hercules)
-      export SUB="sbatch"
-      export CARTOPY_DATA_DIR="/work/noaa/da/esafford/noscrub/python/envs/obs-mon/share/cartopy"
-
-      ptmp="/work2/noaa/stmp/${USER}"
-      stmp="/work/noaa/stmp/${USER}" 
-
-      queue=""
-      project=""
-      account="da-cpu"
-      ;;
 esac
 
 module load obs-monitor/${MACHINE_ID}
@@ -69,5 +61,6 @@ export PROJECT=${PROJECT:-$project}
 export JOB_QUEUE=${JOB_QUEUE:-$queue}
 
 export OM_LOGS="${ptmp}/logs/OM_logs"
+export OM_PLOTS="${ptmp}/OM_plots"
 export DATAROOT=${DATAROOT:-${stmp}}
 export COMOUT=${COMOUT:-${ptmp}}

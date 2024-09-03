@@ -34,6 +34,9 @@ if compgen -G "${DATA}/OM_PLOT*.yaml" > /dev/null; then
    export logfile="${OM_LOGS}/${MODEL}/OM_plot.log"
    if [[ -e ${logfile} ]]; then rm ${logfile}; fi
 
+   export logfile_clnup="${OM_LOGS}/${MODEL}/OM_cleanup.log"
+   if [[ -e ${logfile_clnup} ]]; then rm ${logfile_clnup}; fi
+
    cmdfile="OM_jobscript"
    >${cmdfile}
 
@@ -55,40 +58,33 @@ if compgen -G "${DATA}/OM_PLOT*.yaml" > /dev/null; then
    if (( ${ctr} > 0 )); then
       case ${MACHINE_ID} in
          hera|orion|hercules)
-            ${SUB} --account ${ACCOUNT} -n ${ctr}  -o ${logfile} -D . -J ${jobname} --time=1:00:00 \
-                   --mem=80000M --wrap "srun -l --multi-prog ${cmdfile}"
+            # submit plot job
+            plotjob_id=$(${SUB} --account ${ACCOUNT} -n ${ctr}  -o ${logfile} -D . -J ${jobname} --time=1:00:00 \
+                   --mem=80000M --wrap "srun -l --multi-prog ${cmdfile}")
+
+            # submit cleanup job to run after plot job
+            plotjob_id=`echo ${plotjob_id} | gawk '{ print $4 }'`
+            ${SUB} --account ${ACCOUNT} -n 1 -o ${logfile_clnup} -D . -J "OM_cleanup" --time=0:10:00 \
+                   -p ${SERVICE_PARTITION} --dependency=afterok:${plotjob_id} ${USHobsmon}/om_cleanup.sh
+
          ;;
 
 	 wcoss2)  
+            # submit plot job
             mem=$((8*${ctr})) 
-            echo "submitting ${jobname} on wcoss2, ctr = $ctr, mem = $mem, cmdfile = ${cmdfile}"
-
-	    ${SUB} -q $JOB_QUEUE -A $ACCOUNT -o ${logfile} -e ${logfile} \
+	    plotjob_id=$(${SUB} -q $JOB_QUEUE -A $ACCOUNT -o ${logfile} -e ${logfile} \
 	        -v "PYTHONPATH=${PYTHONPATH}, PATH=${PATH}, HOMEobsmon=${HOMEobsmon}, MODEL=${MODEL}, \
 		    CNTRLobsmon=${CNTRLobsmon}, PARMobsmon=${PARMobsmon}, DATA=${DATA}, CARTOPY_DATA_DIR=${CARTOPY_DATA_DIR}, \
-		    LD_LIBRARY_PATH=${LD_LIBRARY_PATH}, cmdfile=${cmdfile}, ncpus=${ctr}" \
-                -l place=vscatter,select=1:ncpus=${ctr}:mem=${mem}gb:prepost=true,walltime=1:00:00 -N ${jobname} ${USHobsmon}/plot_wcoss2.sh
+		    LD_LIBRARY_PATH=${LD_LIBRARY_PATH}, cmdfile=${cmdfile}, ncpus=${ctr}, OM_PLOTS=${OM_PLOTS}" \
+	        -l place=vscatter,select=1:ncpus=${ctr}:mem=${mem}gb:prepost=true,walltime=1:00:00 -N ${jobname} ${USHobsmon}/plot_wcoss2.sh)
+
+            # submit cleanup job to run after plot job
+ 	    ${SUB} -q $JOB_QUEUE -A $ACCOUNT -o ${logfile_clnup} -e ${logfile_clnup} \
+  	        -v "DATA=${DATA}, KEEPDATA=${KEEPDATA}, NET=${NET}, DATAROOT=${DATAROOT}, \
+		    COMOUTplots=${COMOUTplots}, DATA=${DATA}, MACHINE_ID=${MACHINE_ID}" \
+                -l select=1:mem=500mb,walltime=1:00:00 -W depend=afterok:${plotjob_id} -N "OM_cleanup" ${USHobsmon}/om_cleanup.sh
+
          ;;     
       esac
    fi
 fi
-
-#
-# Need a new job to run following the plot job to clean up $DATA
-#
-
-#-----------------------------
-# Copy output to COMOUTplots
-#
-#   This will now have to be done in a separate
-#   job set to run after cmdfile completes.
-#
-#if [[ -d ./line_plots ]]; then
-#   cp -r line_plots ${COMOUTplots}
-#fi
-#	
-#if [[ -d ./map_plots ]]; then
-#   cp -r map_plots ${COMOUTplots}
-#fi
-
-

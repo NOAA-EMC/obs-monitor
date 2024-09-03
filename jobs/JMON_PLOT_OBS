@@ -34,7 +34,7 @@ cd ${DATA}
 ##################################
 # Remove workspace when finished
 ##################################
-KEEPDATA=${KEEPDATA:-"NO"}
+export KEEPDATA=${KEEPDATA:-"NO"}
 
 ################
 # Run exscript
@@ -49,8 +49,3 @@ status=$?
 if [[ -e "${pgmout}" ]] ; then
   cat "${pgmout}"
 fi
-
-####################
-# Remove workspace -- this will have to be a separate job that runs
-# after the OM_plot job is complete.
-####################
