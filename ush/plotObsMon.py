@@ -8,6 +8,7 @@ import argparse
 import os
 from re import sub
 import yaml
+from setupdata import setupdata
 from wxflow import parse_j2yaml, save_as_yaml
 from wxflow import add_to_datetime, to_timedelta, to_datetime
 from eva.eva_driver import eva
@@ -188,6 +189,8 @@ if __name__ == "__main__":
                     plot_template = os.path.join(parm_location, plot_template)
 
                     genYaml(plot_template, plot_yaml, config)
+#                   logger.info(f'config: {config}')
+                    setupdata(config, logger)
                     eva(plot_yaml)
                     os.remove(plot_yaml)
 
