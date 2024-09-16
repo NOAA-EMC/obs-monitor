@@ -8,7 +8,8 @@ import argparse
 import os
 from re import sub
 import yaml
-from setupdata import setupdata
+from setupdata import OM_data
+
 from wxflow import parse_j2yaml, save_as_yaml
 from wxflow import add_to_datetime, to_timedelta, to_datetime
 from eva.eva_driver import eva
@@ -139,8 +140,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     cycle_tm = to_datetime(args.pdate)
 
-    data = os.environ.get('DATA', '.')
-    os.chdir(data)
+    workdir = os.environ.get('DATA', '.')
+    os.chdir(workdir)
 
     try:
         mon_sources = args.input
@@ -188,11 +189,23 @@ if __name__ == "__main__":
                     parm_location = os.path.join(parm, 'templates')
                     plot_template = os.path.join(parm_location, plot_template)
 
+                    # move to unique directory based on plot_yaml file
+                    plot_dir = os.path.join(workdir, plot_yaml.split('.')[0])
+                    os.makedirs(plot_dir)
+                    os.chdir(plot_dir)
+
+                    config['DATA'] = plot_dir 
+#                   logger.info(f'plot_dir: {plot_dir}')
+
                     genYaml(plot_template, plot_yaml, config)
-#                   logger.info(f'config: {config}')
-                    setupdata(config, logger)
+
+                    # need to send data_location into setupdata maybe instead of config?  files we need should be specified in plot_yaml file
+                    plotData = OM_data(data_location, config, plot_yaml, logger)
+
+#                    setupdata(data_location, config, plot_yaml, logger)
+
                     eva(plot_yaml)
-                    os.remove(plot_yaml)
+#                   os.remove(plot_yaml)
 
     if 'minimization' in mon_dict.keys():
         satname = None
@@ -214,6 +227,7 @@ if __name__ == "__main__":
                 plot_template = os.path.join(parm_location, plot_template)
 
                 genYaml(plot_template, plot_yaml, config)
+                setupdata(config, plot_yaml, logger)
                 eva(plot_yaml)
                 os.remove(plot_yaml)
 

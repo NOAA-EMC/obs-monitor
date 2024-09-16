@@ -19,6 +19,12 @@ if [[ ! -e ${chan_yaml} ]]; then
    exit 2
 fi
 
+#-----------------------------------------------------
+# get data location and setup input data as necessary
+#-----------------------------------------------------
+#echo PDATE: $PDATE
+#${APRUN_PY} ${USHobsmon}/setUpData.py -i ${yaml_file} -p ${PDATE}
+
 #---------------------------------------------------------------
 # split $yaml_file into sat/instr[/plot], minimization, and obs
 # in order to reduce the plot jobs to a more managable size 
@@ -59,13 +65,14 @@ if compgen -G "${DATA}/OM_PLOT*.yaml" > /dev/null; then
       case ${MACHINE_ID} in
          hera|orion|hercules)
             # submit plot job
-            plotjob_id=$(${SUB} --account ${ACCOUNT} -n ${ctr}  -o ${logfile} -D . -J ${jobname} --time=1:00:00 \
+#           plotjob_id=$(${SUB} --account ${ACCOUNT} -n ${ctr}  -o ${logfile} -D . -J ${jobname} --time=1:00:00 \
+            plotjob_id=$(${SUB} --account ${ACCOUNT} -n ${ctr}  -o ${logfile} -D . -J ${jobname} --time=0:05:00 \
                    --mem=80000M --wrap "srun -l --multi-prog ${cmdfile}")
 
             # submit cleanup job to run after plot job
-            plotjob_id=`echo ${plotjob_id} | gawk '{ print $4 }'`
-            ${SUB} --account ${ACCOUNT} -n 1 -o ${logfile_clnup} -D . -J "OM_cleanup" --time=0:10:00 \
-                   -p ${SERVICE_PARTITION} --dependency=afterok:${plotjob_id} ${USHobsmon}/om_cleanup.sh
+#           plotjob_id=`echo ${plotjob_id} | gawk '{ print $4 }'`
+#           ${SUB} --account ${ACCOUNT} -n 1 -o ${logfile_clnup} -D . -J "OM_cleanup" --time=0:10:00 \
+#                  -p ${SERVICE_PARTITION} --dependency=afterok:${plotjob_id} ${USHobsmon}/om_cleanup.sh
 
          ;;
 
@@ -88,3 +95,4 @@ if compgen -G "${DATA}/OM_PLOT*.yaml" > /dev/null; then
       esac
    fi
 fi
+

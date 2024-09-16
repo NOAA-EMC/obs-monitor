@@ -7,82 +7,252 @@ from datetime import datetime
 from eva.utilities.logger import Logger
 from wxflow import add_to_datetime, to_timedelta, to_datetime
 
-# --------------------------------------------------------------------------------------------
-def removeKey(d, keys):
-    """
-    Remove keys from a dictionary
+data_dir_struct = ["obs-mon", "glb-wkflw", "gfs-ops", "leg-mon"]
+ozn_instruments = ['gome', 'omi', 'ompslp', 'ompsnp', 'ompstc8']
 
-    Parameters:
-        d (dict): input dictionary
-        keys (list): keys to remove from dictionary
 
-    Return:
-        modified dictionary if key(s) are found or input dictionary if no keys
-        are in input dictionary
-    """
+class OM_data:
 
-    r = dict(d)
-    for key in keys:
-        if key in d.keys():
-            del r[key]
-    return r
+    def __init__(self, data_src, config, plot_yaml, logger):
 
-# --------------------------------------------------------------------------------------------
-def camelCase(s):
-    """
-    Convert string with spaces, dashes, or underscores to cammel case.
+        self.pdate = datetime.strftime(config.get('PDATE'), '%Y%m%d%H')
+        self.data_src = data_src
+#        self.config = config
+#        self.data_dest = data_dest
+        self.logger = logger
+        self.data_dir_type = ""
+        self.plot_dict = {}
+        self.ctl_file = None
+        self.data_files = []
+        self.dir_struct= ""
 
-    Parameters:
-        s (str): input string
-    Return:
-        string contents in camelCase
-    """
-    
-    s = sub(r"(_|-)+", " ", s).title().replace(" ", "")
-    return ''.join([s[0].lower(), s[1:]])
+        self.read_yaml(plot_yaml)
+        self.load_data_files()
+        self.set_data_type(config.get('SAT'), config.get('SENSOR'))
+        self.set_dir_struct()
 
-# --------------------------------------------------------------------------------------------
-def get_cycles(pdate, logger, cycle_interval=6, max_cycles=121):
-    """
-    Create a list of processing dates starting from input pdate to max_cycles * cycle_interval
-
-    Parameters:
-        pdate (string): first processing date in YYYYMMDDHH format
-        logger:
-
-    Return:
-        list of cycle times 
-    """
-
-    cycle_tm = to_datetime(pdate)
-    cycles = [pdate]
-    for x in range(1, max_cycles):
-        new_date = add_to_datetime(cycle_tm, to_timedelta(f"-{cycle_interval*x}H"))
-        cycles.append(datetime.strftime(new_date, "%Y%m%d%H"))
+        self.dump()
         
-    return cycles
+# --------------------------------------------------------------------------------------------
+    def dump(self):
+        self.logger.info(f'dump OM_data:')
+        self.logger.info(f'==== =======')
+        self.logger.info(f'    data_type: {self.data_type}')
+        self.logger.info(f'        pdate: {self.pdate}')
+        self.logger.info(f'     data_src: {self.data_src}')
+#       self.logger.info(f'       config: {self.config}')
+#       self.logger.info(f'    plot_dict: {self.plot_dict}')
+        self.logger.info(f'     ctl_file: {self.ctl_file}')
+        self.logger.info(f'   data_files: {self.data_files}')
+
+#       self.logger(f'data_dest: {self.data_dest}')
+#       self.logger(f'data_dir_type: {self.data_dir_type}')
+#       for df in self.data_files:
+#           self.logger.info(f'     {df}')
 
 # --------------------------------------------------------------------------------------------
+    def set_data_type(self, sat, sensor):
+
+        if sensor in ozn_instruments:
+            type = 'ozn'
+        elif sat is not None:
+            type = 'rad' 
+        else:
+            type = None
+        self.data_type = type
+
+# --------------------------------------------------------------------------------------------
+    def read_yaml(self, yaml_file):
+        """
+        Read yaml file into plot_dict
+
+        Parameters:
+            yaml_file (file): yaml file with dict info
+            logger (Logger): Logger object for logging messages.
+
+        Return:
+            dictionary from yaml_file
+        """
+
+        pd = None
+        try:
+            with open(yaml_file, 'r') as yaml_file_opened:
+                pd = yaml.safe_load(yaml_file_opened)
+
+        except Exception as e:
+            self.logger.info('Warning: unable to load yaml file into rtn_dict ' +
+                             f'errors when attempting to load: {yaml_file}, error: {e}')
+        self.plot_dict = pd
+
+# --------------------------------------------------------------------------------------------
+    def load_data_files(self):
+
+        """
+
+        Parameters:
+        Return:
+        """
+        self.logger.info(f'--> load_data_files')
+
+        #  Note it's possible to have more than 1 dataset so this will need to iterate
+        ds = self.plot_dict.get('datasets')
+        ds = ds[0]
+
+        self.ctl_file = os.path.basename(ds['control_file'][0])
+        self.data_files = [os.path.basename(f) for f in ds['filenames']]
+        self.logger.info(f'<-- load_data_files')
+
+# --------------------------------------------------------------------------------------------
+    def set_dir_struct(self):
+        ###
+        ###
+ 
+        self.logger.info(f'--> set_dir_struct')
+        self.dir_struct = 'obs-mon'
+
+        if os.path.exists(os.path.join(self.data_src, self.data_type + '_data')):
+            self.logger.info(f'JACKPOT!')
+
+#(os.path.join(os.getcwd(), 'new_folder', 'file.txt')):
+
+        self.logger.info(f'<-- set_dir_struct')
 
 
-def setupdata(config, logger):
+def locate_data(sat, sensor, data_path, cycle_times, logger):
     """
-    Read in config and set up required data files locall.
+    Locate required data files, testing for each of the 4 possible
+    data storage schemes.
 
     Parameters:
-        config (dict): dictionary of plot information
+        sat (string): satellite name
+        sensor (string): sensor (instrument) name
+        data_path (str): input data path from config file
+        cycle_times (list): list of required cycle times
+        logger (Logger): Logger object for logging messages.
+
+    Return:
+        list of required data files (full path)
+    """
+
+    logger.info(f'<-- locate_data')
+    df = []
+
+    for cyc in cycle_times:
+        file = get_data_file(sat, sensor, data_path, cyc, logger, model='gfs', component='ges')
+        logger.info(f'file: {file}')
+
+    logger.info(f'<-- locate_data')
+    return df
+
+# --------------------------------------------------------------------------------------------
+def get_dir_type(data_location, data_type, pdate, ctl_file, logger):
+    """
+    Determine the type of data file structure pointed to by data_location.
+
+    Parameters:
+        data_location (str): path to data files.
+        data_type (str): type of data [con|min|ozn|rad]
+        pdate (datetime): plot date.
+        ctl_file (str): control file name
+        logger (Logger): Logger object for logging messages.
+
+    Return:
+        dir type as enumerated in data_dir_struct list or None
+    """
+
+    logger.info(f'--> get_dir_type')
+    logger.info(f'data_location: {data_location}')
+
+#   data_dir_struct = ["obs-mon", "glb-wkflw", "gfs-ops", "leg-mon"]
+
+    for dir in data_dir_struct:
+        logger.info(f'testing dir: {dir}')
+
+    logger.info(f'<-- get_dir_type')
+    return None
+
+# --------------------------------------------------------------------------------------------
+def load_data(data_location, config, plot_yaml, logger):
+    """
+    Determine necessary data and control files for plotting and untar/copy/link into
+    local work space directory.
+
+    Parameters:
+        data_location (str): path to data files
+        config
+        plot_yaml (file): yaml file with plot information
+        logger (Logger): Logger object for logging messages.
+
     Return:
         None
     """
 
-    logger.info(f'--> setUpData')
+    logger.info(f'--> load_data')
+
+    sat = config.get('SAT')
+    sensor = config.get('SENSOR')
+    pdate = datetime.strftime(config.get('PDATE'), '%Y%m%d%H')
+    pdy = pdate[:-2]
+    hh = pdate[-2:]
+    logger.info(f' pdate, pdy, hh: {pdate} {pdy} {hh}')
+
+    # for the moment assume only OZN data
+    data_type = 'ozn'
+ 
+    # load plot_yaml and return the control and list of data files
+    ctl_file, data_files = getfiles(data_location, plot_yaml, pdate, logger)
+
+    # determine type of data directory structure
+    dir_type = get_dir_type(data_location, data_type, pdate, ctl_file, logger)
+ 
+    # iterate over data_files and copy/link to cwd
+ 
+
+    # this should tell us what kind of data we're after
+#   plot_template = config.get('PLOT_TEMPLATE')
+#   logger.info(f'plot_template: {plot_template}')
+
+#   if sat is not None:
+#       logger.info(f'SAT IS NOT NONE')
+   
+#   if is_ozn_data(sensor):
+#       logger.info(f'OZN DATA')
+#   else:
+#       logger.info(f"NOPE ISN'T OZN DATA")
+
+#   filtered_values = [value for key, value in config.items() if key.startswith('PDATEm')] 
+#   cycle_times = [datetime.strftime(value, '%Y%m%d%H') for value in filtered_values]
+#   logger.info(f'cycle_times: {cycle_times}')
+
+#   data_files = locate_data(sat, sensor, cycle_times, data_path, logger)
+
+    logger.info(f'<-- load_data')
+
+# --------------------------------------------------------------------------------------------
+
+
+def setupdata(data_location, config, plot_yaml, logger):
+    """
+    Read in config and plot_yaml file and set up required data files locally.
+
+    Parameters:
+        data_location (str): path to data files
+        plot_yaml (file): yaml file with plot information
+        logger (Logger): Logger object for logging messages.
+
+    Return:
+        None
+    """
+
+    logger.info(f'--> setupdata')
+    logger.info(f' data_location: {data_location}')
+    logger.info(f' plot_yaml: {plot_yaml}')
     logger.info(f' config: {config}')
 
-    workspace = os.environ.get('DATA', '.')
-    path = os.path.join(workspace, "ozn_data")
-    os.mkdir(path, exist_ok=True)
-
-    logger.info(f'<-- setUpData')
+    # Load data into local directory
+    load_data(data_location, config, plot_yaml, logger)
+    
+    logger.info(f'<-- setupdata')
 
 #   try:
 #       mon_sources = args.input
@@ -99,87 +269,3 @@ def setupdata(config, logger):
 #   except Exception as e:
 #       logger.abort('setUpData is expecting a valid pdate but encountered ' +
 #                    f'errors when attempting to load: {mon_sources}, error: {e}')
-
-#   model = mon_dict.get('model')
-#   data = mon_dict.get('data')
-#   logger.info(f'model: {model}')
-#   logger.info(f'data: {data}')
-
-#   # Create data directories in workspace, using env var $DATA
-#   workspace = os.environ.get('DATA', '.')
-#   os.chdir(workspace)
-#   dir_list = ['con_data', 'mon_data', 'ozn_data/horz', 'ozn_data/time', 'rad_data']
-#
-#   for dir in dir_list:
-#       path = os.path.join(workspace, dir)
-#       os.makedirs(path, exist_ok=True)
-#
-#   if 'satellites' in mon_dict.keys():
-#       for sat in mon_dict.get('satellites'):
-#           satname = sat.get('name')
-
-#           for inst in sat.get('instruments'):
-#               iname = inst.get('name')
-#               logger.info(f'satname: {satname}, instrument: {iname}')
-#              
-#               ozn_instruments = ['gome', 'omi', 'ompslp', 'ompsnp', 'ompstc8']
-
-#               if iname in ozn_instruments:
-#                   logger.info(f'{iname} is OZN')
-#                   plist = inst.get('plot_list')
-#                   logger.info(f'plist: {plist}')
-#                   for p in range (len(plist)):
-#                       logger.info(f'plist[p]: {plist[p]}')
-#                        plt=plist[p].get('plot')
-#                       plt=camelCase(plist[p].get('plot'))
-#                       logger.info(f'plt: {plt}')
- 
-#               else:
-#                   logger.info(f'{iname} is RAD')
-
-
-
-                # --------------------------------------------------------------------
-                # For instruments with a large number of channels split the plot_list
-                #
-#               channels = chan_dict.get(iname)
-#               nchans = 0
-#               if channels is not None:
-#                   nchans = len(channels.split(","))
-
-#               if nchans > 100:
-#                   ctr = 0
-#                   for pl in inst.get('plot_list'):
-#                       pd = sd
-#                       pd['satellites'] = [{'name': satname,
-#                                            'instruments': [{'name': iname,
-#                                                             'plot_list': [pl]}]}]
-#                       fname = f'OM_PLOT_sat_{satname}_{iname}_{ctr}.yaml'
-#                       file = open(fname, "w")
-#                       yaml.dump(pd, file)
-#                       file.close()
-#                       ctr += 1
-
-#               else:
-#                   pd = sd
-#                   pd['satellites'] = [{'name': satname,
-#                                        'instruments': [{'name': iname,
-#                                                         'plot_list': plist}]}]
-#                   fname = f'OM_PLOT_sat_{satname}_{iname}.yaml'
-#                   file = open(fname, "w")
-#                   yaml.dump(pd, file)
-#                   file.close()
-
-#   if 'minimization' in mon_dict.keys():
-#       md = removeKey(mon_dict, ['satellites', 'observations'])
-#       fname = f'OM_PLOT_minimization.yaml'
-#       file = open(fname, "w")
-#       yaml.dump(md, file)
-#       file.close()
-#
-#   if 'observations' in mon_dict.keys():
-#       od = removeKey(mon_dict, ['satellites', 'minimization'])
-#       fname = f'OM_PLOT_observations.yaml'
-#       file = open(fname, "w")
-#       yaml.dump(od, file)
-#       file.close()
