@@ -1,24 +1,29 @@
-
 import argparse
 import yaml
 import os
+import shutil
+import gzip
+import glob
+
 from re import sub
 from datetime import datetime
 from eva.utilities.logger import Logger
 from wxflow import add_to_datetime, to_timedelta, to_datetime
 
-data_dir_struct = ["obs-mon", "glb-wkflw", "gfs-ops", "leg-mon"]
-ozn_instruments = ['gome', 'omi', 'ompslp', 'ompsnp', 'ompstc8']
+#data_dir_struct = ["obs-mon", "glb-wkflw", "gfs-ops", "leg-mon"]
+#ozn_instruments = ['gome', 'omi', 'ompslp', 'ompsnp', 'ompstc8']
 
 
 class OM_data:
 
     def __init__(self, data_src, config, plot_yaml, logger):
 
+        logger.info(f'cwd: {os.getcwd()}')
+
         self.pdate = datetime.strftime(config.get('PDATE'), '%Y%m%d%H')
         self.data_src = data_src
-#        self.config = config
-#        self.data_dest = data_dest
+        self.config = config
+#       self.data_dest = ""
         self.logger = logger
         self.data_dir_type = ""
         self.plot_dict = {}
@@ -28,19 +33,21 @@ class OM_data:
 
         self.read_yaml(plot_yaml)
         self.load_data_files()
-        self.set_data_type(config.get('SAT'), config.get('SENSOR'))
+        self.set_data_types(os.path.basename(config.get('PLOT_TEMPLATE')))
         self.set_dir_struct()
 
         self.dump()
-        
+        self.copy_data(os.getcwd())        
 # --------------------------------------------------------------------------------------------
     def dump(self):
+        self.logger.info('')
         self.logger.info(f'dump OM_data:')
         self.logger.info(f'==== =======')
         self.logger.info(f'    data_type: {self.data_type}')
+        self.logger.info(f' data_subtype: {self.data_subtype}')
         self.logger.info(f'        pdate: {self.pdate}')
         self.logger.info(f'     data_src: {self.data_src}')
-#       self.logger.info(f'       config: {self.config}')
+        self.logger.info(f'       config: {self.config}')
 #       self.logger.info(f'    plot_dict: {self.plot_dict}')
         self.logger.info(f'     ctl_file: {self.ctl_file}')
         self.logger.info(f'   data_files: {self.data_files}')
@@ -49,17 +56,13 @@ class OM_data:
 #       self.logger(f'data_dir_type: {self.data_dir_type}')
 #       for df in self.data_files:
 #           self.logger.info(f'     {df}')
+        self.logger.info('')
 
 # --------------------------------------------------------------------------------------------
-    def set_data_type(self, sat, sensor):
+    def set_data_types(self, template):
 
-        if sensor in ozn_instruments:
-            type = 'ozn'
-        elif sat is not None:
-            type = 'rad' 
-        else:
-            type = None
-        self.data_type = type
+        self.data_type = template[:3].lower()
+        self.data_subtype = template[3:].lower()
 
 # --------------------------------------------------------------------------------------------
     def read_yaml(self, yaml_file):
@@ -106,70 +109,68 @@ class OM_data:
     def set_dir_struct(self):
         ###
         ###
- 
-        self.logger.info(f'--> set_dir_struct')
-        self.dir_struct = 'obs-mon'
 
+        path = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:], 'products', 'atmos', 'oznmon', 'horiz', self.ctl_file)
+        self.logger.info(f'path: {path}')
+ 
         if os.path.exists(os.path.join(self.data_src, self.data_type + '_data')):
-            self.logger.info(f'JACKPOT!')
+            self.dir_struct = 'obs-mon'
+        elif os.path.exists(os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:], 'products', 'atmos', 'oznmon', 'horiz', self.ctl_file)):
+            self.dir_struct = 'glb-wkflw'
 
 #(os.path.join(os.getcwd(), 'new_folder', 'file.txt')):
 
-        self.logger.info(f'<-- set_dir_struct')
-
-
-def locate_data(sat, sensor, data_path, cycle_times, logger):
-    """
-    Locate required data files, testing for each of the 4 possible
-    data storage schemes.
-
-    Parameters:
-        sat (string): satellite name
-        sensor (string): sensor (instrument) name
-        data_path (str): input data path from config file
-        cycle_times (list): list of required cycle times
-        logger (Logger): Logger object for logging messages.
-
-    Return:
-        list of required data files (full path)
-    """
-
-    logger.info(f'<-- locate_data')
-    df = []
-
-    for cyc in cycle_times:
-        file = get_data_file(sat, sensor, data_path, cyc, logger, model='gfs', component='ges')
-        logger.info(f'file: {file}')
-
-    logger.info(f'<-- locate_data')
-    return df
-
 # --------------------------------------------------------------------------------------------
-def get_dir_type(data_location, data_type, pdate, ctl_file, logger):
-    """
-    Determine the type of data file structure pointed to by data_location.
+    def copy_data(self, target_dir ):
+        ###
+        ###
 
-    Parameters:
-        data_location (str): path to data files.
-        data_type (str): type of data [con|min|ozn|rad]
-        pdate (datetime): plot date.
-        ctl_file (str): control file name
-        logger (Logger): Logger object for logging messages.
+        self.logger.info(f'--> copy_data')
 
-    Return:
-        dir type as enumerated in data_dir_struct list or None
-    """
+        match self.dir_struct:
+            case 'obs-mon':
+                src = os.path.join(self.data_src, self.data_type + '_data/' + self.data_subtype, self.ctl_file)
 
-    logger.info(f'--> get_dir_type')
-    logger.info(f'data_location: {data_location}')
+                # this picks up a potentially gzipped ctl file
+                for f in glob.glob(src + '*'):
+                    shutil.copy(f, target_dir)
+                
+                for file in self.data_files:
+                    src = os.path.join(self.data_src, self.data_type + '_data/' + self.data_subtype, file)
+                    for f in glob.glob(src + '*'):
+                        shutil.copy(f, target_dir)
+                        
+            case 'glb-wkflw':
+                src = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:], 'products', 'atmos', 'oznmon', 'horiz', self.ctl_file)
 
-#   data_dir_struct = ["obs-mon", "glb-wkflw", "gfs-ops", "leg-mon"]
+                # This picks up a potentially gzipped ctl file.
+                # This could be a method().
+                for f in glob.glob(src + '*'):
+                    shutil.copy(f, target_dir)
 
-    for dir in data_dir_struct:
-        logger.info(f'testing dir: {dir}')
+                for file in self.data_files:
+                    fname = os.path.basename(file)
+                    date = fname.split(".")[2]
+                    pdy = date[:-2]
+                    hh = date[-2:]
+                    fsrc = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'products', 'atmos', 'oznmon', 'horiz', fname)
 
-    logger.info(f'<-- get_dir_type')
-    return None
+                    # this picks up a potentially gzipped ctl file
+                    for f in glob.glob(fsrc + '*'):
+                        shutil.copy(f, target_dir)
+
+#           Need to handle these two cases
+#           case 'gfs-ops':
+#           case 'leg-mon':
+
+            case _:
+                self.logger.info(f'no match on dir_struct {self.dir_struct}')
+
+        for f in glob.glob(target_dir + '/*.gz'):
+            os.system(f'gunzip {f}')
+
+        self.logger.info(f'<-- copy_data')
+
 
 # --------------------------------------------------------------------------------------------
 def load_data(data_location, config, plot_yaml, logger):
