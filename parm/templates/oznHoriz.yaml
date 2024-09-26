@@ -8,16 +8,11 @@ datasets:
     type: MonDataSpace
     control_file:
       - {{DATA}}/{{SENSOR}}_{{SAT}}.{{COMPONENT}}.ctl
-#     - {{DATA}}/ozn_data/horiz/{{SENSOR}}_{{SAT}}.{{COMPONENT}}.ctl
     filenames:
       - {{DATA}}/{{SENSOR}}_{{SAT}}.{{COMPONENT}}.{{ PDATE | to_YMDH }}.ieee_d
       - {{DATA}}/{{SENSOR}}_{{SAT}}.{{COMPONENT}}.{{ PDATEm6 | to_YMDH }}.ieee_d
       - {{DATA}}/{{SENSOR}}_{{SAT}}.{{COMPONENT}}.{{ PDATEm12 | to_YMDH }}.ieee_d
       - {{DATA}}/{{SENSOR}}_{{SAT}}.{{COMPONENT}}.{{ PDATEm18 | to_YMDH }}.ieee_d
-#     - {{DATA}}/ozn_data/horiz/{{SENSOR}}_{{SAT}}.{{COMPONENT}}.{{ PDATE | to_YMDH }}.ieee_d
-#     - {{DATA}}/ozn_data/horiz/{{SENSOR}}_{{SAT}}.{{COMPONENT}}.{{ PDATEm6 | to_YMDH }}.ieee_d
-#     - {{DATA}}/ozn_data/horiz/{{SENSOR}}_{{SAT}}.{{COMPONENT}}.{{ PDATEm12 | to_YMDH }}.ieee_d
-#     - {{DATA}}/ozn_data/horiz/{{SENSOR}}_{{SAT}}.{{COMPONENT}}.{{ PDATEm18 | to_YMDH }}.ieee_d
     levels: {{LEVELS}}
     groups:
       - name: GsiIeee

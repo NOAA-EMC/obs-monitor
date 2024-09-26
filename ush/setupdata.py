@@ -10,9 +10,6 @@ from datetime import datetime
 from eva.utilities.logger import Logger
 from wxflow import add_to_datetime, to_timedelta, to_datetime
 
-#data_dir_struct = ["obs-mon", "glb-wkflw", "gfs-ops", "leg-mon"]
-#ozn_instruments = ['gome', 'omi', 'ompslp', 'ompsnp', 'ompstc8']
-
 
 class OM_data:
 
@@ -22,14 +19,15 @@ class OM_data:
 
         self.pdate = datetime.strftime(config.get('PDATE'), '%Y%m%d%H')
         self.data_src = data_src
-        self.config = config
-#       self.data_dest = ""
         self.logger = logger
         self.data_dir_type = ""
         self.plot_dict = {}
         self.ctl_file = None
         self.data_files = []
-        self.dir_struct= ""
+        self.dir_struct = ""
+        self.data_type = ""
+        self.data_subtype = ""
+        self.use_subtype = False
 
         self.read_yaml(plot_yaml)
         self.load_data_files()
@@ -40,6 +38,15 @@ class OM_data:
         self.copy_data(os.getcwd())        
 # --------------------------------------------------------------------------------------------
     def dump(self):
+        """
+        Dump all current values in object of class OM_data via logger.info.
+
+        Paremeters:
+            None
+        Return:
+            None
+        """
+
         self.logger.info('')
         self.logger.info(f'dump OM_data:')
         self.logger.info(f'==== =======')
@@ -47,22 +54,33 @@ class OM_data:
         self.logger.info(f' data_subtype: {self.data_subtype}')
         self.logger.info(f'        pdate: {self.pdate}')
         self.logger.info(f'     data_src: {self.data_src}')
-        self.logger.info(f'       config: {self.config}')
-#       self.logger.info(f'    plot_dict: {self.plot_dict}')
         self.logger.info(f'     ctl_file: {self.ctl_file}')
         self.logger.info(f'   data_files: {self.data_files}')
+        self.logger.info(f'   dir_struct: {self.dir_struct}')
 
-#       self.logger(f'data_dest: {self.data_dest}')
-#       self.logger(f'data_dir_type: {self.data_dir_type}')
-#       for df in self.data_files:
-#           self.logger.info(f'     {df}')
+# maybe dump plot_dict as separate method
+#       self.logger.info(f'    plot_dict: {self.plot_dict}')
+
+        self.logger.info('end dump OM_data')
+        self.logger.info('=== ==== =======')
         self.logger.info('')
+
 
 # --------------------------------------------------------------------------------------------
     def set_data_types(self, template):
-
+    
         self.data_type = template[:3].lower()
-        self.data_subtype = template[3:].lower()
+        stype = template[3:].lower() 
+        self.logger.info(f'self.data_type: {self.data_type}')
+
+        # summary will have to point to time
+        if stype == 'summary':
+            stype = 'time'
+        self.data_subtype = stype
+        self.logger.info(f'self.data_subtype: {self.data_subtype}')
+
+        if self.data_type == 'ozn':
+            self.use_subtype = True
 
 # --------------------------------------------------------------------------------------------
     def read_yaml(self, yaml_file):
@@ -91,182 +109,256 @@ class OM_data:
     def load_data_files(self):
 
         """
-
+        Load control and data file names from plot_dict into OM_data class object.
+   
         Parameters:
+            None
         Return:
+            None
         """
-        self.logger.info(f'--> load_data_files')
 
         #  Note it's possible to have more than 1 dataset so this will need to iterate
+        #  is that really so?  Do any of the plot tempates have more than one dataset?  Maybe
+        #  we just need to accept our limitations.
         ds = self.plot_dict.get('datasets')
         ds = ds[0]
 
         self.ctl_file = os.path.basename(ds['control_file'][0])
         self.data_files = [os.path.basename(f) for f in ds['filenames']]
-        self.logger.info(f'<-- load_data_files')
 
 # --------------------------------------------------------------------------------------------
     def set_dir_struct(self):
-        ###
-        ###
+        """
+        Determine which data directory structure is in use. Supported structures are:
+            obs-mon:   used for testing, data is simply in 'ozn_data', 'rad_data', etc.  
+            glb-wkflw: global workflow structure
+            gfs-ops:   operational gfs structure
+            leg-mon:   legacy DA monitor structure
 
-        path = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:], 'products', 'atmos', 'oznmon', 'horiz', self.ctl_file)
-        self.logger.info(f'path: {path}')
- 
-        if os.path.exists(os.path.join(self.data_src, self.data_type + '_data')):
+        Parameters:
+            None
+        Return:
+            None
+        """
+        self.logger.info(f'self.data_src: {self.data_src}')
+        self.logger.info(f'self.data_type: {self.data_type}')
+
+        mon = self.data_type + 'mon'
+        om_test = os.path.join(self.data_src, self.data_type + '_data')
+        gw_test = ""
+        go_test = "" 
+        lm_test = ""
+
+        match mon:
+            case 'oznmon':
+                gw_test = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:], 'products', 'atmos', mon, 'horiz', self.ctl_file)
+                go_test = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:], 'atmos', mon, 'horiz', self.ctl_file)
+                lm_test = os.path.join(self.data_src, mon, 'stats', 'gdas.' + self.pdate[:-2], self.pdate[-2:], 'horiz', self.ctl_file)
+            case 'radmon':
+                gw_test = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:],
+                              'products', 'atmos', mon, 'radmon_' + self.data_subtype + '.tar.gz')
+                go_test = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:],
+                              'atmos', mon, 'radmon_' + self.data_subtype + '.tar.ga')
+                lm_test = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:], 
+                              'radmon', 'radmon_' + self.data_subtype + '.tar.gz')
+                self.logger.info(f'lm_test: {lm_test}')
+
+        if os.path.exists(om_test):
             self.dir_struct = 'obs-mon'
-        elif os.path.exists(os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:], 'products', 'atmos', 'oznmon', 'horiz', self.ctl_file)):
+        elif os.path.exists(gw_test):
             self.dir_struct = 'glb-wkflw'
-
-#(os.path.join(os.getcwd(), 'new_folder', 'file.txt')):
+        elif os.path.exists(go_test):
+            self.dir_struct = 'gfs-ops'
+        elif os.path.exists(lm_test):
+            self.dir_struct = 'leg-mon'
 
 # --------------------------------------------------------------------------------------------
     def copy_data(self, target_dir ):
-        ###
-        ###
+        """
+        Copy required data and control files to requested directory.
 
-        self.logger.info(f'--> copy_data')
+        Parameters:
+            target_dir (path): directory to which data is to be copied
+        Return:
+            None
+        """
+
+        self.logger.info(f'target_dir: {target_dir}')
+        self.logger.info(f'self.use_subtype: {self.use_subtype}')
+        mon = self.data_type + 'mon'
 
         match self.dir_struct:
             case 'obs-mon':
-                src = os.path.join(self.data_src, self.data_type + '_data/' + self.data_subtype, self.ctl_file)
+                # tested on hera
+
+                subtype = self.data_subtype if self.use_subtype else ""
+                src = os.path.join(self.data_src, self.data_type + '_data', subtype, self.ctl_file)
 
                 # this picks up a potentially gzipped ctl file
                 for f in glob.glob(src + '*'):
                     shutil.copy(f, target_dir)
                 
                 for file in self.data_files:
-                    src = os.path.join(self.data_src, self.data_type + '_data/' + self.data_subtype, file)
+                    src = os.path.join(self.data_src, self.data_type + '_data', subtype, file)
+                    # this picks up a potentially gzipped file
                     for f in glob.glob(src + '*'):
                         shutil.copy(f, target_dir)
                         
             case 'glb-wkflw':
-                src = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:], 'products', 'atmos', 'oznmon', 'horiz', self.ctl_file)
+                subtype = self.data_subtype if self.use_subtype else ""
+                self.logger.info(f'glb-wkflw, subtype: {subtype}')
 
-                # This picks up a potentially gzipped ctl file.
-                # This could be a method().
-                for f in glob.glob(src + '*'):
-                    shutil.copy(f, target_dir)
+                if self.data_type == 'rad':
+                    # tested on hera
 
-                for file in self.data_files:
-                    fname = os.path.basename(file)
-                    date = fname.split(".")[2]
-                    pdy = date[:-2]
-                    hh = date[-2:]
-                    fsrc = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'products', 'atmos', 'oznmon', 'horiz', fname)
+                    # locate tar file
+                    tarfile = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:],
+                                              'products', 'atmos', mon, 'radmon_' + self.data_subtype + '.tar.gz')
+                    self.logger.info(f' tarfile: {tarfile}')
 
-                    # this picks up a potentially gzipped ctl file
-                    for f in glob.glob(fsrc + '*'):
+                    cmd = 'tar -xf ' + tarfile + ' -C ' + target_dir + ' ' + self.ctl_file + '.gz'
+                    self.logger.info(f' cmd: {cmd}')
+                    os.system(cmd)
+
+                    for file in self.data_files:
+                        date = os.path.basename(file).split(".")[2]
+                        pdy = date[:-2]
+                        hh = date[-2:]
+
+                        tarfile = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'products', 'atmos', mon,
+                                                  'radmon_' + self.data_subtype + '.tar.gz')
+                        cmd = 'tar -xf ' + tarfile + ' -C ' + target_dir + ' ' + file + '.gz'
+                        self.logger.info(f' cmd: {cmd}')
+                        os.system(cmd)
+
+                else:
+                    # tested on hera
+
+                    src = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:], 
+                                           'products', 'atmos', mon, subtype, self.ctl_file)
+                    self.logger.info(f' src: {src}')
+
+                    # This picks up a potentially gzipped ctl file.
+                    # This could be a method().
+                    for f in glob.glob(src + '*'):
                         shutil.copy(f, target_dir)
 
-#           Need to handle these two cases
-#           case 'gfs-ops':
-#           case 'leg-mon':
+                    for file in self.data_files:
+                        date = os.path.basename(file).split(".")[2]
+                        pdy = date[:-2]
+                        hh = date[-2:]
+
+                        fsrc = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'products', 'atmos', mon, subtype, fname)
+                        # this picks up a potentially gzipped file
+                        for f in glob.glob(fsrc + '*'):
+                            shutil.copy(f, target_dir)
+
+            case 'gfs-ops':
+                subtype = self.data_subtype if self.use_subtype else ""
+                self.logger.info(f'gfs-ops, subtype: {subtype}')
+
+                # This will have to be tested on wcoss2.  I don't have rad data in gfs-ops form on hera.
+                #
+                if self.data_type == 'rad':
+                    # locate tar file
+                    tarfile = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:],
+                                               'atmos', mon, 'radmon_' + self.data_subtype + '.tar.gz')
+                    self.logger.info(f' tarfile: {tarfile}')
+
+                    cmd = 'tar -xf ' + tarfile + ' -C ' + target_dir + ' ' + self.ctl_file + '.gz'
+                    self.logger.info(f' cmd: {cmd}')
+                    os.system(cmd)
+
+                    for file in self.data_files:
+                        date = os.path.basename(file).split(".")[2]
+                        pdy = date[:-2]
+                        hh = date[-2:]
+
+                        tarfile = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'atmos', mon, 'radmon_' + self.data_subtype + '.tar.gz')
+                        cmd = 'tar -xf ' + tarfile + ' -C ' + target_dir + ' ' + file + '.gz'
+                        self.logger.info(f' cmd: {cmd}')
+                        os.system(cmd)
+
+                else: 
+                    # tested on hera
+
+                    src = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:], 'atmos', mon, subtype, self.ctl_file)
+                    # This picks up a potentially gzipped ctl file.
+                    # This could be a method().
+                    for f in glob.glob(src + '*'):
+                        shutil.copy(f, target_dir)
+
+                    for file in self.data_files:
+                        fname = os.path.basename(file)
+                        date = fname.split(".")[2]
+                        pdy = date[:-2]
+                        hh = date[-2:]
+
+                        if self.use_subtype:
+                            fsrc = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'atmos', mon, self.data_subtype, fname)
+                        else:
+                            fsrc = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'atmos', mon, fname)
+
+                        # this picks up a potentially gzipped file
+                        for f in glob.glob(fsrc + '*'):
+                            shutil.copy(f, target_dir)
+
+            case 'leg-mon':
+                self.logger.info(f'identified leg-mon case: {self.dir_struct}')
+                mon = self.data_type + 'mon'
+                self.logger.info(f' mon: {mon}')
+ 
+                if self.data_type == 'rad':
+                    # test on wcoss2
+                    self.logger.info(f'case rad identified')
+                    tarfile = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:], mon,
+                                               'radmon_' + self.data_subtype + '.tar.gz')
+                    self.logger.info(f' tarfile: {tarfile}')
+
+                    if os.path.exists(tarfile):
+                        cmd = 'tar -xf ' + tarfile + ' -C ' + target_dir + ' ' + self.ctl_file + '.gz'
+                        self.logger.info(f' cmd: {cmd}')
+                        os.system(cmd)
+
+                    for file in self.data_files:
+                        date = os.path.basename(file).split(".")[2]
+                        pdy = date[:-2]
+                        hh = date[-2:]
+
+                        tarfile = os.path.join(self.data_src, 'gdas.' + pdy, hh, mon, 'radmon_' + self.data_subtype + '.tar.gz')
+                        if os.path.exists(tarfile):
+                            cmd = 'tar -xf ' + tarfile + ' -C ' + target_dir + ' ' + file + '.gz'
+                            self.logger.info(f' cmd: {cmd}')
+                            os.system(cmd)
+
+                else:
+                    # fix ozn data and retest on hera
+                    subtype = self.data_subtype if self.use_subtype else ""
+                    src = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:], mon, self.data_subtype, self.ctl_file)
+                    self.logger.info(f'src: {src}') 
+                    # This picks up a potentially gzipped ctl file.
+                    # This could be a method().
+                    for f in glob.glob(src + '*'):
+                        shutil.copy(f, target_dir)
+
+                    for file in self.data_files:
+                        fname = os.path.basename(file)
+                        date = fname.split(".")[2]
+                        pdy = date[:-2]
+                        hh = date[-2:]
+    
+                        if self.use_subtype:
+                            fsrc = os.path.join(self.data_src, mon, 'stats', 'gdas.' + pdy, hh, self.data_subtype, fname)
+                        else:
+                            fsrc = os.path.join(self.data_src, mon, 'stats', 'gdas.' + pdy, hh, fname)
+                        self.logger.info(f'fsrc: {fsrc}')
+
+                        # this picks up a potentially gzipped file
+                        for f in glob.glob(fsrc + '*'):
+                            shutil.copy(f, target_dir)
 
             case _:
                 self.logger.info(f'no match on dir_struct {self.dir_struct}')
 
         for f in glob.glob(target_dir + '/*.gz'):
             os.system(f'gunzip {f}')
-
-        self.logger.info(f'<-- copy_data')
-
-
-# --------------------------------------------------------------------------------------------
-def load_data(data_location, config, plot_yaml, logger):
-    """
-    Determine necessary data and control files for plotting and untar/copy/link into
-    local work space directory.
-
-    Parameters:
-        data_location (str): path to data files
-        config
-        plot_yaml (file): yaml file with plot information
-        logger (Logger): Logger object for logging messages.
-
-    Return:
-        None
-    """
-
-    logger.info(f'--> load_data')
-
-    sat = config.get('SAT')
-    sensor = config.get('SENSOR')
-    pdate = datetime.strftime(config.get('PDATE'), '%Y%m%d%H')
-    pdy = pdate[:-2]
-    hh = pdate[-2:]
-    logger.info(f' pdate, pdy, hh: {pdate} {pdy} {hh}')
-
-    # for the moment assume only OZN data
-    data_type = 'ozn'
- 
-    # load plot_yaml and return the control and list of data files
-    ctl_file, data_files = getfiles(data_location, plot_yaml, pdate, logger)
-
-    # determine type of data directory structure
-    dir_type = get_dir_type(data_location, data_type, pdate, ctl_file, logger)
- 
-    # iterate over data_files and copy/link to cwd
- 
-
-    # this should tell us what kind of data we're after
-#   plot_template = config.get('PLOT_TEMPLATE')
-#   logger.info(f'plot_template: {plot_template}')
-
-#   if sat is not None:
-#       logger.info(f'SAT IS NOT NONE')
-   
-#   if is_ozn_data(sensor):
-#       logger.info(f'OZN DATA')
-#   else:
-#       logger.info(f"NOPE ISN'T OZN DATA")
-
-#   filtered_values = [value for key, value in config.items() if key.startswith('PDATEm')] 
-#   cycle_times = [datetime.strftime(value, '%Y%m%d%H') for value in filtered_values]
-#   logger.info(f'cycle_times: {cycle_times}')
-
-#   data_files = locate_data(sat, sensor, cycle_times, data_path, logger)
-
-    logger.info(f'<-- load_data')
-
-# --------------------------------------------------------------------------------------------
-
-
-def setupdata(data_location, config, plot_yaml, logger):
-    """
-    Read in config and plot_yaml file and set up required data files locally.
-
-    Parameters:
-        data_location (str): path to data files
-        plot_yaml (file): yaml file with plot information
-        logger (Logger): Logger object for logging messages.
-
-    Return:
-        None
-    """
-
-    logger.info(f'--> setupdata')
-    logger.info(f' data_location: {data_location}')
-    logger.info(f' plot_yaml: {plot_yaml}')
-    logger.info(f' config: {config}')
-
-    # Load data into local directory
-    load_data(data_location, config, plot_yaml, logger)
-    
-    logger.info(f'<-- setupdata')
-
-#   try:
-#       mon_sources = args.input
-#       with open(mon_sources, 'r') as mon_sources_opened:
-#           mon_dict = yaml.safe_load(mon_sources_opened)
-#   except Exception as e:
-#       logger.abort('setUpData is expecting a valid model plot yaml file, but encountered ' +
-#                    f'errors when attempting to load: {mon_sources}, error: {e}')
-
-#   try:
-#       cycles = get_cycles(args.pdate, logger)
-#       logger.info(f'cycles: {cycles}')
-        
-#   except Exception as e:
-#       logger.abort('setUpData is expecting a valid pdate but encountered ' +
-#                    f'errors when attempting to load: {mon_sources}, error: {e}')
