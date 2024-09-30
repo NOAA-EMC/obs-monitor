@@ -13,7 +13,7 @@ datasets:
   - name: gnorm
     type: CsvSpace
     filenames:
-      - {{DATA}}/min_data/gnorm_data.txt
+      - {{DATA}}/gnorm_data.txt
     groups:
       - name: GsiIeee
         variables:

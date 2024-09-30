@@ -193,17 +193,12 @@ if __name__ == "__main__":
                     plot_dir = os.path.join(workdir, plot_yaml.split('.')[0])
                     os.makedirs(plot_dir)
                     os.chdir(plot_dir)
+                    logger.info(f'cwd: {os.getcwd()}')
 
                     config['DATA'] = plot_dir 
-#                   logger.info(f'plot_dir: {plot_dir}')
-
                     genYaml(plot_template, plot_yaml, config)
 
-                    # need to send data_location into setupdata maybe instead of config?  files we need should be specified in plot_yaml file
                     plotData = OM_data(data_location, config, plot_yaml, logger)
-
-#                    setupdata(data_location, config, plot_yaml, logger)
-
                     eva(plot_yaml)
 #                   os.remove(plot_yaml)
 
@@ -226,10 +221,19 @@ if __name__ == "__main__":
                 parm_location = os.path.join(parm, 'templates')
                 plot_template = os.path.join(parm_location, plot_template)
 
+                # move to unique directory based on plot_yaml file
+                plot_dir = os.path.join(workdir, plot_yaml.split('.')[0])
+                os.makedirs(plot_dir)
+                os.chdir(plot_dir)
+                logger.info(f'cwd: {os.getcwd()}')
+
+                config['DATA'] = plot_dir 
                 genYaml(plot_template, plot_yaml, config)
-                setupdata(config, plot_yaml, logger)
+
+                plotData = OM_data(data_location, config, plot_yaml, logger)
+#               setupdata(config, plot_yaml, logger)
                 eva(plot_yaml)
-                os.remove(plot_yaml)
+#               os.remove(plot_yaml)
 
     if 'observations' in mon_dict.keys():
         satname = None
