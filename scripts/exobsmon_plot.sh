@@ -60,7 +60,7 @@ if compgen -G "${DATA}/OM_PLOT*.yaml" > /dev/null; then
       ((ctr+=1))
    done 
 
-
+   echo "ctr: $ctr"
    if (( ${ctr} > 0 )); then
       case ${MACHINE_ID} in
          hera|orion|hercules)
@@ -78,7 +78,7 @@ if compgen -G "${DATA}/OM_PLOT*.yaml" > /dev/null; then
 
 	 wcoss2)  
             # submit plot job
-            mem=$((8*${ctr})) 
+            mem=$((12*${ctr})) 
 	    plotjob_id=$(${SUB} -q $JOB_QUEUE -A $ACCOUNT -o ${logfile} -e ${logfile} \
 	        -v "PYTHONPATH=${PYTHONPATH}, PATH=${PATH}, HOMEobsmon=${HOMEobsmon}, MODEL=${MODEL}, \
 		    CNTRLobsmon=${CNTRLobsmon}, PARMobsmon=${PARMobsmon}, DATA=${DATA}, CARTOPY_DATA_DIR=${CARTOPY_DATA_DIR}, \
@@ -86,10 +86,10 @@ if compgen -G "${DATA}/OM_PLOT*.yaml" > /dev/null; then
 	        -l place=vscatter,select=1:ncpus=${ctr}:mem=${mem}gb:prepost=true,walltime=1:00:00 -N ${jobname} ${USHobsmon}/plot_wcoss2.sh)
 
             # submit cleanup job to run after plot job
- 	    ${SUB} -q $JOB_QUEUE -A $ACCOUNT -o ${logfile_clnup} -e ${logfile_clnup} \
-  	        -v "DATA=${DATA}, KEEPDATA=${KEEPDATA}, NET=${NET}, DATAROOT=${DATAROOT}, \
-		    COMOUTplots=${COMOUTplots}, DATA=${DATA}, MACHINE_ID=${MACHINE_ID}" \
-                -l select=1:mem=500mb,walltime=1:00:00 -W depend=afterok:${plotjob_id} -N "OM_cleanup" ${USHobsmon}/om_cleanup.sh
+#	    ${SUB} -q $JOB_QUEUE -A $ACCOUNT -o ${logfile_clnup} -e ${logfile_clnup} \
+# 	        -v "DATA=${DATA}, KEEPDATA=${KEEPDATA}, NET=${NET}, DATAROOT=${DATAROOT}, \
+#	    COMOUTplots=${COMOUTplots}, DATA=${DATA}, MACHINE_ID=${MACHINE_ID}" \
+#               -l select=1:mem=500mb,walltime=1:00:00 -W depend=afterok:${plotjob_id} -N "OM_cleanup" ${USHobsmon}/om_cleanup.sh
 
          ;;     
       esac

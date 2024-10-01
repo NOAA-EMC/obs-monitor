@@ -59,7 +59,7 @@ class OM_data:
         self.logger.info(f'   dir_struct: {self.dir_struct}')
 
 # maybe dump plot_dict as separate method
-        self.logger.info(f'    plot_dict: {self.plot_dict}')
+#       self.logger.info(f'    plot_dict: {self.plot_dict}')
 
         self.logger.info('end dump OM_data')
         self.logger.info('=== ==== =======')
@@ -153,18 +153,20 @@ class OM_data:
         match mon:
             case 'oznmon':
                 # 'horiz' should be subtype, no?
-                gw_test = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:], 'products', 'atmos', mon, 'horiz', self.ctl_file)
-                go_test = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:], 'atmos', mon, 'horiz', self.ctl_file)
-                lm_test = os.path.join(self.data_src, mon, 'stats', 'gdas.' + self.pdate[:-2], self.pdate[-2:], 'horiz', self.ctl_file)
+                gw_test = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:], 
+                                       'products', 'atmos', mon, 'horiz', self.ctl_file)
+                go_test = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:], 
+                                       'atmos', mon, self.data_subtype, self.ctl_file)
+                lm_test = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:], 
+                                       'oznmon', self.data_subtype, self.ctl_file)
 
             case 'radmon':
                 gw_test = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:],
                               'products', 'atmos', mon, 'radmon_' + self.data_subtype + '.tar.gz')
                 go_test = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:],
-                              'atmos', mon, 'radmon_' + self.data_subtype + '.tar.ga')
+                              'atmos', mon, 'radmon_' + self.data_subtype + '.tar.gz')
                 lm_test = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:], 
                               'radmon', 'radmon_' + self.data_subtype + '.tar.gz')
-                self.logger.info(f'lm_test: {lm_test}')
 
             case 'minmon':
                 gw_test = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:], 'products', 'atmos', mon)
@@ -181,271 +183,375 @@ class OM_data:
         elif os.path.exists(lm_test):
             self.dir_struct = 'leg-mon'
 
+
 # --------------------------------------------------------------------------------------------
-    def copy_data(self, target_dir ):
+    def get_rad_datafile(self, cycle, file, dest_dir):
+        """
+        Legacy radmon data is unique in that it is stored in tar files (to reduce file
+        count).  There are 4 files for each cycle: radmon_angle.tar.gz, radon_bcoef.tar.gz,
+        radmon_bcor.tar.gz, and radmon_time.tar.gz.  The input file name will be extracted 
+        (if present) from the specified tar file.
+
+        Note that data in obs-mon structure (used only for development) is simply a 
+        directory containing uncompressed files (not stored in a tar file).
+
+        Parameters:
+            cycle (str):   cycle time (in YYYYMMDDHH format) of the requested tar file
+            file (str):    data file name 
+            dest_dir (path):  full directory path to where data file is to be extracted. 
+        Return:
+            None
+
+        """
+
+        pdy = cycle[:-2]
+        hh = cycle[-2:]
+
+        match self.dir_struct:
+            case 'obs-mon':
+                tarfile = ""
+                f = os.path.join(self.data_src, 'rad_data', file) 
+                if os.path.isfile(f):
+                    shutil.copy(f, dest_dir)
+
+            case 'glb-wkflw':
+                self.logger.inf(f'case glb-wkflw not yet supported') 
+                tarfile = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'products', 'atmos', 'radmon', 'radmon_' + self.data_subtype + '.tar.gz')
+            case 'gfs-ops':
+                tarfile = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'atmos', 'radmon', 'radmon_' + self.data_subtype + '.tar.gz')
+            case 'leg-mon':
+                tarfile = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'radmon', 'radmon_' + self.data_subtype + '.tar.gz')
+
+        if os.path.isfile(tarfile):
+            os.system('tar -xf ' + tarfile + ' -C ' + dest_dir + ' --wildcards ' + file + '*')
+
+# --------------------------------------------------------------------------------------------
+    def get_ozn_datafile(self, cycle, file, dest_dir):
+        """
+        Parameters:
+            cycle (str):   cycle time (in YYYYMMDDHH format) of the requested tar file
+            file (str):    data file name 
+            dest_dir (path):  full directory path to where data file is to be extracted. 
+        Return:
+            None
+
+        """
+
+        pdy = cycle[:-2]
+        hh = cycle[-2:]
+        self.logger.info(f'--> get_ozn_datafile, cycle: {cycle}, file: {file}, des_dir: {dest_dir}')
+        self.logger.info(f' self.dir_struct: {self.dir_struct}')
+
+        match self.dir_struct:
+            case 'obs-mon':
+                f = os.path.join(self.data_src, 'ozn_data', self.data_subtype, file) 
+                if os.path.isfile(f):
+                    shutil.copy(f, dest_dir)
+#           case 'glb-wkflw':
+#               self.logger.info(f'case glb-wkflw not yet supported') 
+#               tarfile = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'products', 'atmos', 'radmon', 'radmon_' + self.data_subtype + '.tar.gz')
+            case 'gfs-ops':
+                ff = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'atmos', 'oznmon', self.data_subtype, file)
+                # this picks up both ungzipped and gzipped files
+                for f in glob.glob(ff + '*'):
+                    shutil.copy(f, dest_dir)
+            case 'leg-mon':
+                ff = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'oznmon', self.data_subtype, file)
+                # this picks up both ungzipped and gzipped files
+                for f in glob.glob(ff + '*'):
+                    shutil.copy(f, dest_dir)
+                 
+# --------------------------------------------------------------------------------------------
+    def get_min_datafile(self, cycle, file, dest_dir):
+        """
+        Parameters:
+            cycle (str):   cycle time (in YYYYMMDDHH format) of the requested tar file
+            file (str):    data file name 
+            dest_dir (path):  full directory path to where data file is to be extracted. 
+        Return:
+            None
+
+        """
+
+        pdy = cycle[:-2]
+        hh = cycle[-2:]
+        self.logger.info(f'--> get_min_datafile, cycle: {cycle}, file: {file}, des_dir: {dest_dir}')
+        self.logger.info(f' self.dir_struct: {self.dir_struct}')
+
+        match self.dir_struct:
+            case 'obs-mon':
+                f = os.path.join(self.data_src, 'min_data', file) 
+                if os.path.isfile(f):
+                    shutil.copy(f, dest_dir)
+#           case 'glb-wkflw':
+#               self.logger.info(f'case glb-wkflw not yet supported') 
+#               tarfile = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'products', 'atmos', 'radmon', 'radmon_' + self.data_subtype + '.tar.gz')
+            case 'gfs-ops':
+                ff = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'atmos', 'minmon', file)
+                # this picks up both ungzipped and gzipped files
+                for f in glob.glob(ff + '*'):
+                    shutil.copy(f, dest_dir)
+            case 'leg-mon':
+                ff = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'minmon', file)
+                # this picks up both ungzipped and gzipped files
+                for f in glob.glob(ff + '*'):
+                    shutil.copy(f, dest_dir)
+                 
+
+# --------------------------------------------------------------------------------------------
+    def copy_data(self, dest_dir ):
         """
         Copy required data and control files to requested directory.
 
         Parameters:
-            target_dir (path): directory to which data is to be copied
+            dest_dir (path): directory to which data is to be copied
         Return:
             None
         """
 
-        self.logger.info(f'target_dir: {target_dir}')
+        self.logger.info(f'dest_dir: {dest_dir}')
         self.logger.info(f'self.use_subtype: {self.use_subtype}')
         mon = self.data_type + 'mon'
 
-        match self.dir_struct:
-            case 'obs-mon':
+        match self.data_type:
+            case 'rad':
+                self.get_rad_datafile(self.pdate, self.ctl_file, dest_dir)
+                for file in self.data_files:
+                    date = os.path.basename(file).split(".")[2]
+                    self.get_rad_datafile(date, file, dest_dir)
+            case 'ozn':
+                self.get_ozn_datafile(self.pdate, self.ctl_file, dest_dir)
+                for file in self.data_files:
+                    date = os.path.basename(file).split(".")[2]
+                    self.get_ozn_datafile(date, file, dest_dir)
+
+            case 'min':
+                for file in self.data_files:
+                    if file == 'gnorm_data.txt':
+                        date = self.pdate    
+                    else:
+                        date = os.path.basename(file).split(".")[0]
+                    self.get_min_datafile(date, file, dest_dir)
+
+            case _: 
+                self.logger.info(f'unsupported case {self.data_type} in match self.data_type')
+
+#       match self.dir_struct:
+#           case 'obs-mon':
                 # tested on hera
 
-                subtype = self.data_subtype if self.use_subtype else ""
-                if self.ctl_file is not None:
-                    src = os.path.join(self.data_src, self.data_type + '_data', subtype, self.ctl_file)
-                    self.logger.info(f'src: {src}')
+#               if self.data_type == 'rad':
+#                   self.logger.info('skipping')
+#               elif self.data_type == 'ozn':
+#                   self.logger.info('skipping')
+#               else:
+#                   subtype = self.data_subtype if self.use_subtype else ""
+#                   if self.ctl_file is not None:
+#                       src = os.path.join(self.data_src, self.data_type + '_data', subtype, self.ctl_file)
+#                       self.logger.info(f'src: {src}')
 
-                    # this picks up a potentially gzipped ctl file
-                    for f in glob.glob(src + '*'):
-                        shutil.copy(f, target_dir)
-                
-                for file in self.data_files:
-                    src = os.path.join(self.data_src, self.data_type + '_data', subtype, file)
-                    self.logger.info(f'src: {src}')
+#                       # this picks up a potentially gzipped ctl file
+#                       for f in glob.glob(src + '*'):
+#                           shutil.copy(f, dest_dir)
+#               
+#                   for file in self.data_files:
+#                       src = os.path.join(self.data_src, self.data_type + '_data', subtype, file)
+#                       self.logger.info(f'src: {src}')
 
-                    # this picks up a potentially gzipped file
-                    for f in glob.glob(src + '*'):
-                        shutil.copy(f, target_dir)
-                        
-            case 'glb-wkflw':
-                subtype = self.data_subtype if self.use_subtype else ""
-                self.logger.info(f'glb-wkflw, subtype: {subtype}')
+#                       # this picks up a potentially gzipped file
+#                       for f in glob.glob(src + '*'):
+#                           shutil.copy(f, dest_dir)
 
-                if self.data_type == 'rad':
-                    # tested on hera
+#           case 'glb-wkflw':
+#               subtype = self.data_subtype if self.use_subtype else ""
+#               self.logger.info(f'glb-wkflw, subtype: {subtype}')
 
-                    # locate tar file
-                    tarfile = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:],
-                                              'products', 'atmos', mon, 'radmon_' + self.data_subtype + '.tar.gz')
-                    self.logger.info(f' tarfile: {tarfile}')
+#               if self.data_type == 'rad':
+#                   # tested on hera
 
-                    cmd = 'tar -xf ' + tarfile + ' -C ' + target_dir + ' ' + self.ctl_file + '.gz'
-                    self.logger.info(f' cmd: {cmd}')
-                    os.system(cmd)
+#                   # locate tar file
+#                   tarfile = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:],
+#                                             'products', 'atmos', mon, 'radmon_' + self.data_subtype + '.tar.gz')
+#                   self.logger.info(f' tarfile: {tarfile}')
 
-                    for file in self.data_files:
-                        date = os.path.basename(file).split(".")[2]
-                        pdy = date[:-2]
-                        hh = date[-2:]
+#                   cmd = 'tar -xf ' + tarfile + ' -C ' + dest_dir + ' ' + self.ctl_file + '.gz'
+#                   self.logger.info(f' cmd: {cmd}')
+#                   os.system(cmd)
 
-                        tarfile = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'products', 'atmos', mon,
-                                                  'radmon_' + self.data_subtype + '.tar.gz')
-                        cmd = 'tar -xf ' + tarfile + ' -C ' + target_dir + ' ' + file + '.gz'
-                        self.logger.info(f' cmd: {cmd}')
-                        os.system(cmd)
+#                   for file in self.data_files:
+#                       date = os.path.basename(file).split(".")[2]
+#                       pdy = date[:-2]
+#                       hh = date[-2:]
 
-                elif self.data_type == 'min':
-                    if self.ctl_file is not None:
-                        src = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:], 
-                                               'products', 'atmos', mon, self.ctl_file)
-                        self.logger.info(f'src: {src}')
-                        # This picks up a potentially gzipped ctl file.
-                        # This could be a method().
-                        for f in glob.glob(src + '*'):
-                            shutil.copy(f, target_dir)
+#                       tarfile = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'products', 'atmos', mon,
+#                                                 'radmon_' + self.data_subtype + '.tar.gz')
+#                       cmd = 'tar -xf ' + tarfile + ' -C ' + dest_dir + ' ' + file + '.gz'
+#                       self.logger.info(f' cmd: {cmd}')
+#                       os.system(cmd)
 
-                    for file in self.data_files:
-                        self.logger.info(f'file: {file}')
-                        if file == 'gnorm_data.txt':
-                            date = self.pdate
-                        else:
-                            date = os.path.basename(file).split(".")[0]
-                        pdy = date[:-2]
-                        hh = date[-2:]
+#               elif self.data_type == 'min':
+#                   if self.ctl_file is not None:
+#                       src = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:], 
+#                                              'products', 'atmos', mon, self.ctl_file)
+#                       self.logger.info(f'src: {src}')
+#                       # This picks up a potentially gzipped ctl file.
+#                       # This could be a method().
+#                       for f in glob.glob(src + '*'):
+#                           shutil.copy(f, dest_dir)
 
-                        fsrc = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'products', 'atmos', mon, file)
-                        # this picks up a potentially gzipped file
-                        for f in glob.glob(fsrc + '*'):
-                            shutil.copy(f, target_dir)
+#                   for file in self.data_files:
+#                       self.logger.info(f'file: {file}')
+#                       if file == 'gnorm_data.txt':
+#                           date = self.pdate
+#                       else:
+#                           date = os.path.basename(file).split(".")[0]
+#                       pdy = date[:-2]
+#                       hh = date[-2:]
 
-                else:
-                    # tested on hera
+#                       fsrc = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'products', 'atmos', mon, file)
+#                       # this picks up a potentially gzipped file
+#                       for f in glob.glob(fsrc + '*'):
+#                           shutil.copy(f, dest_dir)
 
-                    src = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:], 
-                                               'products', 'atmos', mon, subtype, self.ctl_file)
-                    self.logger.info(f' src: {src}')
+#               else:
+#                   # tested on hera
 
-                    # This picks up a potentially gzipped ctl file.
-                    # This could be a method().
-                    for f in glob.glob(src + '*'):
-                        shutil.copy(f, target_dir)
+#                   src = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:], 
+#                                              'products', 'atmos', mon, subtype, self.ctl_file)
+#                   self.logger.info(f' src: {src}')
 
-                    for file in self.data_files:
-                        date = os.path.basename(file).split(".")[2]
-                        pdy = date[:-2]
-                        hh = date[-2:]
+#                   # This picks up a potentially gzipped ctl file.
+#                   # This could be a method().
+#                   for f in glob.glob(src + '*'):
+#                       shutil.copy(f, dest_dir)
 
-                        fsrc = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'products', 'atmos', mon, subtype, fname)
-                        # this picks up a potentially gzipped file
-                        for f in glob.glob(fsrc + '*'):
-                            shutil.copy(f, target_dir)
+#                   for file in self.data_files:
+#                       date = os.path.basename(file).split(".")[2]
+#                       pdy = date[:-2]
+#                       hh = date[-2:]
 
-            case 'gfs-ops':
-                subtype = self.data_subtype if self.use_subtype else ""
-                self.logger.info(f'gfs-ops, subtype: {subtype}')
+#                       fsrc = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'products', 'atmos', mon, subtype, fname)
+#                       # this picks up a potentially gzipped file
+#                       for f in glob.glob(fsrc + '*'):
+#                           shutil.copy(f, dest_dir)
 
-                # This will have to be tested on wcoss2.  I don't have rad data in gfs-ops form on hera.
-                #
-                if self.data_type == 'rad':
-                    # locate tar file
-                    tarfile = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:],
-                                               'atmos', mon, 'radmon_' + self.data_subtype + '.tar.gz')
-                    self.logger.info(f' tarfile: {tarfile}')
+#           case 'gfs-ops':
+#               subtype = self.data_subtype if self.use_subtype else ""
+#               self.logger.info(f'gfs-ops, subtype: {subtype}')
 
-                    cmd = 'tar -xf ' + tarfile + ' -C ' + target_dir + ' ' + self.ctl_file + '.gz'
-                    self.logger.info(f' cmd: {cmd}')
-                    os.system(cmd)
+#               if self.data_type == 'rad':
+#                   self.logger.info('skipping')
 
-                    for file in self.data_files:
-                        date = os.path.basename(file).split(".")[2]
-                        pdy = date[:-2]
-                        hh = date[-2:]
+#               elif self.data_type == 'min': 
+#                   self.logger.info('case gfs-ops, min')
+#                   if self.ctl_file is not None:
+#                       src = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:], 
+#                                              'atmos', mon, self.ctl_file)
+#                       self.logger.info(f'src: {src}')
+#                       # This picks up a potentially gzipped ctl file.
+#                       # This could be a method().
+#                       for f in glob.glob(src + '*'):
+#                           shutil.copy(f, dest_dir)
 
-                        tarfile = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'atmos', mon, 'radmon_' + self.data_subtype + '.tar.gz')
-                        cmd = 'tar -xf ' + tarfile + ' -C ' + target_dir + ' ' + file + '.gz'
-                        self.logger.info(f' cmd: {cmd}')
-                        os.system(cmd)
+#                   for file in self.data_files:
+#                       self.logger.info(f'file: {file}')
+#                       if file == 'gnorm_data.txt':
+#                           date = self.pdate
+#                       else:
+#                           date = os.path.basename(file).split(".")[0]
+#                       pdy = date[:-2]
+#                       hh = date[-2:]
 
-                elif self.data_type == 'min': 
-                    self.logger.info('case gfs-ops, min')
-                    if self.ctl_file is not None:
-                        src = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:], 
-                                               'atmos', mon, self.ctl_file)
-                        self.logger.info(f'src: {src}')
-                        # This picks up a potentially gzipped ctl file.
-                        # This could be a method().
-                        for f in glob.glob(src + '*'):
-                            shutil.copy(f, target_dir)
-
-                    for file in self.data_files:
-                        self.logger.info(f'file: {file}')
-                        if file == 'gnorm_data.txt':
-                            date = self.pdate
-                        else:
-                            date = os.path.basename(file).split(".")[0]
-                        pdy = date[:-2]
-                        hh = date[-2:]
-
-                        fsrc = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'atmos', mon, file)
-                        # this picks up a potentially gzipped file
-                        for f in glob.glob(fsrc + '*'):
-                            shutil.copy(f, target_dir)
+#                       fsrc = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'atmos', mon, file)
+#                       # this picks up a potentially gzipped file
+#                       for f in glob.glob(fsrc + '*'):
+#                           shutil.copy(f, dest_dir)
 
 
-                else: 
-                    # tested on hera
+#               else: 
+#                   # tested on hera
 
-                    src = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:], 'atmos', mon, subtype, self.ctl_file)
-                    # This picks up a potentially gzipped ctl file.
-                    # This could be a method().
-                    for f in glob.glob(src + '*'):
-                        shutil.copy(f, target_dir)
+#                   src = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:], 'atmos', mon, subtype, self.ctl_file)
+#                   # This picks up a potentially gzipped ctl file.
+#                   # This could be a method().
+#                   for f in glob.glob(src + '*'):
+#                       shutil.copy(f, dest_dir)
 
-                    for file in self.data_files:
-                        fname = os.path.basename(file)
-                        date = fname.split(".")[2]
-                        pdy = date[:-2]
-                        hh = date[-2:]
+#                   for file in self.data_files:
+#                       fname = os.path.basename(file)
+#                       date = fname.split(".")[2]
+#                       pdy = date[:-2]
+#                       hh = date[-2:]
 
-                        if self.use_subtype:
-                            fsrc = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'atmos', mon, self.data_subtype, fname)
-                        else:
-                            fsrc = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'atmos', mon, fname)
+#                       if self.use_subtype:
+#                           fsrc = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'atmos', mon, self.data_subtype, fname)
+#                       else:
+#                           fsrc = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'atmos', mon, fname)
 
-                        # this picks up a potentially gzipped file
-                        for f in glob.glob(fsrc + '*'):
-                            shutil.copy(f, target_dir)
+#                       # this picks up a potentially gzipped file
+#                       for f in glob.glob(fsrc + '*'):
+#                           shutil.copy(f, dest_dir)
 
-            case 'leg-mon':
-                self.logger.info(f'identified leg-mon case: {self.dir_struct}')
-                mon = self.data_type + 'mon'
-                self.logger.info(f' mon: {mon}')
- 
-                if self.data_type == 'rad':
-                    # test on wcoss2
-                    self.logger.info(f'case rad identified')
-                    tarfile = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:], mon,
-                                               'radmon_' + self.data_subtype + '.tar.gz')
-                    self.logger.info(f' tarfile: {tarfile}')
+#           case 'leg-mon':
+#               self.logger.info(f'identified leg-mon case: {self.dir_struct}')
+#               mon = self.data_type + 'mon'
+#               self.logger.info(f' mon: {mon}')
+#
+#               if self.data_type == 'rad':
+#                   self.logger.info('skipping')
 
-                    if os.path.exists(tarfile):
-                        cmd = 'tar -xf ' + tarfile + ' -C ' + target_dir + ' ' + self.ctl_file + '.gz'
-                        self.logger.info(f' cmd: {cmd}')
-                        os.system(cmd)
+#               elif self.data_type == 'min': 
+#                   self.logger.info('case gfs-ops, min')
+#                   if self.ctl_file is not None:
+#                       src = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:], mon, self.ctl_file)
+#                       self.logger.info(f'src: {src}')
+#                       # This picks up a potentially gzipped ctl file.
+#                       # This could be a method().
+#                       for f in glob.glob(src + '*'):
+#                           shutil.copy(f, dest_dir)
 
-                    for file in self.data_files:
-                        date = os.path.basename(file).split(".")[2]
-                        pdy = date[:-2]
-                        hh = date[-2:]
+#                   for file in self.data_files:
+#                       self.logger.info(f'file: {file}')
+#                       if file == 'gnorm_data.txt':
+#                           date = self.pdate
+#                       else:
+#                           date = os.path.basename(file).split(".")[0]
+#                       pdy = date[:-2]
+#                       hh = date[-2:]
 
-                        tarfile = os.path.join(self.data_src, 'gdas.' + pdy, hh, mon, 'radmon_' + self.data_subtype + '.tar.gz')
-                        if os.path.exists(tarfile):
-                            cmd = 'tar -xf ' + tarfile + ' -C ' + target_dir + ' ' + file + '.gz'
-                            self.logger.info(f' cmd: {cmd}')
-                            os.system(cmd)
+#                       fsrc = os.path.join(self.data_src, 'gdas.' + pdy, hh, mon, file)
+#                       # this picks up a potentially gzipped file
+#                       for f in glob.glob(fsrc + '*'):
+#                           shutil.copy(f, dest_dir)
 
-                elif self.data_type == 'min': 
-                    self.logger.info('case gfs-ops, min')
-                    if self.ctl_file is not None:
-                        src = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:], mon, self.ctl_file)
-                        self.logger.info(f'src: {src}')
-                        # This picks up a potentially gzipped ctl file.
-                        # This could be a method().
-                        for f in glob.glob(src + '*'):
-                            shutil.copy(f, target_dir)
+#               else:
+#                   # fix ozn data and retest on hera
+#                   subtype = self.data_subtype if self.use_subtype else ""
+#                   src = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:], mon, self.data_subtype, self.ctl_file)
+#                   self.logger.info(f'src: {src}') 
+#                   # This picks up a potentially gzipped ctl file.
+#                   # This could be a method().
+#                   for f in glob.glob(src + '*'):
+#                       shutil.copy(f, dest_dir)
 
-                    for file in self.data_files:
-                        self.logger.info(f'file: {file}')
-                        if file == 'gnorm_data.txt':
-                            date = self.pdate
-                        else:
-                            date = os.path.basename(file).split(".")[0]
-                        pdy = date[:-2]
-                        hh = date[-2:]
+#                   for file in self.data_files:
+#                       fname = os.path.basename(file)
+#                       date = fname.split(".")[2]
+#                       pdy = date[:-2]
+#                       hh = date[-2:]
+#   
+#                       if self.use_subtype:
+#                           fsrc = os.path.join(self.data_src, mon, 'stats', 'gdas.' + pdy, hh, self.data_subtype, fname)
+#                       else:
+#                           fsrc = os.path.join(self.data_src, mon, 'stats', 'gdas.' + pdy, hh, fname)
+#                       self.logger.info(f'fsrc: {fsrc}')
 
-                        fsrc = os.path.join(self.data_src, 'gdas.' + pdy, hh, mon, file)
-                        # this picks up a potentially gzipped file
-                        for f in glob.glob(fsrc + '*'):
-                            shutil.copy(f, target_dir)
+#                       # this picks up a potentially gzipped file
+#                       for f in glob.glob(fsrc + '*'):
+#                           shutil.copy(f, dest_dir)
 
-                else:
-                    # fix ozn data and retest on hera
-                    subtype = self.data_subtype if self.use_subtype else ""
-                    src = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:], mon, self.data_subtype, self.ctl_file)
-                    self.logger.info(f'src: {src}') 
-                    # This picks up a potentially gzipped ctl file.
-                    # This could be a method().
-                    for f in glob.glob(src + '*'):
-                        shutil.copy(f, target_dir)
+#           case _:
+#               self.logger.info(f'no match on dir_struct {self.dir_struct}')
 
-                    for file in self.data_files:
-                        fname = os.path.basename(file)
-                        date = fname.split(".")[2]
-                        pdy = date[:-2]
-                        hh = date[-2:]
-    
-                        if self.use_subtype:
-                            fsrc = os.path.join(self.data_src, mon, 'stats', 'gdas.' + pdy, hh, self.data_subtype, fname)
-                        else:
-                            fsrc = os.path.join(self.data_src, mon, 'stats', 'gdas.' + pdy, hh, fname)
-                        self.logger.info(f'fsrc: {fsrc}')
-
-                        # this picks up a potentially gzipped file
-                        for f in glob.glob(fsrc + '*'):
-                            shutil.copy(f, target_dir)
-
-            case _:
-                self.logger.info(f'no match on dir_struct {self.dir_struct}')
-
-        for f in glob.glob(target_dir + '/*.gz'):
+        for f in glob.glob(dest_dir + '/*.gz'):
             os.system(f'gunzip {f}')
