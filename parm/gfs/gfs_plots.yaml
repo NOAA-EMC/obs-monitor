@@ -14,16 +14,16 @@ cycle_interval: 6
 # gfs-ops hera
 #data: '/scratch1/NCEPDEV/da/Edward.Safford/noscrub/test_data/OpsTank/gfs/v16.3'
 # gfs-ops wcoss2
-data: '/lfs/h1/ops/prod/com/gfs/v16.3'
+#data: '/lfs/h1/ops/prod/com/gfs/v16.3'
 
 # leg-mon, hera
 #data: '/scratch1/NCEPDEV/da/Edward.Safford/noscrub/test_data/DevTank/radmon/stats/gfs'
 #data: '/lfs/h2/emc/da/noscrub/edward.safford/test_data/gfs'
 
 # leg-mon, wcoss2
-#data: '/u/edward.safford/nbns/stats/gfs'
+data: '/u/edward.safford/nbns/stats/gfs'
 
-#atellites:
+satellites:
 # - name: aura
 #   instruments:
 #     - name: omi
@@ -114,22 +114,22 @@ data: '/lfs/h1/ops/prod/com/gfs/v16.3'
 
 # Radiance
 
-# - name: g16
-#   instruments:
-#     - name: abi
-#       plot_list:
-#         - plot: rad time
-#           times: 121
-#           channels: 'all'
-#           component: ges
-#         - plot: rad bcoef
-#           times: 121
-#           channels: 'all'
-#           component: ges
-#         - plot: rad angle
-#           times: 121
-#           channels: 'all'
-#           component: ges
+  - name: g16
+    instruments:
+      - name: abi
+        plot_list:
+          - plot: rad time
+            times: 121
+            channels: 'all'
+            component: ges
+          - plot: rad bcoef
+            times: 121
+            channels: 'all'
+            component: ges
+          - plot: rad angle
+            times: 121
+            channels: 'all'
+            component: ges
 
 # - name: g18
 #   instruments:
@@ -531,20 +531,20 @@ data: '/lfs/h1/ops/prod/com/gfs/v16.3'
 #           channels: 'all'
 #           component: ges
 
-minimization:
-  - model: gfs
-    plot_list:
-      - plot: min summary
-        run: gdas
-        times: 28
+#inimization:
+# - model: gfs
+#   plot_list:
+#     - plot: min summary
+#       run: gdas
+#       times: 28
 
-      - plot: min gnorm four cycle
-        run: gdas
-        times: 28
+#     - plot: min gnorm four cycle
+#       run: gdas
+#       times: 28
 
-      - plot: min gnorm one cycle
-        run: gdas
-        times: 28
+#     - plot: min gnorm one cycle
+#       run: gdas
+#       times: 28
 
 #bservations:
 # - obstype: ps
