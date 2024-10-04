@@ -19,12 +19,6 @@ if [[ ! -e ${chan_yaml} ]]; then
    exit 2
 fi
 
-#-----------------------------------------------------
-# get data location and setup input data as necessary
-#-----------------------------------------------------
-#echo PDATE: $PDATE
-#${APRUN_PY} ${USHobsmon}/setUpData.py -i ${yaml_file} -p ${PDATE}
-
 #---------------------------------------------------------------
 # split $yaml_file into sat/instr[/plot], minimization, and obs
 # in order to reduce the plot jobs to a more managable size 
