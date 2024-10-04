@@ -1,4 +1,4 @@
-  DA Monitoring source dictionary
+#  DA Monitoring source dictionary
 
 model: gfs
 cycle_interval: 6
@@ -112,7 +112,7 @@ satellites:
             levels: '1'
             component: ges
  
- #Radiance
+# Radiance
 
   - name: g16
     instruments:

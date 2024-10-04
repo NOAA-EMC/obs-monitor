@@ -60,19 +60,17 @@ if compgen -G "${DATA}/OM_PLOT*.yaml" > /dev/null; then
       ((ctr+=1))
    done 
 
-   echo "ctr: $ctr"
    if (( ${ctr} > 0 )); then
       case ${MACHINE_ID} in
          hera|orion|hercules)
             # submit plot job
-#           plotjob_id=$(${SUB} --account ${ACCOUNT} -n ${ctr}  -o ${logfile} -D . -J ${jobname} --time=1:00:00 \
             plotjob_id=$(${SUB} --account ${ACCOUNT} -n ${ctr}  -o ${logfile} -D . -J ${jobname} --time=0:05:00 \
                    --mem=80000M --wrap "srun -l --multi-prog ${cmdfile}")
 
             # submit cleanup job to run after plot job
-#           plotjob_id=`echo ${plotjob_id} | gawk '{ print $4 }'`
-#           ${SUB} --account ${ACCOUNT} -n 1 -o ${logfile_clnup} -D . -J "OM_cleanup" --time=0:10:00 \
-#                  -p ${SERVICE_PARTITION} --dependency=afterok:${plotjob_id} ${USHobsmon}/om_cleanup.sh
+            plotjob_id=`echo ${plotjob_id} | gawk '{ print $4 }'`
+            ${SUB} --account ${ACCOUNT} -n 1 -o ${logfile_clnup} -D . -J "OM_cleanup" --time=0:10:00 \
+                   -p ${SERVICE_PARTITION} --dependency=afterok:${plotjob_id} ${USHobsmon}/om_cleanup.sh
 
          ;;
 
@@ -86,10 +84,10 @@ if compgen -G "${DATA}/OM_PLOT*.yaml" > /dev/null; then
 	        -l place=vscatter,select=1:ncpus=${ctr}:mem=${mem}gb:prepost=true,walltime=1:00:00 -N ${jobname} ${USHobsmon}/plot_wcoss2.sh)
 
             # submit cleanup job to run after plot job
-#	    ${SUB} -q $JOB_QUEUE -A $ACCOUNT -o ${logfile_clnup} -e ${logfile_clnup} \
-# 	        -v "DATA=${DATA}, KEEPDATA=${KEEPDATA}, NET=${NET}, DATAROOT=${DATAROOT}, \
-#	    COMOUTplots=${COMOUTplots}, DATA=${DATA}, MACHINE_ID=${MACHINE_ID}" \
-#               -l select=1:mem=500mb,walltime=1:00:00 -W depend=afterok:${plotjob_id} -N "OM_cleanup" ${USHobsmon}/om_cleanup.sh
+ 	    ${SUB} -q $JOB_QUEUE -A $ACCOUNT -o ${logfile_clnup} -e ${logfile_clnup} \
+  	        -v "DATA=${DATA}, KEEPDATA=${KEEPDATA}, NET=${NET}, DATAROOT=${DATAROOT}, \
+ 	    COMOUTplots=${COMOUTplots}, DATA=${DATA}, MACHINE_ID=${MACHINE_ID}" \
+                -l select=1:mem=500mb,walltime=1:00:00 -W depend=afterok:${plotjob_id} -N "OM_cleanup" ${USHobsmon}/om_cleanup.sh
 
          ;;     
       esac

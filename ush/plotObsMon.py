@@ -199,7 +199,7 @@ if __name__ == "__main__":
 
                     plotData = OM_data(data_location, config, plot_yaml, logger)
                     eva(plot_yaml)
-#                   os.remove(plot_yaml)
+                    os.remove(plot_yaml)
 
     if 'minimization' in mon_dict.keys():
         satname = None
@@ -230,7 +230,7 @@ if __name__ == "__main__":
 
                 plotData = OM_data(data_location, config, plot_yaml, logger)
                 eva(plot_yaml)
-#               os.remove(plot_yaml)
+                os.remove(plot_yaml)
 
     if 'observations' in mon_dict.keys():
         satname = None
