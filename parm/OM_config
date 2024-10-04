@@ -1,5 +1,5 @@
 
-export KEEPDATA=${KEEPDATA:-"YES"}
+export KEEPDATA=${KEEPDATA:-"NO"}
 
 readonly om_dir_root=$(cd "$(dirname "$(readlink -f -n "${BASH_SOURCE[0]}" )" )/.." && pwd -P)
 export HOMEobsmon=${om_dir_root}
