@@ -1,4 +1,3 @@
-#import yaml
 import os
 import shutil
 import glob
@@ -8,7 +7,9 @@ from datetime import datetime
 from eva.utilities.logger import Logger
 from wxflow import parse_yaml
 
+
 class OM_data:
+
     """
     Class to manage legacy obs-mon data and prepare it for plotting.
     """
