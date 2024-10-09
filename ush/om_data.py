@@ -1,11 +1,12 @@
-import yaml
+#import yaml
 import os
 import shutil
 import glob
+import pprint
 
 from datetime import datetime
 from eva.utilities.logger import Logger
-
+from wxflow import parse_yaml
 
 class OM_data:
     """
@@ -21,19 +22,19 @@ class OM_data:
         self.data_src = data_src
         self.logger = logger
         self.data_dir_type = ""
-        self.plot_dict = {}
         self.ctl_file = []
         self.data_files = []
         self.dir_struct = ""
         self.data_type = ""
         self.data_subtype = ""
+        self.run = config.get('RUN')
 
         self.load_data_files(plot_yaml)
         self.set_data_types(os.path.basename(config.get('PLOT_TEMPLATE')))
         self.set_dir_struct()
 
-        self.dump()
         self.copy_data(os.getcwd())
+        self.dump()
 
 # --------------------------------------------------------------------------------------------
 
@@ -47,17 +48,11 @@ class OM_data:
             None
         """
 
+        pp = pprint.PrettyPrinter(indent=4)
         self.logger.info(f'\n' + 'dump OM_data:')
-        self.logger.info(f'============')
-        self.logger.info(f'    data_type: {self.data_type}')
-        self.logger.info(f' data_subtype: {self.data_subtype}')
-        self.logger.info(f'        pdate: {self.pdate}')
-        self.logger.info(f'     data_src: {self.data_src}')
-        self.logger.info(f'     ctl_file: {self.ctl_file}')
-        self.logger.info(f'   data_files: {self.data_files}')
-        self.logger.info(f'   dir_struct: {self.dir_struct}')
+        self.logger.info('============')
+        pp.pprint(vars(self))
         self.logger.info('============' + '\n')
-
 # --------------------------------------------------------------------------------------------
 
     def set_data_types(self, template):
@@ -74,25 +69,24 @@ class OM_data:
         self.data_type = template[:3].lower()
         stype = template[3:].lower()
 
-        self.data_subtype = stype
+        if self.data_type == 'con':
+            if stype in ['time', 'vert']:
+                self.data_subtype = 'time_vert'
+            elif stype in ['hist', 'horz']:
+                self.data_subtype = 'horz_hist'
 
-        match self.data_type:
-            case 'con':
-                if stype in ['time', 'vert']:
-                    self.data_subtype = 'time_vert'
-                elif stype in ['hist', 'horz']:
-                    self.data_subtype = 'horz_hist'
+        elif self.data_type == 'ozn' and stype == 'summary':
+                self.data_subtype = 'time'
 
-            case 'ozn':
-                if stype == 'summary':
-                    self.data_subtype = 'time'
+        else:
+            self.data_subtype = stype
 
 # --------------------------------------------------------------------------------------------
 
     def load_data_files(self, yaml_file):
 
         """
-        Load control and data file names from plot_dict into OM_data class object.
+        Load control and data file names from yaml_file into OM_data class object.
 
         Parameters:
             yaml_file (file): yaml file with plot dict info
@@ -101,13 +95,11 @@ class OM_data:
         """
 
         try:
-            with open(yaml_file, 'r') as yaml_file_opened:
-                pd = yaml.safe_load(yaml_file_opened)
-
-                for d in pd.get('datasets'):
-                    if 'control_file' in d.keys():
-                        self.ctl_file.append(os.path.basename(d['control_file'][0]))
-                    self.data_files.append([os.path.basename(f) for f in d['filenames']])
+            pd = parse_yaml(path=yaml_file)
+            for d in pd.get('datasets'):
+                if 'control_file' in d.keys():
+                    self.ctl_file.append(os.path.basename(d['control_file'][0]))
+                self.data_files.append([os.path.basename(f) for f in d['filenames']])
 
         except Exception as e:
             self.logger.info('Warning: unable to load yaml file into dict, ' +
@@ -129,43 +121,35 @@ class OM_data:
         Return:
             None
         """
-
         mon = self.data_type + 'mon'
         om_test = os.path.join(self.data_src, self.data_type + '_data')
         gw_test = ""
         go_test = ""
         lm_test = ""
 
+        base_path = os.path.join(self.data_src, self.run + '.' + self.pdate[:-2], self.pdate[-2:])
+
         match mon:
             case 'oznmon':
-                gw_test = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:],
-                                       'products', 'atmos', mon, self.data_subtype)
-                go_test = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:],
-                                       'atmos', mon, self.data_subtype)
-                lm_test = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:],
-                                       mon, self.data_subtype)
+                gw_test = os.path.join(base_path, 'products', 'atmos', mon, self.data_subtype)
+                go_test = os.path.join(base_path, 'atmos', mon, self.data_subtype)
+                lm_test = os.path.join(base_path, mon, self.data_subtype)
 
             case 'radmon':
-                gw_test = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:],
-                                       'products', 'atmos', mon, mon + '_' + self.data_subtype +
-                                       '.tar.gz')
-                go_test = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:],
-                                       'atmos', mon, mon + '_' + self.data_subtype + '.tar.gz')
-                lm_test = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:],
-                                       mon, mon + '_' + self.data_subtype + '.tar.gz')
+                tar_file = mon + '_' + self.data_subtype + '.tar.gz'
+                gw_test = os.path.join(base_path, 'products', 'atmos', mon, tar_file)
+                go_test = os.path.join(base_path, 'atmos', mon, tar_file)
+                lm_test = os.path.join(base_path, mon, tar_file)
 
             case 'minmon':
-                gw_test = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:],
-                                       'products', 'atmos', mon)
-                go_test = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:],
-                                       'atmos', mon)
-                lm_test = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:],
-                                       mon)
+                gw_test = os.path.join(base_path, 'products', 'atmos', mon)
+                go_test = os.path.join(base_path, 'atmos', mon)
+                lm_test = os.path.join(base_path, mon)
 
             # conmon is only in obs-mon and leg-mon structures
             case 'conmon':
-                lm_test = os.path.join(self.data_src, 'gdas.' + self.pdate[:-2], self.pdate[-2:],
-                                       mon, self.data_subtype, self.ctl_file[0])
+                # rm ctl file?
+                lm_test = os.path.join(base_path, mon, self.data_subtype, self.ctl_file[0])
 
         if os.path.exists(om_test):
             self.dir_struct = 'obs-mon'
@@ -199,8 +183,7 @@ class OM_data:
             None
         """
 
-        pdy = cycle[:-2]
-        hh = cycle[-2:]
+        base_path = os.path.join(self.data_src, self.run + '.' + cycle[:-2], cycle[-2:])
 
         match self.dir_struct:
             case 'obs-mon':
@@ -210,14 +193,14 @@ class OM_data:
                     shutil.copy(f, dest_dir)
 
             case 'glb-wkflw':
-                tarfile = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'products', 'atmos',
-                                       'radmon', 'radmon_' + self.data_subtype + '.tar.gz')
-            case 'gfs-ops':
-                tarfile = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'atmos',
-                                       'radmon', 'radmon_' + self.data_subtype + '.tar.gz')
-            case 'leg-mon':
-                tarfile = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'radmon',
+                tarfile = os.path.join(base_path, 'products', 'atmos', 'radmon',
                                        'radmon_' + self.data_subtype + '.tar.gz')
+            case 'gfs-ops':
+                tarfile = os.path.join(base_path, 'atmos', 'radmon', 'radmon_' +
+                                       self.data_subtype + '.tar.gz')
+            case 'leg-mon':
+                tarfile = os.path.join(base_path, 'radmon', 'radmon_' + self.data_subtype +
+                                       '.tar.gz')
 
         if os.path.isfile(tarfile):
             os.system('tar -xf ' + tarfile + ' -C ' + dest_dir + ' --wildcards ' + file + '*')
@@ -238,8 +221,7 @@ class OM_data:
 
         """
 
-        pdy = cycle[:-2]
-        hh = cycle[-2:]
+        base_path = os.path.join(self.data_src, self.run + '.' + cycle[:-2], cycle[-2:])
 
         match self.dir_struct:
             case 'obs-mon':
@@ -247,18 +229,16 @@ class OM_data:
                 if os.path.isfile(f):
                     shutil.copy(f, dest_dir)
             case 'glb-wkflw':
-                ff = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'products',
+                ff = os.path.join(base_path, 'products',
                                   'atmos', 'oznmon', self.data_subtype, file)
                 for f in glob.glob(ff + '*'):
                     shutil.copy(f, dest_dir)
             case 'gfs-ops':
-                ff = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'atmos',
-                                  'oznmon', self.data_subtype, file)
+                ff = os.path.join(base_path, 'atmos', 'oznmon', self.data_subtype, file)
                 for f in glob.glob(ff + '*'):
                     shutil.copy(f, dest_dir)
             case 'leg-mon':
-                ff = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'oznmon',
-                                  self.data_subtype, file)
+                ff = os.path.join(base_path, 'oznmon', self.data_subtype, file)
                 for f in glob.glob(ff + '*'):
                     shutil.copy(f, dest_dir)
 
@@ -278,8 +258,7 @@ class OM_data:
 
         """
 
-        pdy = cycle[:-2]
-        hh = cycle[-2:]
+        base_path = os.path.join(self.data_src, self.run + '.' + cycle[:-2], cycle[-2:])
 
         match self.dir_struct:
             case 'obs-mon':
@@ -287,16 +266,15 @@ class OM_data:
                 if os.path.isfile(f):
                     shutil.copy(f, dest_dir)
             case 'glb-wkflw':
-                ff = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'products', 'atmos',
-                                  'minmon', file)
+                ff = os.path.join(base_path, 'products', 'atmos', 'minmon', file)
                 for f in glob.glob(ff + '*'):
                     shutil.copy(f, dest_dir)
             case 'gfs-ops':
-                ff = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'atmos', 'minmon', file)
+                ff = os.path.join(base_path, 'atmos', 'minmon', file)
                 for f in glob.glob(ff + '*'):
                     shutil.copy(f, dest_dir)
             case 'leg-mon':
-                ff = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'minmon', file)
+                ff = os.path.join(base_path, 'minmon', file)
                 for f in glob.glob(ff + '*'):
                     shutil.copy(f, dest_dir)
 
@@ -316,12 +294,14 @@ class OM_data:
 
         """
 
-        pdy = cycle[:-2]
-        hh = cycle[-2:]
+        self.logger.info(f'--> get_con_dataile, cycle: {cycle}, file: {file}')
+
+        base_path = os.path.join(self.data_src, self.run + '.' + cycle[:-2], cycle[-2:])
 
         match self.dir_struct:
             case 'obs-mon':
                 f = os.path.join(self.data_src, 'con_data', self.data_subtype, file)
+                self.logger.info(f'obs-mon case, f: {f}')
                 if os.path.isfile(f):
                     shutil.copy(f, dest_dir)
             case 'glb-wkflw':
@@ -329,8 +309,7 @@ class OM_data:
             case 'gfs-ops':
                 self.logger.info(f'case gfs-ops not yet supported')
             case 'leg-mon':
-                ff = os.path.join(self.data_src, 'gdas.' + pdy, hh, 'conmon',
-                                  self.data_subtype, file)
+                ff = os.path.join(base_path, 'conmon', self.data_subtype, file)
                 for f in glob.glob(ff + '*'):
                     shutil.copy(f, dest_dir)
 
