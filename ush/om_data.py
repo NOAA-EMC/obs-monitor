@@ -77,7 +77,7 @@ class OM_data:
                 self.data_subtype = 'horz_hist'
 
         elif self.data_type == 'ozn' and stype == 'summary':
-                self.data_subtype = 'time'
+            self.data_subtype = 'time'
 
         else:
             self.data_subtype = stype
