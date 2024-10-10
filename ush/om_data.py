@@ -149,8 +149,7 @@ class OM_data:
 
             # conmon is only in obs-mon and leg-mon structures
             case 'conmon':
-                # rm ctl file?
-                lm_test = os.path.join(base_path, mon, self.data_subtype, self.ctl_file[0])
+                lm_test = os.path.join(base_path, mon, self.data_subtype)
 
         if os.path.exists(om_test):
             self.dir_struct = 'obs-mon'
@@ -295,14 +294,11 @@ class OM_data:
 
         """
 
-        self.logger.info(f'--> get_con_dataile, cycle: {cycle}, file: {file}')
-
         base_path = os.path.join(self.data_src, self.run + '.' + cycle[:-2], cycle[-2:])
 
         match self.dir_struct:
             case 'obs-mon':
                 f = os.path.join(self.data_src, 'con_data', self.data_subtype, file)
-                self.logger.info(f'obs-mon case, f: {f}')
                 if os.path.isfile(f):
                     shutil.copy(f, dest_dir)
             case 'glb-wkflw':
