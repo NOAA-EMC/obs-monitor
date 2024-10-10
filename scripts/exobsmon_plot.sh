@@ -54,12 +54,11 @@ if compgen -G "${DATA}/OM_PLOT*.yaml" > /dev/null; then
       ((ctr+=1))
    done 
 
-
    if (( ${ctr} > 0 )); then
       case ${MACHINE_ID} in
          hera|orion|hercules)
             # submit plot job
-            plotjob_id=$(${SUB} --account ${ACCOUNT} -n ${ctr}  -o ${logfile} -D . -J ${jobname} --time=1:00:00 \
+            plotjob_id=$(${SUB} --account ${ACCOUNT} -n ${ctr}  -o ${logfile} -D . -J ${jobname} --time=0:05:00 \
                    --mem=80000M --wrap "srun -l --multi-prog ${cmdfile}")
 
             # submit cleanup job to run after plot job
@@ -71,7 +70,7 @@ if compgen -G "${DATA}/OM_PLOT*.yaml" > /dev/null; then
 
 	 wcoss2)  
             # submit plot job
-            mem=$((8*${ctr})) 
+            mem=$((12*${ctr})) 
 	    plotjob_id=$(${SUB} -q $JOB_QUEUE -A $ACCOUNT -o ${logfile} -e ${logfile} \
 	        -v "PYTHONPATH=${PYTHONPATH}, PATH=${PATH}, HOMEobsmon=${HOMEobsmon}, MODEL=${MODEL}, \
 		    CNTRLobsmon=${CNTRLobsmon}, PARMobsmon=${PARMobsmon}, DATA=${DATA}, CARTOPY_DATA_DIR=${CARTOPY_DATA_DIR}, \
@@ -81,10 +80,11 @@ if compgen -G "${DATA}/OM_PLOT*.yaml" > /dev/null; then
             # submit cleanup job to run after plot job
  	    ${SUB} -q $JOB_QUEUE -A $ACCOUNT -o ${logfile_clnup} -e ${logfile_clnup} \
   	        -v "DATA=${DATA}, KEEPDATA=${KEEPDATA}, NET=${NET}, DATAROOT=${DATAROOT}, \
-		    COMOUTplots=${COMOUTplots}, DATA=${DATA}, MACHINE_ID=${MACHINE_ID}" \
+ 	    COMOUTplots=${COMOUTplots}, DATA=${DATA}, MACHINE_ID=${MACHINE_ID}" \
                 -l select=1:mem=500mb,walltime=1:00:00 -W depend=afterok:${plotjob_id} -N "OM_cleanup" ${USHobsmon}/om_cleanup.sh
 
          ;;     
       esac
    fi
 fi
+

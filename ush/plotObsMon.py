@@ -8,6 +8,8 @@ import argparse
 import os
 from re import sub
 import yaml
+from om_data import OM_data
+
 from wxflow import parse_j2yaml, save_as_yaml
 from wxflow import add_to_datetime, to_timedelta, to_datetime
 from eva.eva_driver import eva
@@ -138,8 +140,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     cycle_tm = to_datetime(args.pdate)
 
-    data = os.environ.get('DATA', '.')
-    os.chdir(data)
+    workdir = os.environ.get('DATA', '.')
+    os.chdir(workdir)
 
     try:
         mon_sources = args.input
@@ -187,7 +189,15 @@ if __name__ == "__main__":
                     parm_location = os.path.join(parm, 'templates')
                     plot_template = os.path.join(parm_location, plot_template)
 
+                    # cd to unique directory based on plot_yaml file
+                    plot_dir = os.path.join(workdir, plot_yaml.split('.')[0])
+                    os.makedirs(plot_dir)
+                    os.chdir(plot_dir)
+
+                    config['DATA'] = plot_dir
                     genYaml(plot_template, plot_yaml, config)
+
+                    plotData = OM_data(data_location, config, plot_yaml, logger)
                     eva(plot_yaml)
                     os.remove(plot_yaml)
 
@@ -210,7 +220,15 @@ if __name__ == "__main__":
                 parm_location = os.path.join(parm, 'templates')
                 plot_template = os.path.join(parm_location, plot_template)
 
+                # cd to unique directory based on plot_yaml file
+                plot_dir = os.path.join(workdir, plot_yaml.split('.')[0])
+                os.makedirs(plot_dir)
+                os.chdir(plot_dir)
+
+                config['DATA'] = plot_dir
                 genYaml(plot_template, plot_yaml, config)
+
+                plotData = OM_data(data_location, config, plot_yaml, logger)
                 eva(plot_yaml)
                 os.remove(plot_yaml)
 
@@ -246,6 +264,13 @@ if __name__ == "__main__":
                 parm_location = os.path.join(parm, 'templates')
                 plot_template = os.path.join(parm_location, plot_template)
 
+                # cd to unique directory based on plot_yaml file
+                plot_dir = os.path.join(workdir, plot_yaml.split('.')[0])
+                os.makedirs(plot_dir)
+                os.chdir(plot_dir)
+
+                config['DATA'] = plot_dir
                 genYaml(plot_template, plot_yaml, config)
+                plotData = OM_data(data_location, config, plot_yaml, logger)
                 eva(plot_yaml)
                 os.remove(plot_yaml)

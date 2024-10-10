@@ -14,13 +14,13 @@ datasets:
     control_file:
       - {{CONTROL}}/minAllGnorm.ctl
     filenames:
-      - {{DATA}}/min_data/{{ PDATE | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/min_data/{{ PDATEm24 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/min_data/{{ PDATEm48 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/min_data/{{ PDATEm72 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/min_data/{{ PDATEm96 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/min_data/{{ PDATEm120 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/min_data/{{ PDATEm144 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/{{ PDATE | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/{{ PDATEm24 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/{{ PDATEm48 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/{{ PDATEm72 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/{{ PDATEm96 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/{{ PDATEm120 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/{{ PDATEm144 | to_YMDH }}.gnorms.ieee_d
 
     groups:
       - name: GsiIeee

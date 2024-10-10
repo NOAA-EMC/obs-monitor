@@ -18,9 +18,9 @@ datasets:
     obstype: {{OBSTYPE}}
     type: MonDataSpace
     control_file:
-      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.ctl
+      - {{DATA}}/ges_{{OBSTYPE}}_stas.ctl
     filenames:
-      - {{DATA}}/con_data/ges_{{OBSTYPE}}_stas.{{ PDATE | to_YMDH }}
+      - {{DATA}}/ges_{{OBSTYPE}}_stas.{{ PDATE | to_YMDH }}
 
     regions: 1
 
@@ -33,9 +33,9 @@ datasets:
     obstype: {{OBSTYPE}}
     type: MonDataSpace
     control_file:
-      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.ctl
+      - {{DATA}}/anl_{{OBSTYPE}}_stas.ctl
     filenames:
-      - {{DATA}}/con_data/anl_{{OBSTYPE}}_stas.{{ PDATE | to_YMDH }}
+      - {{DATA}}/anl_{{OBSTYPE}}_stas.{{ PDATE | to_YMDH }}
 
     regions: 1
 

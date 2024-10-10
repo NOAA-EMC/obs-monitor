@@ -13,35 +13,35 @@ datasets:
     control_file:
       - {{CONTROL}}/minAllGnorm.ctl
     filenames:
-      - {{DATA}}/min_data/{{ PDATE | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/min_data/{{ PDATEm6 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/min_data/{{ PDATEm12 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/min_data/{{ PDATEm18 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/min_data/{{ PDATEm24 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/min_data/{{ PDATEm30 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/min_data/{{ PDATEm36 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/min_data/{{ PDATEm42 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/min_data/{{ PDATEm48 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/min_data/{{ PDATEm54 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/min_data/{{ PDATEm60 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/min_data/{{ PDATEm66 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/min_data/{{ PDATEm72 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/min_data/{{ PDATEm78 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/min_data/{{ PDATEm84 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/min_data/{{ PDATEm90 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/min_data/{{ PDATEm96 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/min_data/{{ PDATEm102 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/min_data/{{ PDATEm108 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/min_data/{{ PDATEm114 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/min_data/{{ PDATEm120 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/min_data/{{ PDATEm126 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/min_data/{{ PDATEm132 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/min_data/{{ PDATEm138 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/min_data/{{ PDATEm144 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/min_data/{{ PDATEm150 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/min_data/{{ PDATEm156 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/min_data/{{ PDATEm162 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/min_data/{{ PDATEm168 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/{{ PDATE | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/{{ PDATEm6 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/{{ PDATEm12 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/{{ PDATEm18 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/{{ PDATEm24 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/{{ PDATEm30 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/{{ PDATEm36 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/{{ PDATEm42 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/{{ PDATEm48 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/{{ PDATEm54 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/{{ PDATEm60 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/{{ PDATEm66 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/{{ PDATEm72 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/{{ PDATEm78 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/{{ PDATEm84 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/{{ PDATEm90 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/{{ PDATEm96 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/{{ PDATEm102 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/{{ PDATEm108 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/{{ PDATEm114 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/{{ PDATEm120 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/{{ PDATEm126 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/{{ PDATEm132 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/{{ PDATEm138 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/{{ PDATEm144 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/{{ PDATEm150 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/{{ PDATEm156 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/{{ PDATEm162 | to_YMDH }}.gnorms.ieee_d
+      - {{DATA}}/{{ PDATEm168 | to_YMDH }}.gnorms.ieee_d
 
     groups:
       - name: GsiIeee

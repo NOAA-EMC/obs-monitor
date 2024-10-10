@@ -1,9 +1,27 @@
-# DA Monitoring source dictionary
+#  DA Monitoring source dictionary
 
 model: gfs
 cycle_interval: 6
+
+##  obs-mon hera
 #data: '/scratch1/NCEPDEV/da/Edward.Safford/noscrub/test_data/gfs'
-data: '/lfs/h2/emc/da/noscrub/edward.safford/test_data/gfs'
+##  obs-mon wcoss2
+#data: '/lfs/h2/emc/da/noscrub/edward.safford/test_data/gfs'
+
+##  glb-wkflw hera
+data: '/scratch1/NCEPDEV/da/Edward.Safford/noscrub/test_data/physics_taper'
+
+##  gfs-ops hera
+#data: '/scratch1/NCEPDEV/da/Edward.Safford/noscrub/test_data/OpsTank/gfs/v16.3'
+##  gfs-ops wcoss2
+#data: '/lfs/h1/ops/prod/com/gfs/v16.3'
+
+##  leg-mon, hera
+#data: '/scratch1/NCEPDEV/da/Edward.Safford/noscrub/test_data/DevTank/radmon/stats/gfs'
+#data: '/lfs/h2/emc/da/noscrub/edward.safford/test_data/gfs'
+
+##  leg-mon, wcoss2
+#data: '/u/edward.safford/nbns/stats/gfs'
 
 satellites:
   - name: aura
@@ -14,12 +32,14 @@ satellites:
             times: 4
             levels: '1'
             component: ges
+            run: gdas
 
           - plot: ozn time
             times: 121 
             levels: '1'
             component: ges
-
+            run: gdas
+ 
   - name: npp
     instruments:
       - name: ompsnp
@@ -28,41 +48,48 @@ satellites:
             times: 4
             levels: '1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22'
             component: ges
-
+            run: gdas
+ 
           - plot: ozn summary
             times: 121
             levels: '1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22'
             component: ges
-
+            run: gdas
+ 
           - plot: ozn time
             times: 121 
             levels: '1'
             component: ges
-
+            run: gdas
+ 
       - name: ompslp
         plot_list:
           - plot: ozn horiz
             times: 4
             levels: '1'
             component: ges
-
+            run: gdas
+ 
           - plot: ozn time
             times: 121 
             levels: '1'
             component: ges
-
+            run: gdas
+ 
       - name: ompstc8
         plot_list:
           - plot: ozn horiz
             times: 4
             levels: '1'
             component: ges
-
+            run: gdas
+ 
           - plot: ozn time
             times: 121 
             levels: '1'
             component: ges
-
+            run: gdas
+ 
   - name: n20
     instruments:
       - name: ompsnp
@@ -71,29 +98,34 @@ satellites:
             times: 4
             levels: '1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22'
             component: ges
-
+            run: gdas
+ 
           - plot: ozn time
             times: 121 
             levels: '1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22'
             component: ges
+            run: gdas
 
           - plot: ozn summary
             times: 121
             levels: '1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22'
             component: ges
-
+            run: gdas
+ 
       - name: ompstc8
         plot_list:
           - plot: ozn horiz
             times: 4
             levels: '1'
             component: ges
-
+            run: gdas
+ 
           - plot: ozn time
             times: 121 
             levels: '1'
             component: ges
-
+            run: gdas
+ 
 # Radiance
 
   - name: g16
@@ -104,14 +136,17 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad bcoef
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad angle
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
 
   - name: g18
     instruments:
@@ -121,14 +156,17 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad bcoef
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad angle
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
 
   - name: himawari9
     instruments:
@@ -138,14 +176,17 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad bcoef
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad angle
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
 
   - name: metop-b
     instruments:
@@ -155,29 +196,35 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad bcoef
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad angle
             times: 121
             channels: 'all'
             component: ges
-
+            run: gdas
+ 
       - name: iasi
         plot_list:
           - plot: rad time
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad bcoef
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad angle
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
 
       - name: mhs
         plot_list:
@@ -185,29 +232,35 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad bcoef
             times: 121
             channels: '1,2,3,4,5'
             component: ges
+            run: gdas
           - plot: rad angle
             times: 121
             channels: 'all'
             component: ges
-
+            run: gdas
+ 
       - name: avhrr
         plot_list:
           - plot: rad time
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad bcoef
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad angle
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
 
   - name: metop-c
     instruments:
@@ -217,44 +270,53 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad bcoef
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad angle
             times: 121
             channels: 'all'
             component: ges
-
+            run: gdas
+ 
       - name: iasi
         plot_list:
           - plot: rad time
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad bcoef
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad angle
             times: 121
             channels: 'all'
             component: ges
-
+            run: gdas
+ 
       - name: avhrr
         plot_list:
           - plot: rad time
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad bcoef
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad angle
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
 
       - name: mhs
         plot_list:
@@ -262,14 +324,17 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad bcoef
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad angle
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
 
   - name: n15
     instruments:
@@ -279,14 +344,17 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad bcoef
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad angle
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
 
   - name: n18
     instruments:
@@ -296,14 +364,17 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad bcoef
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad angle
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
 
       - name: avhrr
         plot_list:
@@ -311,14 +382,17 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad bcoef
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad angle
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
 
   - name: n19
     instruments:
@@ -328,43 +402,52 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad bcoef
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad angle
             times: 121
             channels: 'all'
             component: ges
-
+            run: gdas
+ 
       - name: avhrr
         plot_list:
           - plot: rad time
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad bcoef
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad angle
             times: 121
             channels: 'all'
             component: ges
-
+            run: gdas
+ 
       - name: mhs
         plot_list:
           - plot: rad time
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad bcoef
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad angle
             times: 121
             component: ges
+            run: gdas
 
   - name: n20
     instruments:
@@ -374,14 +457,17 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad bcoef
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad angle
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
 
       - name: cris-fsr
         plot_list:
@@ -389,14 +475,17 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad bcoef
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad angle
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
 
   - name: n21
     instruments:
@@ -406,29 +495,35 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad bcoef
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad angle
             times: 121
             channels: 'all'
             component: ges
-
+            run: gdas
+ 
       - name: cris-fsr
         plot_list:
           - plot: rad time
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad bcoef
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad angle
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
 
   - name: npp
     instruments:
@@ -438,30 +533,36 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad bcoef
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad angle
             times: 121
             channels: 'all'
             component: ges
-
+            run: gdas
+ 
       - name: viirs-m
         plot_list:
           - plot: rad time
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad bcoef
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad angle
             times: 121
             channels: 'all'
             component: ges
-
+            run: gdas
+ 
   - name: j1
     instruments:
       - name: viirs-m
@@ -470,15 +571,18 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad bcoef
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad angle
             times: 121
             channels: 'all'
             component: ges
-
+            run: gdas
+ 
   - name: f17
     instruments:
       - name: ssmis
@@ -487,15 +591,18 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad bcoef
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad angle
             times: 121
             channels: 'all'
             component: ges
-
+            run: gdas
+ 
   - name: f18
     instruments:
       - name: ssmis
@@ -504,14 +611,17 @@ satellites:
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad bcoef
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
           - plot: rad angle
             times: 121
             channels: 'all'
             component: ges
+            run: gdas
 
 minimization:
   - model: gfs
@@ -534,51 +644,64 @@ observations:
       - plot: con time
         times: 121
         datatypes: 'all'
+        run: gdas
   - obstype: gps
     plot_list:
       - plot: con time
         times: 121
         datatypes: 'all'
+        run: gdas
       - plot: con vert
         times: 1
         datatypes: 'all'
+        run: gdas
   - obstype: q
     plot_list:
       - plot: con time
         times: 121
         datatypes: 'all'
+        run: gdas
       - plot: con vert
         times: 1
         datatypes: 'all'
+        run: gdas
   - obstype: t
     plot_list:
       - plot: con time
         times: 121
         datatypes: 'all'
+        run: gdas
       - plot: con vert
         times: 1
         datatypes: 'all'
+        run: gdas
   - obstype: u
     plot_list:
       - plot: con time
         times: 121
         datatypes: 'all'
+        run: gdas
       - plot: con vert
         times: 1
         datatypes: 'all'
+        run: gdas
   - obstype: uv
     plot_list:
       - plot: con time
         times: 121
         datatypes: 'all'
+        run: gdas
       - plot: con vert
         times: 1
         datatypes: 'all'
+        run: gdas
   - obstype: v
     plot_list:
       - plot: con time
         times: 121
         datatypes: 'all'
+        run: gdas
       - plot: con vert
         times: 1
         datatypes: 'all'
+        run: gdas
