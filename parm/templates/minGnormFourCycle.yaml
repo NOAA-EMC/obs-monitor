@@ -13,35 +13,13 @@ datasets:
     control_file:
       - {{CONTROL}}/minAllGnorm.ctl
     filenames:
-      - {{DATA}}/{{ PDATE | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/{{ PDATEm6 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/{{ PDATEm12 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/{{ PDATEm18 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/{{ PDATEm24 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/{{ PDATEm30 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/{{ PDATEm36 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/{{ PDATEm42 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/{{ PDATEm48 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/{{ PDATEm54 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/{{ PDATEm60 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/{{ PDATEm66 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/{{ PDATEm72 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/{{ PDATEm78 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/{{ PDATEm84 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/{{ PDATEm90 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/{{ PDATEm96 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/{{ PDATEm102 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/{{ PDATEm108 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/{{ PDATEm114 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/{{ PDATEm120 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/{{ PDATEm126 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/{{ PDATEm132 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/{{ PDATEm138 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/{{ PDATEm144 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/{{ PDATEm150 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/{{ PDATEm156 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/{{ PDATEm162 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/{{ PDATEm168 | to_YMDH }}.gnorms.ieee_d
+      {% for i in range(0, 168, 6) %}
+      {% set offset_hr = i | string %}
+      {% set offset_str = "-" + offset_hr + "H" %}
+      {% set offset_td = offset_str | to_timedelta %}
+      {% set PDATEnew = PDATE | add_to_datetime(offset_td) %}
+      - {{ DATA }}/{{ PDATEnew | to_YMDH }}.gnorms.ieee_d
+      {% endfor %}
 
     groups:
       - name: GsiIeee

@@ -14,13 +14,13 @@ datasets:
     control_file:
       - {{CONTROL}}/minAllGnorm.ctl
     filenames:
-      - {{DATA}}/{{ PDATE | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/{{ PDATEm24 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/{{ PDATEm48 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/{{ PDATEm72 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/{{ PDATEm96 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/{{ PDATEm120 | to_YMDH }}.gnorms.ieee_d
-      - {{DATA}}/{{ PDATEm144 | to_YMDH }}.gnorms.ieee_d
+      {% for i in range(0, 144, 24) %}
+      {% set offset_hr = i | string %}
+      {% set offset_str = "-" + offset_hr + "H" %}
+      {% set offset_td = offset_str | to_timedelta %}
+      {% set PDATEnew = PDATE | add_to_datetime(offset_td) %}
+      - {{ DATA }}/{{ PDATEnew | to_YMDH }}.gnorms.ieee_d
+      {% endfor %}
 
     groups:
       - name: GsiIeee
