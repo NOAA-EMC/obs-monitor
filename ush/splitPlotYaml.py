@@ -29,38 +29,59 @@ def removeKey(d, keys):
     return r
 
 
-def check_plotlist(type, logger, plot_list, sat=None, instr=None):
+def check_plotlist(type, logger, plotlist, sat=None, instr=None, obstype=None):
     """
+    Parse plotlist for missing required elements.
+
+    Parameters:
+        type (str): type of plot
+        logger (Logger):  logger for output warnings
+        plotlist (list):  list of requested plot specifications
+        sat (str): satellite name (deafault None)
+        instr (str); instrument name (default None)
+        obstype (str): observation type namea (default None)
+
+    Return:
+        True if no required elements are missing from plotlist, else False
     """
-    logger.info(f'--> check_plotlist')
-    sat_reqs = {'rad': ['plot', 'times', 'channels', 'component', 'run'], 
-                'ozn': ['plot', 'times', 'levels', 'component', 'run']} 
+
+    sat_reqs = {'rad': ['plot', 'times', 'channels', 'component', 'run'],
+                'ozn': ['plot', 'times', 'levels', 'component', 'run']}
+    min_reqs = ['plot', 'times', 'run']
+    obs_reqs = ['plot', 'times', 'datatypes', 'run']
 
     rtn_val = True
     missing = []
     match type:
-            case 'sat':   
-                if 'rad' in plot_list.get('plot'):
-                    reqs = sat_reqs.get('rad')
-                else:
-                    reqs = sat_reqs.get('ozn')
+        case 'sat':
+            if 'rad' in plotlist.get('plot'):
+                reqs = sat_reqs.get('rad')
+            else:
+                reqs = sat_reqs.get('ozn')
 
-                for val in reqs:
-                    if val not in plot_list:
-                        missing.append(val) 
-                        plot_str = (f" {instr} {sat} {plot_list.get('plot')}")         
+            for val in reqs:
+                if val not in plotlist:
+                    missing.append(val)
+                    plot_info = (f" {instr} {sat} {plotlist.get('plot')}")
 
-#           case 'min':   
-#           case 'obs':   
-#           cast _:
+        case 'min':
+            for val in min_reqs:
+                if val not in plotlist:
+                    missing.append(val)
+                    plot_info = (f" {plotlist.get('plot')}")
+
+        case 'obs':
+            for val in obs_reqs:
+                if val not in plotlist:
+                    missing.append(val)
+                    plot_info = (f" {obstype}, {plotlist.get('plot')}")
 
     if missing:
-        logger.info(f'WARNING:  YAML for plot {plot_str}  is missing  {missing}')
+        logger.info(f'WARNING:  YAML for plot {plot_info}  is missing  {missing}')
         logger.info(f'WARNING:  Requested plot will be SKIPPED.')
         rtn_val = False
- 
+
     return (rtn_val)
-    logger.info(f'<-- check_plotlist')
 
 
 if __name__ == "__main__":
@@ -155,9 +176,10 @@ if __name__ == "__main__":
         md = removeKey(mon_dict, ['satellites', 'observations'])
         fname = f'OM_PLOT_minimization.yaml'
         mm = md.get('minimization')
-        logger.info(f'mm: {mm}')
-        for m in mm.get('plot_list'):
-            logger.info(f'm: {m}')
+
+        for pl in mm[0]['plot_list']:
+            if not check_plotlist('min', logger, pl):
+                mm[0]['plot_list'].remove(pl)
 
         file = open(fname, "w")
         yaml.dump(md, file)
@@ -165,6 +187,14 @@ if __name__ == "__main__":
 
     if 'observations' in mon_dict.keys():
         od = removeKey(mon_dict, ['satellites', 'minimization'])
+        obs = od.get('observations')
+
+        for ob in obs:
+            obstype = ob.get('obstype')
+            for pl in ob.get('plot_list'):
+                if not check_plotlist('obs', logger, pl, obstype=obstype):
+                    ob.get('plot_list').remove(pl)
+
         fname = f'OM_PLOT_observations.yaml'
         file = open(fname, "w")
         yaml.dump(od, file)
