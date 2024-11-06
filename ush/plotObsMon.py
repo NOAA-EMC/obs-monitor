@@ -19,6 +19,7 @@ from datetime import timedelta
 
 # --------------------------------------------------------------------------------------------
 
+
 def genYaml(input_yaml, output_yaml, config):
     """
     Read in input yaml file and modify with contents of config.
@@ -182,8 +183,6 @@ if __name__ == "__main__":
                 instrument = inst.get('name')
 
                 for plot in inst.get('plot_list'):
-                    logger.info(f'plot: {plot}')
-
                     config = loadConfig(satname, instrument, obstype, plot, cycle_tm,
                                         cycle_interval, data_location, model, chan_dict)
                     plot_template = f"{config['PLOT_TEMPLATE']}.yaml"
@@ -204,11 +203,11 @@ if __name__ == "__main__":
 
                         plotData = OM_data(data_location, config, plot_yaml, logger)
                         eva(plot_yaml)
-#                       os.remove(plot_yaml)
+                        os.remove(plot_yaml)
 
                     except Exception as e:
-                        logger.info(f'Warning: unable to run genYaml() with plot_yaml file {plot_yaml} ' +
-                                    f'error: {e}')
+                        logger.info(f'Warning: unable to run genYaml() with plot_yaml file ' +
+                                    f'{plot_yaml} error: {e}')
                         continue
 
     if 'minimization' in mon_dict.keys():

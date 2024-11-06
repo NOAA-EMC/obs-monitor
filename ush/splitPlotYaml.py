@@ -126,7 +126,6 @@ if __name__ == "__main__":
     data = mon_dict.get('data')
 
     if 'satellites' in mon_dict.keys():
-        logger.info(f' split_plot, in satellites')
         sd = removeKey(mon_dict, ['minimization', 'observations'])
 
         for sat in mon_dict.get('satellites'):
@@ -143,11 +142,9 @@ if __name__ == "__main__":
                 # For instruments with a large number of channels split the plot_list
                 #
                 channels = chan_dict.get(iname)
-                logger.info(f' channels: {channels}')
                 nchans = 0
                 if channels is not None:
                     nchans = len(channels.split(","))
-                logger.info(f' nchans: {nchans}')
 
                 if nchans > 100:
                     ctr = 0
