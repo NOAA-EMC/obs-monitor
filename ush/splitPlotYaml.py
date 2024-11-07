@@ -37,7 +37,7 @@ def check_plotlist(type, logger, plotlist, sat=None, instr=None, obstype=None):
         type (str): type of plot
         logger (Logger):  logger for output warnings
         plotlist (list):  list of requested plot specifications
-        sat (str): satellite name (deafault None)
+        sat (str): satellite name (default None)
         instr (str); instrument name (default None)
         obstype (str): observation type namea (default None)
 
@@ -76,7 +76,7 @@ def check_plotlist(type, logger, plotlist, sat=None, instr=None, obstype=None):
                     missing.append(val)
                     plot_info = (f" {obstype}, {plotlist.get('plot')}")
 
-    if missing:
+    if len(missing) > 0:
         logger.info(f'WARNING:  YAML for plot {plot_info}  is missing  {missing}')
         logger.info(f'WARNING:  Requested plot will be SKIPPED.')
         rtn_val = False
