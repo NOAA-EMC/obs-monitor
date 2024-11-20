@@ -9,11 +9,15 @@ import os
 from re import sub
 import yaml
 from om_data import OM_data
+import datetime as dt
 
 from wxflow import parse_j2yaml, save_as_yaml
 from wxflow import add_to_datetime, to_timedelta, to_datetime
 from eva.eva_driver import eva
 from eva.utilities.logger import Logger
+from datetime import timedelta
+
+# --------------------------------------------------------------------------------------------
 
 
 def genYaml(input_yaml, output_yaml, config):
@@ -181,7 +185,6 @@ if __name__ == "__main__":
                 for plot in inst.get('plot_list'):
                     config = loadConfig(satname, instrument, obstype, plot, cycle_tm,
                                         cycle_interval, data_location, model, chan_dict)
-
                     plot_template = f"{config['PLOT_TEMPLATE']}.yaml"
                     plot_yaml = f"{config['SENSOR']}_{config['SAT']}_{plot_template}"
 
@@ -195,11 +198,17 @@ if __name__ == "__main__":
                     os.chdir(plot_dir)
 
                     config['DATA'] = plot_dir
-                    genYaml(plot_template, plot_yaml, config)
+                    try:
+                        genYaml(plot_template, plot_yaml, config)
 
-                    plotData = OM_data(data_location, config, plot_yaml, logger)
-                    eva(plot_yaml)
-                    os.remove(plot_yaml)
+                        plotData = OM_data(data_location, config, plot_yaml, logger)
+                        eva(plot_yaml)
+                        os.remove(plot_yaml)
+
+                    except Exception as e:
+                        logger.info(f'Warning: unable to run genYaml() with plot_yaml file ' +
+                                    f'{plot_yaml} error: {e}')
+                        continue
 
     if 'minimization' in mon_dict.keys():
         satname = None
