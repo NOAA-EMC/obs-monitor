@@ -9,7 +9,7 @@ local pkgNameVer = myModuleFullName()
 conflict(pkgName)
 
 
-load ("python/3.10.4")
+load ("python/3.12.0")
 
 local pyenvpath = "/lfs/h2/emc/da/noscrub/edward.safford/python/envs/"
 local pyenvname = "obs-mon"
@@ -20,7 +20,7 @@ if (mode() == "load") then
   local activate_cmd = "source "..pyenvactivate
   execute{cmd=activate_cmd, modeA={"load"}}
   prepend_path("PATH", "/lfs/h2/emc/da/noscrub/edward.safford/python/envs/obs-mon/bin")
-  prepend_path("PYTHONPATH", "/lfs/h2/emc/da/noscrub/edward.safford/python/envs/obs-mon")
+  setenv("PYTHONPATH","/lfs/h2/emc/da/noscrub/edward.safford/python/envs/obs-mon/lib/python3.12/site-packages")
 
 else
   if (mode() == "unload") then
