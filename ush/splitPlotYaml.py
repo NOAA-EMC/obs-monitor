@@ -173,10 +173,11 @@ if __name__ == "__main__":
         md = removeKey(mon_dict, ['satellites', 'observations'])
         fname = f'OM_PLOT_minimization.yaml'
         mm = md.get('minimization')
+        logger.info(f'mm: {mm}')
 
-        for pl in mm[0]['plot_list']:
+        for pl in mm['plot_list']:
             if not check_plotlist('min', logger, pl):
-                mm[0]['plot_list'].remove(pl)
+                mm['plot_list'].remove(pl)
 
         file = open(fname, "w")
         yaml.dump(md, file)

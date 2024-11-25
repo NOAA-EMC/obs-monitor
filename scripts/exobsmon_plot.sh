@@ -65,7 +65,6 @@ if compgen -G "${DATA}/OM_PLOT*.yaml" > /dev/null; then
             plotjob_id=`echo ${plotjob_id} | gawk '{ print $4 }'`
             ${SUB} --account ${ACCOUNT} -n 1 -o ${logfile_clnup} -D . -J "OM_cleanup" --time=0:10:00 \
                    -p ${SERVICE_PARTITION} --dependency=afterok:${plotjob_id} ${USHobsmon}/om_cleanup.sh
-
          ;;
 
 	 wcoss2)  
@@ -80,10 +79,10 @@ if compgen -G "${DATA}/OM_PLOT*.yaml" > /dev/null; then
             # submit cleanup job to run after plot job
  	    ${SUB} -q $JOB_QUEUE -A $ACCOUNT -o ${logfile_clnup} -e ${logfile_clnup} \
   	        -v "DATA=${DATA}, KEEPDATA=${KEEPDATA}, NET=${NET}, DATAROOT=${DATAROOT}, \
- 	    COMOUTplots=${COMOUTplots}, DATA=${DATA}, MACHINE_ID=${MACHINE_ID}" \
+                    COMOUTplots=${COMOUTplots}, DATA=${DATA}, MACHINE_ID=${MACHINE_ID}" \
                 -l select=1:mem=500mb,walltime=1:00:00 -W depend=afterok:${plotjob_id} -N "OM_cleanup" ${USHobsmon}/om_cleanup.sh
-
          ;;     
+
       esac
    fi
 fi

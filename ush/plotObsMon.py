@@ -215,31 +215,28 @@ if __name__ == "__main__":
         instrument = None
         obstype = None
 
-        for min in mon_dict.get('minimization'):
-            model = min.get('model')
+        for plot in mon_dict.get('minimization').get('plot_list'):
+            config = loadConfig(satname, instrument, obstype, plot, cycle_tm, cycle_interval,
+                                data_location, model)
 
-            for plot in min.get('plot_list'):
-                config = loadConfig(satname, instrument, obstype, plot, cycle_tm, cycle_interval,
-                                    data_location, model)
+            plot_template = f"{config['PLOT_TEMPLATE']}.yaml"
+            plot_yaml = f"{config['MODEL']}_{config['RUN']}_{plot_template}"
 
-                plot_template = f"{config['PLOT_TEMPLATE']}.yaml"
-                plot_yaml = f"{config['MODEL']}_{config['RUN']}_{plot_template}"
+            parm = os.environ.get('PARMobsmon', '../parm')
+            parm_location = os.path.join(parm, 'templates')
+            plot_template = os.path.join(parm_location, plot_template)
 
-                parm = os.environ.get('PARMobsmon', '../parm')
-                parm_location = os.path.join(parm, 'templates')
-                plot_template = os.path.join(parm_location, plot_template)
+            # cd to unique directory based on plot_yaml file
+            plot_dir = os.path.join(workdir, plot_yaml.split('.')[0])
+            os.makedirs(plot_dir)
+            os.chdir(plot_dir)
 
-                # cd to unique directory based on plot_yaml file
-                plot_dir = os.path.join(workdir, plot_yaml.split('.')[0])
-                os.makedirs(plot_dir)
-                os.chdir(plot_dir)
+            config['DATA'] = plot_dir
+            genYaml(plot_template, plot_yaml, config)
 
-                config['DATA'] = plot_dir
-                genYaml(plot_template, plot_yaml, config)
-
-                plotData = OM_data(data_location, config, plot_yaml, logger)
-                eva(plot_yaml)
-                os.remove(plot_yaml)
+            plotData = OM_data(data_location, config, plot_yaml, logger)
+            eva(plot_yaml)
+            os.remove(plot_yaml)
 
     if 'observations' in mon_dict.keys():
         satname = None
