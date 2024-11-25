@@ -21,7 +21,6 @@ function usage {
 echo begin runObsMon.sh
 
 nargs=$#
-echo nargs: $nargs
 if [[ ${nargs} -lt 4 || ${nargs} -gt 6 ]]; then
    usage
    exit 1
@@ -63,13 +62,10 @@ if  [ ! -e ${yaml_file} ]; then
 fi
 yaml_file=`realpath ${yaml_file}`
 
-echo yaml_file:  $yaml_file
-
 #-------------------------------
 # find model name in $yaml_file
 #
 model=`grep -m1 "model:" $yaml_file | head -1 | gawk '{print $NF}'`
-echo model: $model
 
 export PDY=`echo ${pdate}|cut -c1-8`
 export cyc=`echo ${pdate}|cut -c9-10`

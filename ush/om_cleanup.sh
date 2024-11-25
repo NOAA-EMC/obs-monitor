@@ -11,8 +11,6 @@ echo "COMOUTplots: $COMOUTplots"
 img_dirs=`ls -d ${DATA}/*/*plots/`
 
 for dir in $img_dirs; do
-   echo "dir: $dir"
-   echo ""
 
    base_name=$(basename ${dir})
    destination=${COMOUTplots}/${base_name}
