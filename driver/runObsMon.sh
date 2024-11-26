@@ -10,13 +10,10 @@
 #  usage
 #--------------------------------------------------------------------
 function usage {
-  echo "Usage:  runObsMon.sh -p|--pdate pdate -m|--model, [-y|--yaml]"
+  echo "Usage:  runObsMon.sh -p|--pdate pdate -y|--yaml"
   echo "            -p | --pdate 	cycle time to be processed, format yyyymmddhh."
   echo "              			If unspecified the last available date will be processed."
-  echo "            -m | --model	model or experiment name (i.e. gfs, exp1, etc.)"
   echo "            -y | --yaml 	yaml plot file, with full or relative path."
-  echo "                                If no yaml file is specified the default is "
-  echo "                                parm/[model]/[model]_plot.yaml"
   echo " "
 }
 
@@ -24,7 +21,6 @@ function usage {
 echo begin runObsMon.sh
 
 nargs=$#
-echo nargs: $nargs
 if [[ ${nargs} -lt 4 || ${nargs} -gt 6 ]]; then
    usage
    exit 1
@@ -36,7 +32,6 @@ fi
 #
 
 pdate=""
-model=""
 yaml_file=""
 
 while [[ $# -ge 1 ]]
@@ -49,10 +44,6 @@ do
          pdate="$2"
          shift # past argument
       ;;
-      -m|--model)
-         model="$2"
-         shift # past argument
-      ;;
       -y|--yaml)
          yaml_file="$2"
          shift # past argument
@@ -63,16 +54,18 @@ do
 done
 
 echo pdate: $pdate
-echo model: $model
-
-if [ -n "${yaml_file}" ]; then 
-   if  [ ! -e ${yaml_file} ]; then
-      echo "ERROR:  input yaml file ${yaml_file} not found"
-      exit 1 
-   fi
-   yaml_file=`realpath ${yaml_file}`
-fi
 echo yaml_file:  $yaml_file
+
+if  [ ! -e ${yaml_file} ]; then
+   echo "ERROR:  input yaml file ${yaml_file} not found"
+   exit 1 
+fi
+yaml_file=`realpath ${yaml_file}`
+
+#-------------------------------
+# find model name in $yaml_file
+#
+model=`grep -m1 "model:" $yaml_file | head -1 | gawk '{print $NF}'`
 
 export PDY=`echo ${pdate}|cut -c1-8`
 export cyc=`echo ${pdate}|cut -c9-10`

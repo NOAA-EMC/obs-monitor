@@ -1,13 +1,23 @@
 #!/bin/bash
 
+echo "NET: $NET"
+echo "RUN: $RUN"
+echo "DATA: $DATA"
+echo "COMOUTplots: $COMOUTplots"
+
 # ---------------------------------------------
 # Sync image files with $COMOUTplots directory
 # 
-img_dirs=`ls -d ${DATA}/*_plots/`
+img_dirs=`ls -d ${DATA}/*/*plots/`
+
 for dir in $img_dirs; do
-   echo "syncing ${dir} and ${COMOUTplots}/${dir}"
+
    base_name=$(basename ${dir})
-   rsync -a ${dir} ${COMOUTplots}/${base_name} 
+   destination=${COMOUTplots}/${base_name}
+   echo "syncing ${dir} and ${destination}"
+   echo ""
+
+   rsync -a ${dir} ${destination} 
 done
 
 # ---------------------------------------------

@@ -624,19 +624,18 @@ satellites:
             run: gdas
 
 minimization:
-  - model: gfs
-    plot_list:
-      - plot: min summary
-        run: gdas
-        times: 28
+  plot_list:
+    - plot: min summary
+      run: gdas
+      times: 28
 
-      - plot: min gnorm four cycle
-        run: gdas
-        times: 28
+    - plot: min gnorm four cycle
+      run: gdas
+      times: 28
 
-      - plot: min gnorm one cycle
-        run: gdas
-        times: 28
+    - plot: min gnorm one cycle
+      run: gdas
+      times: 28
 
 observations:
   - obstype: ps
