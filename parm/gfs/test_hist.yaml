@@ -1,10 +1,10 @@
 # DA Monitoring source dictionary
 
-# This is a simple script to create a radiance plot using the radHist 
-# (histogram) plot template.
+# This is a simple script to create a histogram plot using legacy 
+# GSI-monitor radiance scan angle data.
 #
 # It is intended as a proof of concept and isn't an actual part of the 
-# legacy RadMon.
+# legacy RadMon output.
 #
 
 model: gfs
