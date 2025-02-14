@@ -1,0 +1,26 @@
+# DA Monitoring source dictionary
+
+# This is a simple script to create a radiance plot using the radHist 
+# (histogram) plot template.
+#
+# It is intended as a proof of concept and isn't an actual part of the 
+# legacy RadMon.
+#
+
+model: gfs
+cycle_interval: 6
+
+# obs-mon hera
+data: '/scratch1/NCEPDEV/da/Edward.Safford/noscrub/test_data/gfs'
+
+satellites:
+
+  - name: g18
+    instruments:
+      - name: abi
+        plot_list:
+          - plot: rad hist
+            times: 1
+            channels: 'all'
+            component: ges
+            run: gdas
