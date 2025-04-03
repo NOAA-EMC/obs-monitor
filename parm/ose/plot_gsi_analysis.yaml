@@ -1,0 +1,77 @@
+datasets:
+  - group: state
+    type: LatLon
+    filename: /scratch2/NCEPDEV/stmp1/Cory.R.Martin/apr2025/raobs/gdas.t00z.atmanl.nc
+    name: zerozed
+    variables: [pressfc, spfh, ugrd, vgrd, tmp, lat, lon]
+  - group: state
+    type: LatLon
+    filename: /scratch2/NCEPDEV/stmp1/Cory.R.Martin/apr2025/raobs/gdas.t06z.atmanl.nc
+    name: sixzed
+    variables: [pressfc, spfh, ugrd, vgrd, tmp, lat, lon]
+  - group: increment
+    type: LatLon
+    filename: /scratch2/NCEPDEV/stmp1/Cory.R.Martin/apr2025/raobs/diff.anl.nc
+    name: diffanl
+    variables: [pressfc, spfh, ugrd, vgrd, tmp, lat, lon]
+
+graphics:
+
+  plotting_backend: Emcpy
+  figure_list:
+
+  # Map plots
+  # ---------
+
+  # analysis 00z
+  - batch figure:
+      variables: [tmp, ugrd, vgrd, spfh]
+    figure:
+      figure size: [20,10]
+      layout: [1,1]
+      title: 'Analysis from GSI'
+      output name: /scratch2/NCEPDEV/stmp1/Cory.R.Martin/apr2025/raobs/figs/nearsfc_${variable}_zerozed.png
+    plots:
+      - mapping:
+          projection: plcarr
+          domain: conus
+        add_map_features: ['coastline']
+        add_colorbar:
+          label: ${variable}
+        add_grid:
+        layers:
+        - type: MapGridded
+          longitude:
+            variable: zerozed::state::lon
+          latitude:
+            variable: zerozed::state::lat
+          data:
+            variable: zerozed::state::${variable}
+            slices: '[-1,...]'
+          colorbar: true
+  # analysis 06z
+  - batch figure:
+      variables: [tmp, ugrd, vgrd, spfh]
+    figure:
+      figure size: [20,10]
+      layout: [1,1]
+      title: 'Analysis from GSI'
+      output name: /scratch2/NCEPDEV/stmp1/Cory.R.Martin/apr2025/raobs/figs/nearsfc_${variable}_sixzed.png
+    plots:
+      - mapping:
+          projection: plcarr
+          domain: conus
+        add_map_features: ['coastline']
+        add_colorbar:
+          label: ${variable}
+        add_grid:
+        layers:
+        - type: MapGridded
+          longitude:
+            variable: sixzed::state::lon
+          latitude:
+            variable: sixzed::state::lat
+          data:
+            variable: sixzed::state::${variable}
+            slices: '[-1,...]'
+          colorbar: true
