@@ -30,7 +30,7 @@ plot1 = CreatePlot()
 plot1.plot_layers = [gridded]
 plot1.projection = 'plcarr'
 plot1.domain = 'conus'
-plot1.add_map_features(['coastline'])
+plot1.add_map_features(['coastline', 'states'])
 plot1.add_xlabel(xlabel='longitude')
 plot1.add_ylabel(ylabel='latitude')
 plot1.add_colorbar(label='temperature',
@@ -53,7 +53,7 @@ plot1 = CreatePlot()
 plot1.plot_layers = [gridded]
 plot1.projection = 'plcarr'
 plot1.domain = 'conus'
-plot1.add_map_features(['coastline'])
+plot1.add_map_features(['coastline', 'states'])
 plot1.add_xlabel(xlabel='longitude')
 plot1.add_ylabel(ylabel='latitude')
 plot1.add_colorbar(label='temperature',

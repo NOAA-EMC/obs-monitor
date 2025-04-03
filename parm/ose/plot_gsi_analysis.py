@@ -29,7 +29,7 @@ plot1 = CreatePlot()
 plot1.plot_layers = [gridded]
 plot1.projection = 'plcarr'
 plot1.domain = 'conus'
-plot1.add_map_features(['coastline'])
+plot1.add_map_features(['coastline', 'states'])
 plot1.add_xlabel(xlabel='longitude')
 plot1.add_ylabel(ylabel='latitude')
 plot1.add_colorbar(label='temperature',
@@ -45,14 +45,14 @@ fig.save_figure('/scratch2/NCEPDEV/stmp1/Cory.R.Martin/apr2025/raobs/figs/surfac
 
 # plot analysis field
 gridded = MapGridded(lats, lons, temp1[0, -1,...])
-gridded.cmap = 'viridis'
+gridded.cmap = 'rainbow'
 gridded.vmin = 260
 gridded.vmax = 310
 plot1 = CreatePlot()
 plot1.plot_layers = [gridded]
 plot1.projection = 'plcarr'
 plot1.domain = 'conus'
-plot1.add_map_features(['coastline'])
+plot1.add_map_features(['coastline', 'states'])
 plot1.add_xlabel(xlabel='longitude')
 plot1.add_ylabel(ylabel='latitude')
 plot1.add_colorbar(label='temperature',
