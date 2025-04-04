@@ -8,7 +8,7 @@ local pkgNameVer = myModuleFullName()
 
 conflict(pkgName)
 
-
+load ("intel/19.1.3.304")
 load ("python/3.12.0")
 
 local pyenvpath = "/lfs/h2/emc/da/noscrub/edward.safford/python/envs/"
