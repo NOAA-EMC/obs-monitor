@@ -77,7 +77,7 @@ plot1.add_colorbar(label='temperature',
 fig = CreateFigure()
 fig.plot_list = [plot1]
 fig.create_figure()
-#fig.plot_logo(loc='lower right', subplot_orientation='first', zoom=0.5, alpha=0.9)
+fig.plot_logo(loc='lower right', subplot_orientation='first', zoom=0.5, alpha=0.9)
 
 plt.savefig('/scratch2/NCEPDEV/stmp1/Cory.R.Martin/apr2025/raobs/figs/omf_midtrop_conv_t_2025030100.png')
 
