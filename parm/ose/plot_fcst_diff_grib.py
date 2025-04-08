@@ -12,14 +12,24 @@ ops_root = '/lfs/h2/emc/global/noscrub/cory.r.martin/ops_gfsv16.3'
 para_root = '/lfs/h2/emc/ptmp/russ.treadon/prsonde'
 fh = 120
 
-inits = [dt.datetime(2025,3,10,12),
+inits = [dt.datetime(2025,3,8,0),
+         dt.datetime(2025,3,8,12),
+         dt.datetime(2025,3,9,0),
+         dt.datetime(2025,3,9,12),
+         dt.datetime(2025,3,10,0),
+         dt.datetime(2025,3,10,12),
          dt.datetime(2025,3,11,0),
          dt.datetime(2025,3,11,12),
          dt.datetime(2025,3,12,0),
          dt.datetime(2025,3,12,12),
          dt.datetime(2025,3,13,0),
          ]
-valid = [dt.datetime(2025,3,15,12),
+valid = [dt.datetime(2025,3,13,0),
+         dt.datetime(2025,3,13,12),
+         dt.datetime(2025,3,14,0),
+         dt.datetime(2025,3,14,12),
+         dt.datetime(2025,3,15,0),
+         dt.datetime(2025,3,15,12),
          dt.datetime(2025,3,16,0),
          dt.datetime(2025,3,16,12),
          dt.datetime(2025,3,17,0),
@@ -34,6 +44,7 @@ for i in range(len(inits)):
                            inits[i].strftime('%H'), "atmos", f"gfs.t{inits[i].strftime('%H')}z.pgrb2.0p25.f120")
     parapath = os.path.join(para_root, f"gfs.{inits[i].strftime('%Y%m%d')}",
                             inits[i].strftime('%H'), "atmos", f"gfs.t{inits[i].strftime('%H')}z.pgrb2.0p25.f120")
+    print(anlpath)
     # open grib files
     ops = grib2io.open(opspath)
     para = grib2io.open(parapath)
