@@ -1,8 +1,8 @@
 [submodule "sorc/eva"]
 	path = sorc/eva
 	url = https://github.com/JCSDA-internal/eva.git
-    branch = develop
+        branch = develop
 [submodule "sorc/emcpy"]
 	path = sorc/emcpy
 	url = https://github.com/NOAA-EMC/emcpy.git
-    branch = develop
+        branch = develop
