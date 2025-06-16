@@ -1,0 +1,9 @@
+experiment_dir: '/scratch1/NCEPDEV/da/Kevin.Dougherty/test/'
+runtime_dir: '/scratch1/NCEPDEV/da/Kevin.Dougherty/obs-monitor/driver/'
+start: '2023-11-30T00:00:00Z'
+end: '2023-11-30T18:00:00Z'
+interval_hours: 6
+outdir: '/scratch1/NCEPDEV/da/Kevin.Dougherty/outdir'
+ob type: 'viirs_n20'
+plot type: 'timeseries'
+template_path: '/scratch1/NCEPDEV/da/Kevin.Dougherty/obs-monitor/templates/ioda_stats_viirs_n20.yaml.j2'
