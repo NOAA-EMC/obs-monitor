@@ -3,13 +3,12 @@ import os
 import yaml
 import shutil
 import logging
-import tempfile
 import subprocess
 from pathlib import Path
-from wxflow import Logger, Jinja
-import jinja2
 from datetime import datetime
 from dateutil.parser import parse as parse_datetime
+from wxflow import Logger, Jinja
+from multiprocessing import Pool
 
 
 def generate_eva_config(template_path: str, output_path: str, context: dict):
@@ -28,8 +27,7 @@ def generate_eva_config(template_path: str, output_path: str, context: dict):
     jinja_render.save(output_file=output_path)
     return output_path
 
-
-def driver(monitor_dict: dict):
+def run_monitoring_job(args):
     """
     Main driver function for observation monitoring workflow.
 
@@ -41,20 +39,19 @@ def driver(monitor_dict: dict):
     - (Optional) Copies the results to an output directory
 
     Args:
-        monitor_dict (dict): Dictionary containing configuration values
+        ars (dict): list including monitor_dict and timestamp
     """
+    monitor_dict, timestamp = args
 
-    # Add logger
-    logger = Logger('Observation Monitoring')
-
-    logger.info('Starting Observation Monitoring')
+    logger = Logger(f"Obs Monitor - {monitor_dict['ob type']}")
+    logger.info("Starting Observation Monitoring")
 
     # Validate required directories
     experiment_dir = Path(monitor_dict["experiment_dir"])
     if not experiment_dir.exists():
         raise FileNotFoundError(f"Experiment directory not found: {experiment_dir}")
 
-    runtime_root = Path(monitor_dict.get("runtime_dir", "./runtime"))
+    runtime_root = monitor_dict.get("runtime_dir", "./runtime")
     outdir = Path(monitor_dict.get("outdir", "./outdir"))
     template_path = monitor_dict["template_path"]
 
@@ -62,8 +59,7 @@ def driver(monitor_dict: dict):
         raise FileNotFoundError(f"Template path not found: {template_path}")
 
     # Create runtime directory
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    runtime_dir = runtime_root / f"runtime_{timestamp}"
+    runtime_dir = Path(os.path.join(runtime_root, f"runtime_{monitor_dict['ob type']}_{timestamp}"))
     runtime_dir.mkdir(parents=True, exist_ok=False)
     logging.info(f"Created runtime directory: {runtime_dir}")
 
@@ -93,7 +89,7 @@ def driver(monitor_dict: dict):
         logging.error(f"EVA failed with exit code {e.returncode}")
         raise
 
-    # Copy results to output directory
+    # Optionally copy results to output directory (still commented out)
     # outdir.mkdir(parents=True, exist_ok=True)
     # for file in runtime_dir.glob("*"):
     #     if file.is_file():
@@ -102,28 +98,38 @@ def driver(monitor_dict: dict):
 
 
 
+
 def main():
     """
     Entry point for the script. Parses command-line arguments and loads configuration.
-
-    If a config YAML file is provided, it loads and passes it to the driver function.
     """
     parser = argparse.ArgumentParser(description="Run obs-monitor driver.")
-    parser.add_argument("-c", "--config", type=str, required=False,
-                        help="Path to YAML config file.")
+    parser.add_argument("-y", "--config", type=str, required=True, help="Path to YAML config file.")
+    parser.add_argument("-c", "--cycle", type=str, required=True, help="Cycle datetime in YYYYMMDDHH format.")
     args = parser.parse_args()
 
-    if args.config:
-        with open(args.config, 'r') as f:
-            monitor_config = yaml.safe_load(f)
-            logging.info(f"Loaded config from {args.config}")
+    try:
+        cycle_dt = datetime.strptime(args.cycle, "%Y%m%d%H")
+        timestamp = cycle_dt.strftime("%Y%m%d_%H%M%S")
+    except ValueError:
+        raise ValueError("Invalid cycle format. Use YYYYMMDDHH.")
+
+    with open(args.config, 'r') as f:
+        monitor_config = yaml.safe_load(f)
+        logging.info(f"Loaded config from {args.config}")
+
+    # Ensure config is a list of jobs
+    if isinstance(monitor_config, dict):
+        monitor_config = [monitor_config]
+
+    job_args = [(job, timestamp) for job in monitor_config]
 
     try:
-        driver(monitor_config)
+        with Pool(processes=min(len(job_args), os.cpu_count())) as pool:
+            pool.map(run_monitoring_job, job_args)
     except Exception as e:
-        logging.exception("Driver failed.")
+        logging.exception("One or more monitoring jobs failed.")
         raise
-
 
 if __name__ == "__main__":
     main()
