@@ -27,6 +27,7 @@ def generate_eva_config(template_path: str, output_path: str, context: dict):
     jinja_render.save(output_file=output_path)
     return output_path
 
+
 def run_monitoring_job(args):
     """
     Main driver function for observation monitoring workflow.
@@ -43,7 +44,7 @@ def run_monitoring_job(args):
     """
     monitor_dict, timestamp = args
 
-    logger = Logger(f"Obs Monitor - {monitor_dict['ob type']}")
+    logger = Logger(f"Obs Monitor - {monitor_dict['ob_type']}")
     logger.info("Starting Observation Monitoring")
 
     # Validate required directories
@@ -59,12 +60,12 @@ def run_monitoring_job(args):
         raise FileNotFoundError(f"Template path not found: {template_path}")
 
     # Create runtime directory
-    runtime_dir = Path(os.path.join(runtime_root, f"runtime_{monitor_dict['ob type']}_{timestamp}"))
+    runtime_dir = Path(os.path.join(runtime_root, f"runtime_{monitor_dict['ob_type']}_{timestamp}"))
     runtime_dir.mkdir(parents=True, exist_ok=False)
     logging.info(f"Created runtime directory: {runtime_dir}")
 
     # Copy experiment files
-    ob_type = monitor_dict["ob type"]
+    ob_type = monitor_dict["ob_type"]
     nc_files = list(experiment_dir.glob(f"*{ob_type}_*.nc"))
     if not nc_files:
         logging.warning(f"No NetCDF files found matching *{ob_type}_*.nc in {experiment_dir}")
@@ -97,8 +98,6 @@ def run_monitoring_job(args):
     #         logging.info(f"Moved {file.name} to output directory: {outdir}")
 
 
-
-
 def main():
     """
     Entry point for the script. Parses command-line arguments and loads configuration.
@@ -115,12 +114,14 @@ def main():
         raise ValueError("Invalid cycle format. Use YYYYMMDDHH.")
 
     with open(args.config, 'r') as f:
-        monitor_config = yaml.safe_load(f)
+        config = yaml.safe_load(f)
         logging.info(f"Loaded config from {args.config}")
 
-    # Ensure config is a list of jobs
-    if isinstance(monitor_config, dict):
-        monitor_config = [monitor_config]
+    # Support original config format and new format for testing
+    if isinstance(config, dict) and "jobs" in config:
+        monitor_config = config["jobs"]
+    else:
+        monitor_config = config if isinstance(config, list) else [config]
 
     job_args = [(job, timestamp) for job in monitor_config]
 
@@ -130,6 +131,7 @@ def main():
     except Exception as e:
         logging.exception("One or more monitoring jobs failed.")
         raise
+
 
 if __name__ == "__main__":
     main()
