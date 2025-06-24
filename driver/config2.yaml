@@ -1,8 +1,7 @@
 defaults: &defaults
   experiment_dir: '/scratch1/NCEPDEV/da/Kevin.Dougherty/test/'
   runtime_dir: '/scratch1/NCEPDEV/da/Kevin.Dougherty/obs-monitor/driver/'
-  start: '2023-11-30T00:00:00Z'
-  end: '2023-11-30T18:00:00Z'
+  ncycles: 3
   interval_hours: 6
   outdir: '/scratch1/NCEPDEV/da/Kevin.Dougherty/outdir'
 

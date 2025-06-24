@@ -5,7 +5,7 @@ import shutil
 import logging
 import subprocess
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from dateutil.parser import parse as parse_datetime
 from wxflow import Logger, Jinja
 from multiprocessing import Pool
@@ -73,12 +73,19 @@ def run_monitoring_job(args):
         shutil.copy2(file, runtime_dir / file.name)
         logging.info(f"Copied: {file.name}")
 
+    interval_hours = monitor_dict.get("interval_hours")
+    ncycles = monitor_dict.get("ncycles")
+    
+    # Compute end_time (from command line) and start_time (derived)
+    end_time = datetime.strptime(timestamp, "%Y%m%d_%H%M%S").replace(tzinfo=timezone.utc)
+    start_time = end_time - timedelta(hours=interval_hours * ncycles)
+    
     # Generate EVA config
     context = {
         "runtime_dir": str(runtime_dir),
-        "start_time": parse_datetime(monitor_dict["start"]),
-        "end_time": parse_datetime(monitor_dict["end"]),
-        "interval_hours": monitor_dict.get("interval_hours", 6),
+        "start_time": start_time,
+        "end_time": end_time,
+        "interval_hours": interval_hours,
     }
     eva_config_path = generate_eva_config(template_path, runtime_dir / "eva_config.yaml", context)
 
