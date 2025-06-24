@@ -25,8 +25,8 @@ graphics:
   # Mean Brightness Temperature
   - figure:
       layout: [1,1]
-      title: 'viirs n20 Time Series - Mean'
-      output name: time_series/viirs_n20/aerosolOpticalDepth/time_series_test_aod.png
+      title: '{{ ob_type }} Time Series - Mean'
+      output name: {{ runtime_dir }}/time_series/{{ ob_type }}/aerosolOpticalDepth/{{ ob_type }}_time_series_{{ start_time | to_YMDH }}_{{ end_time | to_YMDH }}.png
     plots:
       - add_xlabel: 'Datetime'
         add_ylabel: 'aerosolOpticalDepth (Mean)'

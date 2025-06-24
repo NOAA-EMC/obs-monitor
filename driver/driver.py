@@ -86,6 +86,7 @@ def run_monitoring_job(args):
         "start_time": start_time,
         "end_time": end_time,
         "interval_hours": interval_hours,
+        "ob_type": monitor_dict.get("ob_type")
     }
     eva_config_path = generate_eva_config(template_path, runtime_dir / "eva_config.yaml", context)
 
