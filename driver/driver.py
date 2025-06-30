@@ -112,14 +112,16 @@ def main():
     """
     parser = argparse.ArgumentParser(description="Run obs-monitor driver.")
     parser.add_argument("-y", "--config", type=str, required=True, help="Path to YAML config file.")
-    parser.add_argument("-c", "--cycle", type=str, required=True, help="Cycle datetime in YYYYMMDDHH format.")
-    args = parser.parse_args()
+
+    cdate_str = os.environ.get("CDATE")
+    if not cdate_str:
+        raise EnvironmentError("CDATE environment variable not found. Must be YYYYMMDDHH.")
 
     try:
-        cycle_dt = datetime.strptime(args.cycle, "%Y%m%d%H")
+        cycle_dt = datetime.strptime(cdate_str, "%Y%m%d%H")
         timestamp = cycle_dt.strftime("%Y%m%d_%H%M%S")
     except ValueError:
-        raise ValueError("Invalid cycle format. Use YYYYMMDDHH.")
+        raise ValueError("Invalid CDATE format. Use YYYYMMDDHH.")
 
     with open(args.config, 'r') as f:
         config = yaml.safe_load(f)

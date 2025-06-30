@@ -1,7 +1,7 @@
 defaults: &defaults
   experiment_dir: '/scratch1/NCEPDEV/da/Kevin.Dougherty/test/'
   runtime_dir: '/scratch1/NCEPDEV/da/Kevin.Dougherty/obs-monitor/driver/'
-  ncycles: 3
+  ncycles: 1
   interval_hours: 6
   outdir: '/scratch1/NCEPDEV/da/Kevin.Dougherty/outdir'
 
