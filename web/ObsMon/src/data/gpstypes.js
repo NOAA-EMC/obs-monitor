@@ -1,0 +1,154 @@
+export const gpsTypes = [
+    {
+        gpskey: "003-0",
+        displayName: "GPS 3 (MetOpB)"
+    },
+    {
+        gpskey: "004-0",
+        displayName: "GPS 4 (MetOpA)"
+    },
+    {
+        gpskey: "005-0",
+        displayName: "GPS 5 (MetOpC)"
+    },
+    {
+        gpskey: "041-0",
+        displayName: "GPS 41 (Champ)"
+    },
+    {
+        gpskey: "042-0",
+        displayName: "GPS 42 (TeraSAR-X)"
+    },
+    {
+        gpskey: "044-0",
+        displayName: "GPS 44 (PAZ)"
+    },
+    {
+        gpskey: "066-0",
+        displayName: "GPS 66 (Sentinal 6A)"
+    },
+    {
+        gpskey: "265-0",
+        displayName: "GPS 265 (GeoOptics CICERO OP1)"
+    },
+    {
+        gpskey: "266-0",
+        displayName: "GPS 266 (GeoOptics CICERO OP2)"
+    },
+    {
+        gpskey: "267-0",
+        displayName: "GPS 267 (PlanetiQ GNOMES-A)"
+    },
+    {
+        gpskey: "268-0",
+        displayName: "GPS 268 (PlanetiQ GNOMES-B)"
+    },
+    {
+        gpskey: "269-0",
+        displayName: "GPS 269 (Spire Lemur 3U CubeSat)"
+    },
+    {
+        gpskey: "421-0",
+        displayName: "GPS 421 (OCEANSAT-2)"
+    },
+    {
+        gpskey: "440-0",
+        displayName: "GPS 440 (Megha-Tropiques)"
+    },
+    {
+        gpskey: "722-0",
+        displayName: "GPS 722 (GRACE A)"
+    },
+    {
+        gpskey: "723-0",
+        displayName: "GPS 723 (GRACE B)"
+    },
+    {
+        gpskey: "724-0",
+        displayName: "GPS 724 (COSMIC-2 Polar)"
+    },
+    {
+        gpskey: "725-0",
+        displayName: "GPS 725 (COSMIC-2 Polar)"
+    },
+    {
+        gpskey: "726-0",
+        displayName: "GPS 726 (COSMIC-2 Polar)"
+    },
+    {
+        gpskey: "727-0",
+        displayName: "GPS 727 (COSMIC-2 Polar)"
+    },
+    {
+        gpskey: "728-0",
+        displayName: "GPS 728 (COSMIC-2 Polar)"
+    },
+    {
+        gpskey: "729-0",
+        displayName: "GPS 729 (COSMIC-2 Polar)"
+    },
+    {
+        gpskey: "740-0",
+        displayName: "GPS 740 (COSMIC FM1)"
+    },
+    {
+        gpskey: "741-0",
+        displayName: "GPS 741 (COSMIC FM2)"
+    },
+    {
+        gpskey: "742-0",
+        displayName: "GPS 742 (COSMIC FM3)"
+    },
+    {
+        gpskey: "743-0",
+        displayName: "GPS 743 (COSMIC FM4)"
+    },
+    {
+        gpskey: "744-0",
+        displayName: "GPS 744 (COSMIC FM5)"
+    },
+    {
+        gpskey: "745-0",
+        displayName: "GPS 745 (COSMIC FM6)"
+    },
+    {
+        gpskey: "750-0",
+        displayName: "GPS 750 (COSMIC-2 Equatorial)"
+    },
+    {
+        gpskey: "751-0",
+        displayName: "GPS 751 (COSMIC-2 Equatorial)"
+    },
+    {
+        gpskey: "752-0",
+        displayName: "GPS 752 (COSMIC-2 Equatorial)"
+    },
+    {
+        gpskey: "753-0",
+        displayName: "GPS 753 (COSMIC-2 Equatorial)"
+    },
+    {
+        gpskey: "754-0",
+        displayName: "GPS 754 (COSMIC-2 Equatorial)"
+    },
+    {
+        gpskey: "755-0",
+        displayName: "GPS 755 (COSMIC-2 Equatorial)"
+    },
+    {
+        gpskey: "786-0",
+        displayName: "GPS 786 (C/NOFS)"
+    },
+    {
+        gpskey: "820-0",
+        displayName: "GPS 820 (SACC)"
+    },
+    {
+        gpskey: "821-0",
+        displayName: "GPS 821 (SACI)"
+    },
+    {
+        gpskey: "825-0",
+        displayName: "GPS 825 (KOMPSAT-5)"
+    }
+]
