@@ -103,7 +103,6 @@ export default function UvObs({ openSection, toggleSection, navigate, cycleTime 
                             assimilated={uv.assimilated}
                             anomaly={uv.anomaly}
                             navigate={navigate}
-                            cycleTime={cycleTime}
                         />
 
                     ))}
