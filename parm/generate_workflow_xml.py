@@ -15,12 +15,13 @@ def main():
     output = template.render(
         PSLOT=args.pslot,
         HOMEobsmon="/scratch3/NCEPDEV/da/Kevin.Dougherty/obs-monitor",
-        # DATAROOT="/scratch3/NCEPDEV/da/Kevin.Dougherty/test",
-        CONFIG_YAML="/scratch3/NCEPDEV/da/Kevin.Dougherty/obs-monitor/config/obs_monitor_config.yaml",
-        RUNTIMEDIR="/scratch3/NCEPDEV/da/Kevin.Dougherty/obs-monitor/driver/",
-        NCYCLES="1",
+        COMROOT="/scratch3/NCEPDEV/da/Kevin.Dougherty/obsmon_save",
+        EXPDIR="/scratch3/NCEPDEV/da/Kevin.Dougherty/obsmon_exp",
+        DATAROOT="/scratch3/NCEPDEV/da/Kevin.Dougherty/test",
+        RUNTIME_DIR=f"{EXPDIR}/{PSLOT}",
+        CONFIG_YAML=f"{HOMEobsmon}/driver/config2.yaml",
+        NCYCLES="1", # number of cycles to work back from start date
         INTERVAL_HOURS="6",
-        OUTDIR="/scratch3/NCEPDEV/da/Kevin.Dougherty/outdir",
         SCHEDULER="slurm",
         SDATE=args.start_date,
         ACCOUNT="da-cpu",
@@ -31,6 +32,7 @@ def main():
         TASK_MEM="4G"
     )
 
+    # need to point this to our EXPDIR, so just make 'output' EXPDIR?
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
     with open(args.output, "w") as f:
         f.write(output)
