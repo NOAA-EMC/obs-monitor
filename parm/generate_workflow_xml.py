@@ -4,24 +4,37 @@ from pathlib import Path
 
 def main():
     parser = argparse.ArgumentParser(description="Generate Rocoto XML from template.")
-    parser.add_argument("--pslot", default="obsmon_test")
-    parser.add_argument("--start_date", required=True)
-    parser.add_argument("--output", required=True, help="Path to output XML file")
+    parser.add_argument("--pslot", required=True, help="PSLOT name for workflow")
+    parser.add_argument("--start_date", required=True, help="Cycle start date in YYYYMMDDHH format")
+    parser.add_argument("--obsmondir", required=True, help="Path to base obs-monitor directory")
+    parser.add_argument("--expdir", required=True, help="Experiment directory (EXPDIR)")
+    parser.add_argument("--comroot", required=True, help="COMROOT directory")
+    parser.add_argument("--dataroot", required=True, help="DATAROOT directory")
+    parser.add_argument("--ncycles", default="1", help="Number of cycles to work back from start date")
+    parser.add_argument("--intervalhrs", default="6", help="Hours between cycles")
     args = parser.parse_args()
 
     env = Environment(loader=FileSystemLoader("."))
     template = env.get_template("monitor_rocoto_template.xml.j2")
 
+    # Assign variables first to avoid reference issues
+    pslot = args.pslot
+    obsmondir = args.obsmondir
+    expdir = args.expdir
+    runtime_dir = f"{expdir}/{pslot}"
+    config_yaml = f"{obsmondir}/driver/config2.yaml"
+    output_path = f"{runtime_dir}/{pslot}_obsmon_rocoto.xml"
+
     output = template.render(
-        PSLOT=args.pslot,
-        HOMEobsmon="/scratch3/NCEPDEV/da/Kevin.Dougherty/obs-monitor",
-        COMROOT="/scratch3/NCEPDEV/da/Kevin.Dougherty/obsmon_save",
-        EXPDIR="/scratch3/NCEPDEV/da/Kevin.Dougherty/obsmon_exp",
-        DATAROOT="/scratch3/NCEPDEV/da/Kevin.Dougherty/test",
-        RUNTIME_DIR=f"{EXPDIR}/{PSLOT}",
-        CONFIG_YAML=f"{HOMEobsmon}/driver/config2.yaml",
-        NCYCLES="1", # number of cycles to work back from start date
-        INTERVAL_HOURS="6",
+        PSLOT=pslot,
+        HOMEobsmon=obsmondir,
+        COMROOT=args.comroot,
+        EXPDIR=expdir,
+        DATAROOT=args.dataroot,
+        RUNTIME_DIR=runtime_dir,
+        CONFIG_YAML=config_yaml,
+        NCYCLES=args.ncycles,
+        INTERVAL_HOURS=args.intervalhrs,
         SCHEDULER="slurm",
         SDATE=args.start_date,
         ACCOUNT="da-cpu",
@@ -31,12 +44,13 @@ def main():
         TASK_NODES="1",
         TASK_MEM="4G"
     )
+    
+    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
 
-    # need to point this to our EXPDIR, so just make 'output' EXPDIR?
-    Path(args.output).parent.mkdir(parents=True, exist_ok=True)
-    with open(args.output, "w") as f:
+    with open(output_path, "w") as f:
         f.write(output)
-    print(f"Rocoto workflow written to {args.output}")
+    
+    print(f"Rocoto workflow written to {output_path}")
 
 if __name__ == "__main__":
     main()
