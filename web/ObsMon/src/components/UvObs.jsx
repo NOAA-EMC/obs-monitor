@@ -38,18 +38,18 @@ export default function UvObs({ openSection, toggleSection, navigate, cycleTime 
     }, [cycleTime]);
 
     const enrichedUvTypes = useMemo(() => {
-        const enriched = uvTypes.map(({ uvkey, displayName }) => ({
+        return uvTypes.map(({ uvkey, displayName }) => ({
             uvkey,
             displayName,
             assimilated: assimilationStatus[uvkey] ?? false,
             anomaly: anomalyStatus[uvkey] ?? "ok",
         }));
-
-        const foundAnomaly = enriched.some((uv) => uv.anomaly && uv.anomaly !== "ok");
-        setHasAnyAnomaly(foundAnomaly);
-
-        return enriched;
     }, [assimilationStatus, anomalyStatus]);
+
+    useEffect(() => {
+        const foundAnomaly = enrichedUvTypes.some((uv) => uv.anomaly && uv.anomaly !== "ok");
+        setHasAnyAnomaly(foundAnomaly);
+    }, [enrichedUvTypes]);
 
     const filteredUvTypes = useMemo(() => {
         switch (filter) {
