@@ -11,8 +11,7 @@ export jobid="${job}.$$"
 
 ###############################################################
 # Execute the JJOB
-python "${HOMEobsmon}/driver/driver.py" \
-    --config "${CONFIG_YAML}"
+python "${HOMEobsmon}/driver/driver.py"
 
 exit $?
 
