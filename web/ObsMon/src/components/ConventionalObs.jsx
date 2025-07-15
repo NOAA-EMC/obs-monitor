@@ -54,7 +54,7 @@ export default function ConventionalObs({
                 anomaly: anomalyStatus[id] ?? "ok",
             };
         });
-    }, [typeList, assimilationStatus, anomalyStatus]);
+    }, [typeList, assimilationStatus, anomalyStatus, keyProp]);
 
     const filteredTypes = useMemo(() => {
         switch (filter) {
