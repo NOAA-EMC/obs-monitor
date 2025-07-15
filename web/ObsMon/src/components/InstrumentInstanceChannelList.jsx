@@ -4,7 +4,7 @@ import { MHS } from "../data/channels";
 // Utility for styling
 const getTextColor = (channel) => {
     if (!channel.assimilated) return "gray";
-    if (channel.anomaly === "low_counts") return "orange";
+    if (channel.anomaly === "low_count") return "orange";
     if (channel.anomaly === "high_error") return "red";
     return "black";
 };

@@ -3,7 +3,7 @@ import React, { useMemo } from "react";
 const getTextColor = (assimilated, anomaly) => {
     if (!assimilated) return "gray";
     if (anomaly === "missing") return "red";
-    if (anomaly === "high_error" || anomaly === "low_counts") return "orange";
+    if (anomaly === "high_error" || anomaly === "low_count") return "orange";
     return "black";
 };
 
@@ -14,7 +14,7 @@ export default function TypeBlock({ type, id, displayName, assimilated, anomaly,
     const tooltip = useMemo(() => {
         if (anomaly === "missing") return "Data missing from current cycle";
         if (anomaly === "high_error") return "High error value";
-        if (anomaly === "low_counts") return "Low observation count";
+        if (anomaly === "low_count") return "Low observation count";
         return assimilated ? "Assimilated" : "Not Assimilated";
     }, [anomaly, assimilated]);
 

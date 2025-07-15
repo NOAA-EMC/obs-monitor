@@ -1,10 +1,17 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { gpsTypes } from "../data/gpstypes";
-import TypeBlock from "./TypeBlock";
-import { withBase } from '../utils/paths.js';
+import TypeBlock from "./TypeBlock.jsx";
+import { withBase } from "../utils/paths.js";
 
-
-export default function GpsObs({ openSection, toggleSection, navigate, cycleTime }) {
+export default function ConventionalObs({
+    obsType,          // e.g., "gps", "ps", "q"
+    typeList,         // e.g., gpsTypes, psTypes (array of { gpskey/pskey, displayName })
+    keyProp,          // e.g., "gpskey", "pskey"
+    displayLabel,     // e.g., "GPS Observations"
+    openSection,
+    toggleSection,
+    navigate,
+    cycleTime
+}) {
     const [assimilationStatus, setAssimilationStatus] = useState({});
     const [anomalyStatus, setAnomalyStatus] = useState({});
     const [filter, setFilter] = useState("all");
@@ -12,24 +19,22 @@ export default function GpsObs({ openSection, toggleSection, navigate, cycleTime
     useEffect(() => {
         const fetchStatus = async () => {
             try {
-                // const res = await fetch("/data/assimilationStatus_gps.json");
-                const res = await fetch(withBase('data/assimilationStatus_gps.json'));
+                const res = await fetch(withBase(`data/assimilationStatus_${obsType}.json`));
                 if (!res.ok) throw new Error("Assimilation file missing");
                 const data = await res.json();
                 setAssimilationStatus(data);
             } catch (err) {
-                console.warn("Could not load assimilationStatus_gps.json", err);
+                console.warn(`Could not load assimilationStatus_${obsType}.json`, err);
                 setAssimilationStatus({});
             }
 
             try {
-                // const res = await fetch(`/data/anomalyStatus_gps_${cycleTime}.json`);
-                const res = await fetch(withBase(`data/anomalyStatus_gps_${cycleTime}.json`));
+                const res = await fetch(withBase(`data/anomalyStatus_${obsType}_${cycleTime}.json`));
                 if (!res.ok) throw new Error("Anomaly file missing");
                 const data = await res.json();
                 setAnomalyStatus(data);
             } catch (err) {
-                console.warn(`Missing anomaly file for cycle ${cycleTime}`, err);
+                console.warn(`Missing anomaly file for ${obsType} at ${cycleTime}`, err);
                 setAnomalyStatus({});
             }
         };
@@ -37,52 +42,53 @@ export default function GpsObs({ openSection, toggleSection, navigate, cycleTime
         if (cycleTime) {
             fetchStatus();
         }
-    }, [cycleTime]);
+    }, [obsType, cycleTime]);
 
-    const enrichedGpsTypes = useMemo(() => {
-        return gpsTypes.map(({ gpskey, displayName }) => ({
-            gpskey,
-            displayName,
-            assimilated: assimilationStatus[gpskey] ?? false,
-            anomaly: anomalyStatus[gpskey] ?? "ok",
-        }));
-    }, [assimilationStatus, anomalyStatus]);
+    const enrichedTypes = useMemo(() => {
+        return typeList.map((entry) => {
+            const id = entry[keyProp];
+            return {
+                ...entry,
+                id,
+                assimilated: assimilationStatus[id] ?? false,
+                anomaly: anomalyStatus[id] ?? "ok",
+            };
+        });
+    }, [typeList, assimilationStatus, anomalyStatus]);
 
-    const filteredGpsTypes = useMemo(() => {
+    const filteredTypes = useMemo(() => {
         switch (filter) {
             case "assimilated":
-                return enrichedGpsTypes.filter((t) => t.assimilated);
+                return enrichedTypes.filter((t) => t.assimilated);
             case "anomalous":
-                return enrichedGpsTypes.filter((t) => t.anomaly !== "ok");
+                return enrichedTypes.filter((t) => t.anomaly !== "ok");
             default:
-                return enrichedGpsTypes;
+                return enrichedTypes;
         }
-    }, [enrichedGpsTypes, filter]);
+    }, [enrichedTypes, filter]);
 
-    // ✅ Determine if any GPS type has an anomaly
-    const categoryHasAnomaly = enrichedGpsTypes.some((g) => g.anomaly !== "ok");
+    const categoryHasAnomaly = enrichedTypes.some((t) => t.anomaly && t.anomaly !== "ok");
 
     return (
         <div className="mb-4">
             <button
-                onClick={() => toggleSection("gps")}
+                onClick={() => toggleSection(obsType)}
                 className="custom-button-category"
                 style={{
                     backgroundColor: categoryHasAnomaly ? "#ffdfdf" : undefined,
                 }}
             >
-                GPS Observations
+                {displayLabel}
             </button>
 
-            {openSection === "gps" && (
+            {openSection === obsType && (
                 <div className="ml-4 mt-1">
-                    {/* Filter UI */}
                     <div className="mb-2">
-                        <label htmlFor="gps-filter" className="mr-2 font-medium">
+                        <label htmlFor={`${obsType}-filter`} className="mr-2 font-medium">
                             Filter:
                         </label>
                         <select
-                            id="gps-filter"
+                            id={`${obsType}-filter`}
                             value={filter}
                             onChange={(e) => setFilter(e.target.value)}
                             className="border rounded px-2 py-1"
@@ -93,15 +99,14 @@ export default function GpsObs({ openSection, toggleSection, navigate, cycleTime
                         </select>
                     </div>
 
-                    {/* Filtered GPS list */}
-                    {filteredGpsTypes.map((gps) => (
+                    {filteredTypes.map((entry) => (
                         <TypeBlock
-                            type="gps"
-                            key={gps.gpskey}
-                            id={gps.gpskey}
-                            displayName={gps.displayName}
-                            assimilated={gps.assimilated}
-                            anomaly={gps.anomaly}
+                            key={entry.id}
+                            type={obsType}
+                            id={entry.id}
+                            displayName={entry.displayName}
+                            assimilated={entry.assimilated}
+                            anomaly={entry.anomaly}
                             navigate={navigate}
                             cycleTime={cycleTime}
                         />

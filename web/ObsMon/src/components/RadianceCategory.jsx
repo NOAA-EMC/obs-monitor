@@ -1,75 +1,69 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import SatelliteBlock from './SatelliteBlock';
-import { infraredSatellites } from '../data/infrasats';
 import { withBase } from '../utils/paths';
 
-export default function InfraredRad({
+export default function RadianceCategory({
+    sectionKey,
+    label,
+    satelliteList,
+    channelMap,
     openSection,
     toggleSection,
     openSat,
     toggleSat,
     navigate,
-    CrIS,
-    IASI,
     cycleTime,
 }) {
-    const channelMap = {
-        CrIS: CrIS.channels,
-        IASI: IASI.channels,
+    const [openInstrument, setOpenInstrument] = useState(null);
+    const [anomalyMap, setAnomalyMap] = useState({});
+
+    // Add or update anomaly status when reported by SatelliteBlock
+    const handleReportAnomalyStatus = (key, hasAnomaly) => {
+        setAnomalyMap((prev) => {
+            if (prev[key] === hasAnomaly) return prev;
+            return { ...prev, [key]: hasAnomaly };
+        });
     };
 
     // Group satellites by instrument
     const instrumentToSats = useMemo(() => {
         const map = {};
-        for (const sat of infraredSatellites) {
+        for (const sat of satelliteList) {
             if (!map[sat.instrument]) {
                 map[sat.instrument] = [];
             }
             map[sat.instrument].push(sat);
         }
         return map;
-    }, []);
+    }, [satelliteList]);
 
-    const [openInstrument, setOpenInstrument] = useState(null);
-    const [anomalyMap, setAnomalyMap] = useState({});
-
-    const handleAnomalyStatus = (satKey, hasAnomaly) => {
-        setAnomalyMap((prev) => ({ ...prev, [satKey]: hasAnomaly }));
-    };
-
-    const instrumentHasAnomaly = (instrument) => {
-        return infraredSatellites
-            .filter((s) => s.instrument === instrument)
-            .some((s) => anomalyMap[s.satKey]);
-    };
-
-    const categoryHasAnomaly = Object.keys(instrumentToSats)
-        .some((instrument) => instrumentHasAnomaly(instrument));
-
-    // Eagerly fetch anomaly status for all infrared satellites
+    // Eagerly prefetch anomaly status on mount / cycle change
     useEffect(() => {
         const fetchAllAnomalies = async () => {
             const newMap = {};
 
             await Promise.all(
-                infraredSatellites.map(async (sat) => {
-                    // const anomalyUrl = `/data/anomalyStatus_${sat.satKey}_${sat.instrument}_${cycleTime}.json`;
-                    const anomalyUrl = withBase(`data/anomalyStatus_${sat.satKey}_${sat.instrument}_${cycleTime}.json`);
+                satelliteList.map(async (sat) => {
+                    const key = `${sat.satKey}_${sat.instrument}`;
+                    const anomalyUrl = withBase(`data/anomalyStatus_${key}_${cycleTime}.json`);
                     try {
-                        const res = await fetch(anomalyUrl);
+                        const res = await fetch(anomalyUrl, { cache: 'no-store' });
                         if (res.ok) {
                             const data = await res.json();
                             const values = Object.values(data);
-                            const hasAnomaly = values.includes("high_error") ||
-                                values.includes("low_counts") ||
+                            const hasAnomaly =
+                                values.includes("high_error") ||
+                                values.includes("low_count") ||
                                 values.includes("missing") ||
-                                values.includes("all");
-                            newMap[sat.satKey] = hasAnomaly;
+                                values.includes("all");  // fallback: "all" is sometimes set when missing
+
+                            newMap[key] = hasAnomaly;
                         } else {
-                            newMap[sat.satKey] = false;
+                            newMap[key] = false;
                         }
-                    } catch {
-                        newMap[sat.satKey] = false;
+                    } catch (err) {
+                        console.warn(`Anomaly fetch failed for ${key}:`, err);
+                        newMap[key] = false;
                     }
                 })
             );
@@ -80,24 +74,34 @@ export default function InfraredRad({
         if (cycleTime) {
             fetchAllAnomalies();
         }
-    }, [cycleTime]);
+    }, [satelliteList, cycleTime]);
+
+
+    const instrumentHasAnomaly = (instrument) =>
+        instrumentToSats[instrument]?.some(sat => anomalyMap[`${sat.satKey}_${instrument}`]);
+
+    const categoryHasAnomaly = useMemo(() => {
+        return Object.keys(instrumentToSats).some((instrument) =>
+            instrumentHasAnomaly(instrument)
+        );
+    }, [instrumentToSats, anomalyMap]);
 
     return (
         <div className="mb-4">
             <button
-                onClick={() => toggleSection('inf')}
+                onClick={() => toggleSection(sectionKey)}
                 className="custom-button-category"
-                style={{
-                    backgroundColor: categoryHasAnomaly ? "#ffdfdf" : undefined,
-                }}
+                style={{ backgroundColor: categoryHasAnomaly ? "#ffdfdf" : undefined }}
             >
-                Infrared Observations
+                {label}
             </button>
 
-            {openSection === 'inf' && (
+            {openSection === sectionKey && (
                 <div className="ml-4 mt-1">
                     {Object.keys(instrumentToSats).sort().map((instrument) => {
+                        const sats = instrumentToSats[instrument];
                         const hasAnomaly = instrumentHasAnomaly(instrument);
+
                         return (
                             <div key={instrument} className="mb-2">
                                 <button
@@ -107,16 +111,14 @@ export default function InfraredRad({
                                         )
                                     }
                                     className="custom-button-instrument"
-                                    style={{
-                                        backgroundColor: hasAnomaly ? "#ffdfdf" : undefined,
-                                    }}
+                                    style={{ backgroundColor: hasAnomaly ? "#ffdfdf" : undefined }}
                                 >
                                     {instrument}
                                 </button>
 
                                 {openInstrument === instrument && (
                                     <div className="ml-4 mt-1">
-                                        {instrumentToSats[instrument].map((sat) => (
+                                        {sats.map((sat) => (
                                             <SatelliteBlock
                                                 key={`${sat.satKey}_${instrument}`}
                                                 satKey={sat.satKey}
@@ -127,7 +129,7 @@ export default function InfraredRad({
                                                 toggleSat={toggleSat}
                                                 navigate={navigate}
                                                 cycleTime={cycleTime}
-                                                reportAnomalyStatus={handleAnomalyStatus}
+                                                reportAnomalyStatus={handleReportAnomalyStatus}
                                             />
                                         ))}
                                     </div>
