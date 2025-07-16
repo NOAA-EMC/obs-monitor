@@ -113,21 +113,26 @@ export default function SatelliteBlock({
         }
     }, [enrichedChannels, filter]);
 
+    const getChannelTitle = (channel) => {
+        if (!channel.assimilated) return "Not Assimilated";
+        if (channel.anomaly !== "ok") return channel.anomaly;
+        return "Assimilated";
+    };
+
+    const getSatelliteTitle = (allMissing, enrichedChannels) => {
+        if (allMissing) return "All data missing from current cycle";
+        if (!enrichedChannels.some((ch) => ch.assimilated)) return "Not Assimilated";
+        const anomalous = enrichedChannels.find((ch) => ch.anomaly !== "ok");
+        return anomalous ? anomalous.anomaly : "Assimilated";
+    };
+
     return (
         <div className="mb-2">
             <button
                 onClick={() => toggleSat(satKey)}
                 className="custom-button-satellite"
                 style={{ color: satelliteTextColor }}
-                title={
-                    allMissing
-                        ? "All data missing from current cycle"
-                        : !enrichedChannels.some(ch => ch.assimilated)
-                            ? "Not Assimilated"
-                            : enrichedChannels.some(ch => ch.anomaly !== "ok")
-                                ? enrichedChannels.find(ch => ch.anomaly !== "ok").anomaly
-                                : "Assimilated"
-                }
+                title={getSatelliteTitle(allMissing, enrichedChannels)}
             >
                 {displayName}
             </button>
@@ -183,13 +188,7 @@ export default function SatelliteBlock({
                                     borderRadius: "4px",
                                 }}
                                 className="hover:bg-gray-100"
-                                title={
-                                    !channel.assimilated
-                                        ? "Not Assimilated"
-                                        : channel.anomaly !== "ok"
-                                            ? channel.anomaly
-                                            : "Assimilated"
-                                }
+                                title={getChannelTitle(channel)}
                             >
                                 Channel {channel.id}
                             </li>
