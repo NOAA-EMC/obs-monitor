@@ -1,10 +1,12 @@
 import os
 import yaml
 import logging
+import shutil
 from pathlib import Path
 from datetime import datetime, timedelta, timezone
 from multiprocessing import Pool
 import subprocess
+import wxflow
 from wxflow import Logger, Jinja
 
 def generate_eva_config(template_path: str, output_path: str, context: dict):
@@ -42,27 +44,28 @@ def run_monitoring_job(args):
     logger = Logger(f"Obs Monitor - {monitor_dict['ob_type']}")
     logger.info("Starting Observation Monitoring")
 
-    experiment_dir = os.getenv("EXPDIR")
+    experiment_dir = Path(os.getenv("EXPDIR"))
     if not experiment_dir.exists():
         raise FileNotFoundError(f"Experiment directory not found: {experiment_dir}")
 
-    runtime_root = os.getenv("RUNTIME_DIR")
+    runtime_root = Path(os.getenv("RUNTIME_DIR"))
     template_path = monitor_dict["template_path"]
+    print(template_path)
 
-    runtime_dir = Path(runtime_root) / f"runtime_{monitor_dict['ob_type']}_{timestamp}"
+    runtime_dir = runtime_root / f"runtime_{monitor_dict['ob_type']}_{timestamp}"
     runtime_dir.mkdir(parents=True, exist_ok=False)
     logger.info(f"Created runtime directory: {runtime_dir}")
 
     ob_type = monitor_dict["ob_type"]
-    dataroot = os.getenv("DATAROOT")
+    dataroot = Path(os.getenv("DATAROOT"))
     # Going to need to clean this up a bit so we grab the right dates etc.
     nc_files = list(dataroot.glob(f"*{ob_type}_*.nc"))
     for file in nc_files:
         shutil.copy2(file, runtime_dir / file.name)
         logger.info(f"Copied: {file.name}")
 
-    interval_hours = os.getenv("INTERVAL_HOURS")
-    ncycles = os.getenv("NCYCLES")
+    interval_hours = int(os.getenv("INTERVAL_HOURS"))
+    ncycles = int(os.getenv("NCYCLES"))
 
     end_time = datetime.strptime(timestamp, "%Y%m%d_%H%M%S").replace(tzinfo=timezone.utc)
     start_time = end_time - timedelta(hours=interval_hours * ncycles)
@@ -77,8 +80,11 @@ def run_monitoring_job(args):
 
     eva_config_path = generate_eva_config(template_path, runtime_dir / "eva_config.yaml", context)
 
+    # Get the eva executable
+    eva_exe = wxflow.executable.which("eva")
+
     try:
-        subprocess.run(["eva", str(eva_config_path)], check=True)
+        subprocess.run([str(eva_exe), str(eva_config_path)], check=True)
         logger.info("EVA executed successfully.")
     except subprocess.CalledProcessError as e:
         logger.error(f"EVA failed with exit code {e.returncode}")
@@ -107,7 +113,7 @@ def main():
     except ValueError:
         raise ValueError("Invalid CDATE format, expected YYYYMMDDHH")
 
-    config_path = os.getenv("CONFIG_YAML")
+    config_path = Path(os.getenv("CONFIG_YAML"))
     if not config_path:
         raise EnvironmentError("CONFIG_YAML environment variable not set")
 
@@ -121,7 +127,7 @@ def main():
         monitor_jobs = config if isinstance(config, list) else [config]
 
     # Inject runtime_dir from environment or default
-    runtime_dir = os.getenv("RUNTIME_DIR", "./runtime")
+    runtime_dir = Path(os.getenv("RUNTIME_DIR"))
     for job in monitor_jobs:
         job.setdefault("runtime_dir", runtime_dir)
 

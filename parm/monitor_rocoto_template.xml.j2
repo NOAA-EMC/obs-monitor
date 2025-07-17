@@ -13,7 +13,7 @@
     <cyclestr>&COMROOT;/&PSLOT;/logs/@Y@m@d@H.log</cyclestr>
   </log>
 
-  <cycledef name="obsmon" group="gdas">(( SDATE }} 06:00:00</cycledef>
+  <cycledef name="obsmon" group="gdas">{{ SDATE }} 06:00:00</cycledef>
 
   <task name="obs_monitor_driver" cycledefs="obsmon" maxtries="&MAXTRIES;">
     <command>&HOMEobsmon;/jobs/rocoto/run_driver.sh</command>

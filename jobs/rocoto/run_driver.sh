@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 
-source "${HOMEobsmon}/ush/preamble.sh"
+#source "${HOMEobsmon}/ush/preamble.sh"
 
 ###############################################################
 # Source workflow modules
-. "${HOMEobsmon}/ush/load_obsmon_modules.sh"
+#. "${HOMEobsmon}/ush/load_obsmon_modules.sh"
+
+source /scratch3/NCEPDEV/da/Kevin.Dougherty/pyenv/spack-stack-pyenv.sh
 
 export job="obsmon_driver"
 export jobid="${job}.$$"
