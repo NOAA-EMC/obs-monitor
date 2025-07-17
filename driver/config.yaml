@@ -1,17 +1,6 @@
-- experiment_dir: '/scratch1/NCEPDEV/da/Kevin.Dougherty/test/'
-  runtime_dir: '/scratch1/NCEPDEV/da/Kevin.Dougherty/obs-monitor/driver/'
-  start: '2023-11-30T00:00:00Z'
-  end: '2023-11-30T18:00:00Z'
-  interval_hours: 6
-  outdir: '/scratch1/NCEPDEV/da/Kevin.Dougherty/outdir'
-  template_path: '/scratch1/NCEPDEV/da/Kevin.Dougherty/obs-monitor/templates/ioda_stats_viirs_n20.yaml.j2'
-  ob type: 'viirs_n20'
+jobs:
+  - ob_type: 'viirs_n20'
+    template_path: '/scratch3/NCEPDEV/da/Kevin.Dougherty/obs-monitor/templates/ioda_stats_viirs_n20.yaml.j2'
 
-- experiment_dir: '/scratch1/NCEPDEV/da/Kevin.Dougherty/test/'
-  runtime_dir: '/scratch1/NCEPDEV/da/Kevin.Dougherty/obs-monitor/driver/'
-  start: '2023-11-30T00:00:00Z'
-  end: '2023-11-30T18:00:00Z'
-  interval_hours: 6
-  outdir: '/scratch1/NCEPDEV/da/Kevin.Dougherty/outdir'
-  template_path: '/scratch1/NCEPDEV/da/Kevin.Dougherty/obs-monitor/templates/ioda_stats_viirs_npp.yaml.j2'
-  ob type: 'viirs_npp'
+  - ob_type: 'viirs_npp'
+    template_path: '/scratch3/NCEPDEV/da/Kevin.Dougherty/obs-monitor/templates/ioda_stats_viirs_npp.yaml.j2'
