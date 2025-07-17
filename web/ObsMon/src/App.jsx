@@ -2,16 +2,20 @@ import React, { useEffect, useState, useRef, createContent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ABI, AHI, AMSUA, ATMS, CrIS, IASI, MHS, SSMIS, OMI, OMPSNP, OMPSTC8 } from "./data/channels.js";
 import MainContent from "./MainContent.jsx";
-import GeostationaryRad from './components/GeostationaryRad.jsx';
-import InfraredRad from './components/InfraredRad';
-import MicrowaveRad from './components/MicrowaveRad.jsx';
-import OzoneObs from './components/OzoneObs.jsx'
-import GpsObs from './components/GpsObs.jsx';
-import PsObs from './components/PsObs.jsx';
-import QObs from './components/QObs.jsx';
-import TObs from './components/TObs.jsx';
-import UvObs from './components/UvObs.jsx';
 import { withBase } from './utils/paths.js';
+
+import RadianceCategory from './components/RadianceCategory.jsx';
+import { geostationarySatellites } from "./data/geosats";
+import { infraredSatellites } from './data/infrasats.js';
+import { microwaveSatellites } from './data/microwavesats.js';
+import OzoneObs from './components/OzoneObs.jsx'
+import ConventionalObs from './components/ConventionalObs.jsx';
+
+import { gpsTypes } from "./data/gpstypes";
+import { psTypes } from "./data/pstypes";
+import { qTypes } from "./data/qtypes";
+import { tTypes } from "./data/ttypes";
+import { uvTypes } from "./data/uvtypes";
 
 function App() {
 
@@ -65,38 +69,42 @@ function App() {
           Current Cycle: &nbsp; &nbsp; {cycleTime || "Loading..."}
         </p>
 
-        <GeostationaryRad
+        <RadianceCategory
+          sectionKey="geo"
+          label="Geostationary Radiance"
+          satelliteList={geostationarySatellites}
+          channelMap={{ ABI: ABI.channels, AHI: AHI.channels }}
           openSection={openSection}
           toggleSection={toggleSection}
           openSat={openSat}
           toggleSat={toggleSat}
           navigate={navigate}
-          ABI={ABI}
-          AHI={AHI}
           cycleTime={cycleTime}
         />
 
-        <InfraredRad
+        <RadianceCategory
+          sectionKey="inf"
+          label="Infrared Obs"
+          satelliteList={infraredSatellites}
+          channelMap={{ CrIS: CrIS.channels, IASI: IASI.channels }}
           openSection={openSection}
           toggleSection={toggleSection}
           openSat={openSat}
           toggleSat={toggleSat}
           navigate={navigate}
-          CrIS={CrIS}
-          IASI={IASI}
           cycleTime={cycleTime}
         />
 
-        <MicrowaveRad
+        <RadianceCategory
+          sectionKey="mic"
+          label="Microwave Observations"
+          satelliteList={microwaveSatellites}
+          channelMap={{ AMSUA: AMSUA.channels, ATMS: ATMS.channels, MHS: MHS.channels, SSMIS: SSMIS.channels }}
           openSection={openSection}
           toggleSection={toggleSection}
           openSat={openSat}
           toggleSat={toggleSat}
           navigate={navigate}
-          AMSUA={AMSUA}
-          ATMS={ATMS}
-          MHS={MHS}
-          SSMIS={SSMIS}
           cycleTime={cycleTime}
         />
 
@@ -112,42 +120,61 @@ function App() {
           cycleTime={cycleTime}
         />
 
-        <GpsObs
+        <ConventionalObs
+          obsType="gps"
+          typeList={gpsTypes}
+          keyProp="gpskey"
+          displayLabel="GPS Observations"
           openSection={openSection}
           toggleSection={toggleSection}
           navigate={navigate}
           cycleTime={cycleTime}
         />
 
-        <PsObs
+        <ConventionalObs
+          obsType="ps"
+          typeList={psTypes}
+          keyProp="pskey"
+          displayLabel="PS Observations"
           openSection={openSection}
           toggleSection={toggleSection}
           navigate={navigate}
           cycleTime={cycleTime}
         />
 
-        <QObs
+        <ConventionalObs
+          obsType="q"
+          typeList={qTypes}
+          keyProp="qkey"
+          displayLabel="Q Observations"
           openSection={openSection}
           toggleSection={toggleSection}
           navigate={navigate}
           cycleTime={cycleTime}
         />
 
-        <TObs
+        <ConventionalObs
+          obsType="t"
+          typeList={tTypes}
+          keyProp="tkey"
+          displayLabel="T Observations"
           openSection={openSection}
           toggleSection={toggleSection}
           navigate={navigate}
           cycleTime={cycleTime}
         />
 
-        <UvObs
+        <ConventionalObs
+          obsType="uv"
+          typeList={uvTypes}
+          keyProp="uvkey"
+          displayLabel="UV Observations"
           openSection={openSection}
           toggleSection={toggleSection}
           navigate={navigate}
           cycleTime={cycleTime}
         />
 
-        {/* Add more sections here */}
       </aside>
 
       <MainContent />

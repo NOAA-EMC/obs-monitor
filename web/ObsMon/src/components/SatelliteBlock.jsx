@@ -4,7 +4,7 @@ import { withBase } from '../utils/paths.js';
 const getTextColor = (channel) => {
     if (!channel.assimilated) return "gray";
     if (channel.anomaly === "missing") return "red";
-    if (channel.anomaly === "low_counts" || channel.anomaly === "high_error") return "orange";
+    if (channel.anomaly === "low_count" || channel.anomaly === "high_error") return "orange";
     return "black";
 };
 
@@ -34,74 +34,63 @@ export default function SatelliteBlock({
     }, [anomaly, allMissing]);
 
     const satelliteTooltip = useMemo(() => {
-        if (allMissing) return "Data missing from current cycle";
+        if (allMissing) return "All data missing from current cycle";
 
         const values = Object.values(anomaly);
         if (values.includes("high_error")) return "High error value in one or more channels";
-        if (values.includes("low_counts")) return "Low observation counts in one or more channels";
+        if (values.includes("low_count")) return "Low observation counts in one or more channels";
 
         return "";  // No tooltip
     }, [anomaly, allMissing]);
 
     useEffect(() => {
-        const hasAnomaly = anomaly["all"] === "missing" ||
-            Object.values(anomaly).some((v) => v !== "ok");
-
-        reportAnomalyStatus?.(satKey, hasAnomaly);
-    }, [anomaly]);
-
-
-    useEffect(() => {
         const fetchStatus = async () => {
-            const anomaly_file = `anomalyStatus_${satKey}_${instrument}_${cycleTime}.json`;
-            const assim_file = `assimilationStatus_${satKey}_${instrument}.json`;
+            const anomalyFile = `anomalyStatus_${satKey}_${instrument}_${cycleTime}.json`;
+            const assimFile = `assimilationStatus_${satKey}_${instrument}.json`;
 
             try {
-                const response = await fetch(withBase(`/data/${anomaly_file}`));
-                if (!response.ok) {
-                    throw new Error(`Status file not found: ${anomaly_file}`);
+                const anomalyRes = await fetch(withBase(`/data/${anomalyFile}`));
+                if (!anomalyRes.ok) {
+                    throw new Error(`Status file not found: ${anomalyFile}`);
                 }
+                const anomalyData = await anomalyRes.json();
 
-                const data = await response.json();
-                if (data.all === "missing") {
-                    setAllMissing(true);
-                    setAnomaly({});  // Clear per-channel current-cycle anomalies
-                } else {
-                    setAllMissing(false);
-                    setAnomaly(data);
-                }
+                setAllMissing(anomalyData.all === "missing");
+                setAnomaly(anomalyData);
 
+                const hasAnomaly =
+                    anomalyData.all === "missing" ||
+                    Object.values(anomalyData).some((v) => v !== "ok");
+
+                // Report using composite key here:
+                reportAnomalyStatus?.(`${satKey}_${instrument}`, hasAnomaly);
             } catch (error) {
                 console.warn(`Using default empty anomalyStatus for ${satKey}_${instrument}`, error);
                 setAnomaly({});
+                setAllMissing(false);
+                reportAnomalyStatus?.(`${satKey}_${instrument}`, false);
             }
 
-
             try {
-                const [assimilationRes] = await Promise.all([
-                    fetch(withBase(`/data/${assim_file}`)),
-                ]);
-
-                if (!assimilationRes.ok) {
+                const assimRes = await fetch(withBase(`/data/${assimFile}`));
+                if (!assimRes.ok) {
                     console.warn(`Missing assimilation file for ${satKey}/${instrument}`);
                     setStatusAvailable(false);
                     return;
                 }
-
-                const [assimilationJson, anomalyJson] = await Promise.all([
-                    assimilationRes.json()
-                ]);
-
-                setAssimilation(assimilationJson);
+                const assimData = await assimRes.json();
+                setAssimilation(assimData);
                 setStatusAvailable(true);
             } catch (error) {
-                console.error(`Error loading status for ${satKey}/${instrument}:`, error);
+                console.error(`Error loading assimilation status for ${satKey}/${instrument}:`, error);
                 setStatusAvailable(false);
             }
         };
 
-        fetchStatus();
-    }, [satKey, instrument, cycleTime]);
+        if (cycleTime) {
+            fetchStatus();
+        }
+    }, [satKey, instrument, cycleTime, reportAnomalyStatus]);
 
     const enrichedChannels = useMemo(() => {
         return channels.map((id) => ({
@@ -117,28 +106,39 @@ export default function SatelliteBlock({
                 return enrichedChannels.filter((ch) => ch.assimilated);
             case "anomalous":
                 return enrichedChannels.filter((ch) => ch.anomaly !== "ok");
-            case "low_counts":
-                return enrichedChannels.filter((ch) => ch.anomaly === "low_counts");
+            case "low_count":
+                return enrichedChannels.filter((ch) => ch.anomaly === "low_count");
             default:
                 return enrichedChannels;
         }
     }, [enrichedChannels, filter]);
 
+    const getChannelTitle = (channel) => {
+        if (!channel.assimilated) return "Not Assimilated";
+        if (channel.anomaly !== "ok") return channel.anomaly;
+        return "Assimilated";
+    };
+
+    const getSatelliteTitle = (allMissing, enrichedChannels) => {
+        if (allMissing) return "All data missing from current cycle";
+        if (!enrichedChannels.some((ch) => ch.assimilated)) return "Not Assimilated";
+        const anomalous = enrichedChannels.find((ch) => ch.anomaly !== "ok");
+        return anomalous ? anomalous.anomaly : "Assimilated";
+    };
+
     return (
         <div className="mb-2">
-
             <button
                 onClick={() => toggleSat(satKey)}
                 className="custom-button-satellite"
                 style={{ color: satelliteTextColor }}
-                title={satelliteTooltip}
+                title={getSatelliteTitle(allMissing, enrichedChannels)}
             >
                 {displayName}
             </button>
 
             {openSat === satKey && (
                 <div className="ml-4 mt-1">
-                    {/* Always show Summary link */}
                     <div className="mb-2">
                         <a
                             onClick={() => navigate(`/${satKey.toLowerCase()}/${instrument}/summary`)}
@@ -148,14 +148,12 @@ export default function SatelliteBlock({
                         </a>
                     </div>
 
-                    {/* If status data is missing */}
                     {!statusAvailable && (
                         <div style={{ color: "gray", fontStyle: "italic", marginBottom: "4px" }}>
                             Channel status unavailable
                         </div>
                     )}
 
-                    {/* Filter selection */}
                     <div className="mb-2">
                         <label htmlFor="channel-filter" className="mr-2 font-medium">
                             Filter:
@@ -169,10 +167,10 @@ export default function SatelliteBlock({
                             <option value="all">All Channels</option>
                             <option value="assimilated">Assimilated Only</option>
                             <option value="anomalous">Anomalous Only</option>
+                            <option value="low_count">Low Count Only</option>
                         </select>
                     </div>
 
-                    {/* Channel list */}
                     <ul>
                         {filteredChannels.map((channel) => (
                             <li
@@ -183,27 +181,21 @@ export default function SatelliteBlock({
                                 style={{
                                     color: getTextColor(channel),
                                     fontWeight: "bold",
+                                    fontStyle: !channel.assimilated ? "italic" : "normal",
                                     marginBottom: "2px",
                                     cursor: "pointer",
                                     padding: "2px 6px",
                                     borderRadius: "4px",
                                 }}
                                 className="hover:bg-gray-100"
-                                title={
-                                    !channel.assimilated
-                                        ? "Not Assimilated"
-                                        : channel.anomaly !== "ok"
-                                            ? channel.anomaly
-                                            : ""
-                                }
+                                title={getChannelTitle(channel)}
                             >
                                 Channel {channel.id}
                             </li>
                         ))}
                     </ul>
                 </div>
-            )
-            }
-        </div >
+            )}
+        </div>
     );
 }

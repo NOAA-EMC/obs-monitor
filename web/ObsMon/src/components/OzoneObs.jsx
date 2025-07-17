@@ -42,7 +42,6 @@ export default function OzoneObs({
             await Promise.all(
                 ozoneSatellites.map(async (sat) => {
                     const key = `${sat.satKey}_${sat.instrument}`;
-                    // const anomalyUrl = `/data/anomalyStatus_${sat.satKey}_${sat.instrument}_${cycleTime}.json`;
                     const anomalyUrl = withBase(`data/anomalyStatus_${sat.satKey}_${sat.instrument}_${cycleTime}.json`);
 
                     try {
@@ -52,7 +51,7 @@ export default function OzoneObs({
                             const values = Object.values(data);
                             const hasAnomaly =
                                 values.includes("high_error") ||
-                                values.includes("low_counts") ||
+                                values.includes("low_count") ||
                                 values.includes("missing") ||
                                 values.includes("all"); // for missing full data
                             newMap[key] = hasAnomaly;

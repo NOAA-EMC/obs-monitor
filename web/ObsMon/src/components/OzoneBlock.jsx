@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
+import { withBase } from '../utils/paths.js';
 
 export default function OzoneBlock({
     satKey,
@@ -21,8 +22,8 @@ export default function OzoneBlock({
         const fetchStatus = async () => {
             try {
                 const [assimilationRes, anomalyRes] = await Promise.all([
-                    fetch(`/data/assimilationStatus_${satKey}_${instrument}.json`),
-                    fetch(`/data/anomalyStatus_${satKey}_${instrument}_${cycleTime}.json`),
+                    fetch(withBase(`data/assimilationStatus_${satKey}_${instrument}.json`)),
+                    fetch(withBase(`data/anomalyStatus_${satKey}_${instrument}_${cycleTime}.json`)),
                 ]);
 
                 if (!assimilationRes.ok || !anomalyRes.ok) {
@@ -72,7 +73,7 @@ export default function OzoneBlock({
     const textColor = useMemo(() => {
         if (allMissing) return "red";
         const values = Object.values(anomaly);
-        if (values.includes("high_error") || values.includes("low_counts")) return "orange";
+        if (values.includes("high_error") || values.includes("low_count")) return "orange";
         return "black";
     }, [anomaly, allMissing]);
 
@@ -81,7 +82,7 @@ export default function OzoneBlock({
 
         const values = Object.values(anomaly);
         if (values.includes("high_error")) return "High error value";
-        if (values.includes("low_counts")) return "Low observation count";
+        if (values.includes("low_count")) return "Low observation count";
 
         return "";  // No tooltip
     }, [anomaly, allMissing]);

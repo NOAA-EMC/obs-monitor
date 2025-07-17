@@ -8,6 +8,8 @@ export default function UnifiedWrapper() {
         q: "Q Data Time Series Page",
         t: "T Data Time Series Page",
         gps: "GPS Data Time Series Page",
+        ps: "PS Data Time Series Page",
+        uv: "UV Data Time Series Page"
     };
 
     return (
