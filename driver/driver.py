@@ -25,6 +25,29 @@ def generate_eva_config(template_path: str, output_path: str, context: dict):
     jinja_render.save(output_file=output_path)
     return output_path
 
+def copy_plots_to_public(runtime_dir: Path, logger, public_root: Path = Path("public") / "plots"):
+    """
+    Copies all plot PNGs from runtime_dir/plots/** into the public/plots/ directory,
+    preserving all subdirectory structure.
+
+    Args:
+        runtime_dir (Path): Base runtime directory (which contains 'plots/' subfolder).
+        logger: Logger instance.
+        public_root (Path): Target base directory (default: 'public/plots/').
+    """
+    plots_dir = runtime_dir / "plots"
+    if not plots_dir.exists():
+        logger.warning(f"No 'plots/' directory found in runtime_dir: {runtime_dir}")
+        return
+
+    for plot_file in plots_dir.rglob("*.png"):
+        rel_path = plot_file.relative_to(plots_dir)
+        target_path = public_root / rel_path
+
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(plot_file, target_path)
+        logger.info(f"Copied {plot_file} → {target_path}")
+        
 def run_monitoring_job(args):
     """
     Main driver function for observation monitoring workflow.
@@ -37,11 +60,17 @@ def run_monitoring_job(args):
     - (Optional) Copies the results to an output directory
 
     Args:
-        ars (dict): list including monitor_dict and timestamp
+        args (tuple): A tuple containing:
+            - monitor_dict (dict): A dictionary with monitoring configuration details.
+            - timestamp (str): A timestamp string in the format "%Y%m%d_%H%M%S".
     """
     monitor_dict, timestamp = args
 
-    logger = Logger(f"Obs Monitor - {monitor_dict['ob_type']}")
+    satellite = monitor_dict["satellite"]
+    sensor = monitor_dict["sensor"]
+    ob_type = f"{sensor}_{satellite}"
+
+    logger = Logger(f"Obs Monitor - {ob_type}")
     logger.info("Starting Observation Monitoring")
 
     experiment_dir = Path(os.getenv("EXPDIR"))
@@ -50,13 +79,11 @@ def run_monitoring_job(args):
 
     runtime_root = Path(os.getenv("RUNTIME_DIR"))
     template_path = monitor_dict["template_path"]
-    print(template_path)
 
-    runtime_dir = runtime_root / f"runtime_{monitor_dict['ob_type']}_{timestamp}"
+    runtime_dir = runtime_root / f"runtime_{ob_type}_{timestamp}"
     runtime_dir.mkdir(parents=True, exist_ok=False)
     logger.info(f"Created runtime directory: {runtime_dir}")
 
-    ob_type = monitor_dict["ob_type"]
     dataroot = Path(os.getenv("DATAROOT"))
     # Going to need to clean this up a bit so we grab the right dates etc.
     nc_files = list(dataroot.glob(f"*{ob_type}_*.nc"))
@@ -75,9 +102,12 @@ def run_monitoring_job(args):
         "start_time": start_time,
         "end_time": end_time,
         "interval_hours": interval_hours,
+        "satellite": satellite,
+        "sensor": sensor,
         "ob_type": ob_type
     }
 
+    template_path = os.path.expandvars(template_path)
     eva_config_path = generate_eva_config(template_path, runtime_dir / "eva_config.yaml", context)
 
     # Get the eva executable
@@ -90,13 +120,11 @@ def run_monitoring_job(args):
         logger.error(f"EVA failed with exit code {e.returncode}")
         raise
 
-    # Optionally copy results to output directory (still commented out)
-    # outdir.mkdir(parents=True, exist_ok=True)
-    # for file in runtime_dir.glob("*"):
-    #     if file.is_file():
-    #         shutil.copy2(file, outdir / file.name)
-    #         logging.info(f"Moved {file.name} to output directory: {outdir}")
+    copy_data = os.getenv("COPY_DATA")
 
+    # Copy plots to public
+    if copy_data:
+        copy_plots_to_public(runtime_dir, logger)
 
 def main():
     """

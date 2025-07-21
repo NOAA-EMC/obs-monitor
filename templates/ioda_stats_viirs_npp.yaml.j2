@@ -22,11 +22,11 @@ graphics:
 
   # Ioda Stats Time Series
 
-  # Mean Brightness Temperature
+  # Mean Aerosol Optical Depth
   - figure:
       layout: [1,1]
       title: '{{ ob_type }} Time Series - Mean'
-      output name: {{ runtime_dir }}/time_series/{{ ob_type }}/aerosolOpticalDepth/{{ ob_type }}_time_series_{{ start_time | to_YMDH }}_{{ end_time | to_YMDH }}.png
+      output name: {{ runtime_dir }}/plots/{{ satellite }}/{{ sensor }}/aerosolOpticalDepth/{{ ob_type }}_time_series_{{ start_time | to_YMDH }}_{{ end_time | to_YMDH }}.png
     plots:
       - add_xlabel: 'Datetime'
         add_ylabel: 'aerosolOpticalDepth (Mean)'

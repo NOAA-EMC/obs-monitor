@@ -1,6 +1,0 @@
-jobs:
-  - ob_type: 'viirs_n20'
-    template_path: '/scratch3/NCEPDEV/da/Kevin.Dougherty/obs-monitor/templates/ioda_stats_viirs_n20.yaml.j2'
-
-  - ob_type: 'viirs_npp'
-    template_path: '/scratch3/NCEPDEV/da/Kevin.Dougherty/obs-monitor/templates/ioda_stats_viirs_npp.yaml.j2'
