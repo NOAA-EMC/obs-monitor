@@ -6,12 +6,14 @@ def main():
     parser = argparse.ArgumentParser(description="Generate Rocoto XML from template.")
     parser.add_argument("--pslot", required=True, help="PSLOT name for workflow")
     parser.add_argument("--start_date", required=True, help="Cycle start date in YYYYMMDDHH format")
+    parser.add_argument("--end_date", required=True, help="Cycle end date in YYYYMMDDHH format")
     parser.add_argument("--obsmondir", required=True, help="Path to base obs-monitor directory")
     parser.add_argument("--expdir", required=True, help="Experiment directory (EXPDIR)")
     parser.add_argument("--comroot", required=True, help="COMROOT directory")
     parser.add_argument("--dataroot", required=True, help="DATAROOT directory")
     parser.add_argument("--ncycles", default="1", help="Number of cycles to work back from start date")
     parser.add_argument("--intervalhrs", default="6", help="Hours between cycles")
+    parser.add_argument("--copydata", default=False, help="Copy data to local")
     args = parser.parse_args()
 
     env = Environment(loader=FileSystemLoader("."))
@@ -22,7 +24,7 @@ def main():
     obsmondir = args.obsmondir
     expdir = args.expdir
     runtime_dir = f"{expdir}/{pslot}"
-    config_yaml = f"{obsmondir}/driver/config2.yaml"
+    config_yaml = f"{obsmondir}/driver/config.yaml"
     output_path = f"{runtime_dir}/{pslot}_obsmon_rocoto.xml"
 
     output = template.render(
@@ -37,12 +39,13 @@ def main():
         INTERVAL_HOURS=args.intervalhrs,
         SCHEDULER="slurm",
         SDATE=args.start_date,
+        EDATE=args.end_date,
         ACCOUNT="da-cpu",
         QUEUE="batch",
-        PARTITION="standard",
         WALLTIME="00:15:00",
-        TASK_NODES="1",
-        TASK_MEM="4G"
+        TASK_NODES='1:ppn=1:tpp=1',
+        TASK_MEM="4G",
+        COPY_DATA=args.copydata
     )
     
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)

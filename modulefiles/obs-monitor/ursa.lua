@@ -9,12 +9,13 @@ local pkgNameVer = myModuleFullName()
 conflict(pkgName)
 
 
-prepend_path("MODULEPATH", '/contrib/spack-stack/spack-stack-1.9.2/envs/ue-oneapi-2024.2.1/install/modulefiles/Core')
+prepend_path("MODULEPATH", "/contrib/spack-stack/spack-stack-1.9.2/envs/ue-oneapi-2024.2.1/install/modulefiles/Core")
 
 load("stack-oneapi/2024.2.1")
 load("stack-intel-oneapi-mpi/2021.13")
 load("intel-oneapi-mkl/2024.2.1")
 load("stack-python/3.11.7")
+load("rocoto/1.3.7")
 
 load("py-jinja2/3.1.4")
 load("py-netcdf4/1.7.1.post2")
@@ -48,6 +49,6 @@ else
 end
 
 whatis("Name: ".. pkgName)
-whatis("Version: ".. pkgVersion)
+whatis("Version: ".. tostring(pkgVersion))
 whatis("Category: Obs-monitor")
 whatis("Description: Load all libraries needed for obs-monitor")
