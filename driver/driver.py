@@ -26,7 +26,7 @@ def generate_eva_config(template_path: str, output_path: str, context: dict):
     jinja_render.save(output_file=output_path)
     return output_path
 
-def copy_plots_to_public(runtime_dir: Path, logger, public_root: Path = Path("public") / "plots"):
+def copy_plots_to_public(runtime_dir: Path, logger, public_root: Path = Path("/public") / "plots"):
     """
     Copies all plot PNGs from runtime_dir/plots/** into the public/plots/ directory,
     preserving all subdirectory structure.
