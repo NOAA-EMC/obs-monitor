@@ -8,6 +8,7 @@ from multiprocessing import Pool
 import subprocess
 import wxflow
 from wxflow import Logger, Jinja
+from wxflow.configuration import cast_as_dtype
 
 def generate_eva_config(template_path: str, output_path: str, context: dict):
     """
@@ -120,11 +121,23 @@ def run_monitoring_job(args):
         logger.error(f"EVA failed with exit code {e.returncode}")
         raise
 
-    copy_data = os.getenv("COPY_DATA")
-
+    copy_data = cast_as_dtype(os.getenv("COPY_DATA"))
+    keep_data = cast_as_dtype(os.getenv("KEEP_DATA"))
+    
     # Copy plots to public
     if copy_data:
         copy_plots_to_public(runtime_dir, logger)
+
+    # Check if user wants to keep data, if not then delete runtime dir.
+    if not keep_data:
+        if os.path.exists(runtime_dir):
+            shutil.rmtree(runtime_dir)
+            print(f"Deleted runtime directory: {runtime_dir}")
+        else:
+            print(f"Runtime directory not found: {runtime_dir}")
+    else:
+        print(f"KEEP_DATA is True. Data and figures can be found in {runtime_dir}.")
+        
 
 def main():
     """

@@ -13,7 +13,8 @@ def main():
     parser.add_argument("--dataroot", required=True, help="DATAROOT directory")
     parser.add_argument("--ncycles", default="1", help="Number of cycles to work back from start date")
     parser.add_argument("--intervalhrs", default="6", help="Hours between cycles")
-    parser.add_argument("--copydata", default=False, help="Copy data to local")
+    parser.add_argument("--copydata", default=False, help="Copy data to /local")
+    parser.add_argument("--keepdata", default=False, help="Keep runtime directory, data, and figures")
     args = parser.parse_args()
 
     env = Environment(loader=FileSystemLoader("."))
@@ -45,7 +46,8 @@ def main():
         WALLTIME="00:15:00",
         TASK_NODES='1:ppn=1:tpp=1',
         TASK_MEM="4G",
-        COPY_DATA=args.copydata
+        COPY_DATA=args.copydata,
+        KEEP_DATA=args.keepdata
     )
     
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
