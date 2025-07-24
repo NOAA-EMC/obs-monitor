@@ -1,13 +1,11 @@
 #!/usr/bin/env bash
 
-#source "${HOMEobsmon}/ush/preamble.sh"
+source "${HOMEobsmon}/ush/detect_machine.sh"
 
 ###############################################################
-# Source workflow modules
+# Source workflow modules for machine dependent lua files
 module use ${HOMEobsmon}/modulefiles
-module load obs-monitor/ursa # This needs to be machine dependant
-
-#source /scratch3/NCEPDEV/da/Kevin.Dougherty/pyenv/spack-stack-pyenv.sh
+module load obs-monitor/${MACHINE_ID} 
 
 export job="obsmon_driver"
 export jobid="${job}.$$"
