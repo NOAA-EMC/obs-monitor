@@ -141,7 +141,7 @@ export default function SatelliteBlock({
                 <div className="ml-4 mt-1">
                     <div className="mb-2">
                         <a
-                            onClick={() => navigate(`/${satKey.toLowerCase()}/${instrument}/summary`)}
+                            onClick={() => navigate(`/rad/${satKey.toLowerCase()}/${instrument}/summary`)}
                             className="block px-2 py-1 hover:bg-gray-100 rounded cursor-pointer"
                         >
                             Summary
@@ -176,7 +176,7 @@ export default function SatelliteBlock({
                             <li
                                 key={channel.id}
                                 onClick={() =>
-                                    navigate(`/${satKey.toLowerCase()}/${instrument}/${channel.id}`)
+                                    navigate(`/rad/${satKey.toLowerCase()}/${instrument}/${channel.id}`)
                                 }
                                 style={{
                                     color: getTextColor(channel),

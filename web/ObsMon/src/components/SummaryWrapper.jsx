@@ -1,7 +1,29 @@
+import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { withBase } from "../utils/paths.js";
+import { useCycle } from "./useCycle";
 
 function SummaryWrapper() {
-    const { satellite, instrument } = useParams();
+    const { type, satellite, instrument } = useParams();
+    const [fileExists, setFileExists] = useState(null);
+    const [filePath, setFilePath] = useState("");
+    const cycle = useCycle();
+
+    useEffect(() => {
+        if (satellite && instrument && cycle && type) {
+            const file = `pngs/${type.toLowerCase()}/${instrument.toLowerCase()}_${satellite.toLowerCase()}_summary_${cycle}.png`;
+            setFilePath(file);
+
+            fetch(withBase(`/utils/checkfile.php?file=${encodeURIComponent(file)}`))
+                .then(res => res.text())
+                .then(text => {
+                    setFileExists(text.trim() === "true");
+                })
+                .catch(() => {
+                    setFileExists(false);
+                });
+        }
+    }, [satellite, instrument, type, cycle]);
 
     if (!satellite || !instrument) {
         return (
@@ -17,9 +39,23 @@ function SummaryWrapper() {
                 {satellite.toUpperCase()} / {instrument.toUpperCase()} Summary Page
             </h1>
             <p>
-                This is a placeholder summary for the instrument <strong>{satellite.toUpperCase()}</strong> / <strong>{instrument}</strong>.
-            </p >
-        </div >
+                This is a summary for <strong>{satellite.toUpperCase()}</strong> / <strong>{instrument}</strong>.
+            </p>
+
+            {fileExists === null && <p>Checking for image...<code>{filePath}</code></p>}
+            {fileExists === true && (
+                <img
+                    src={withBase(`/${filePath}`)}
+                    alt={`${satellite}_${instrument} summary`}
+                    className="mt-4 max-w-full border rounded shadow"
+                />
+            )}
+            {fileExists === false && (
+                <p className="text-red-600 mt-4">
+                    Image file <code>{filePath}</code> not available.
+                </p>
+            )}
+        </div>
     );
 }
 

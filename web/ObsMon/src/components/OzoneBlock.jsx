@@ -103,7 +103,7 @@ export default function OzoneBlock({
                 <div className="ml-4 mt-1">
                     <div className="mb-2">
                         <a
-                            onClick={() => navigate(`/${satKey.toLowerCase()}/${instrument}/summary`)}
+                            onClick={() => navigate(`/ozn/${satKey.toLowerCase()}/${instrument}/summary`)}
                             className="block px-2 py-1 hover:bg-gray-100 rounded cursor-pointer"
                         >
                             Summary
@@ -111,7 +111,7 @@ export default function OzoneBlock({
                     </div>
                     <div className="mb-2">
                         <a
-                            onClick={() => navigate(`/${satKey.toLowerCase()}/${instrument}/time`)}
+                            onClick={() => navigate(`/ozn/${satKey.toLowerCase()}/${instrument}/time`)}
                             className="block px-2 py-1 hover:bg-gray-100 rounded cursor-pointer"
                         >
                             Time Series
