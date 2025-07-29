@@ -1,6 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import OzoneBlock from './OzoneBlock.jsx';
-// import { ozoneSatellites } from '../data/ozonesats.js';
 import { withBase } from '../utils/paths.js';
 
 export default function OzoneObs({
