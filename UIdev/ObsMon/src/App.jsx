@@ -5,9 +5,6 @@ import MainContent from "./MainContent.jsx";
 import { withBase } from './utils/paths.js';
 
 import RadianceCategory from './components/RadianceCategory.jsx';
-// import { geostationarySatellites } from "./data/geosats";
-// import { infraredSatellites } from './data/infrasats.js';
-// import { microwaveSatellites } from './data/microwavesats.js';
 import OzoneObs from './components/OzoneObs.jsx'
 import ConventionalObs from './components/ConventionalObs.jsx';
 
@@ -119,9 +116,19 @@ function App() {
 
     fetchCycle(); // Load on mount
 
-    const interval = setInterval(fetchCycle, 60000); // Poll every 60 seconds
+    const interval = setInterval(fetchCycle, 300000); // Poll every 5 min
+    // Optionally fetch when tab becomes visible again
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchCycle();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    return () => clearInterval(interval); // Cleanup
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, []);
 
   return (
