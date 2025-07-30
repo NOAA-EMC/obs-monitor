@@ -1,181 +1,272 @@
+"""
+Observation Monitoring Driver Script
+
+This script runs EVA processing for multiple observation types using multiprocessing.
+Each job:
+    - Finds matching NetCDF observation files
+    - Copies them to a unique runtime directory
+    - Generates a YAML config using Jinja templates
+    - Runs EVA using that config
+    - Optionally copies output plots to a public directory
+    - Cleans up runtime data unless KEEP_DATA is set
+
+Environment variables drive key configuration parameters.
+
+Author: You
+"""
+
 import os
-import yaml
-import logging
+import uuid
 import shutil
-from pathlib import Path
-from datetime import datetime, timedelta, timezone
-from multiprocessing import Pool
+import logging
 import subprocess
-import wxflow
+import yaml
+import glob
+import re
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from multiprocessing import Pool, cpu_count
+
 from wxflow import Logger, Jinja
 from wxflow.configuration import cast_as_dtype
+import wxflow
 
-def generate_eva_config(template_path: str, output_path: str, context: dict):
+
+# ------------------------
+# Configuration Class
+# ------------------------
+
+class MonitoringConfig:
     """
-    Render a Jinja template to create an EVA configuration file.
+    Encapsulates configuration for a single observation monitoring job.
+    Handles environment variables, time window calculation, and paths.
+    """
+    def __init__(self, monitor_dict: dict, timestamp: str):
+        self.satellite = monitor_dict["satellite"]
+        self.sensor = monitor_dict["sensor"]
+        self.ob_type = f"{self.sensor}_{self.satellite}"
+        self.template_path = os.path.expandvars(monitor_dict["template_path"])
+        self.timestamp = timestamp
 
-    Args:
-        template_path (str): Path to the Jinja template file.
-        output_path (str): Path where the rendered config file will be saved.
-        context (dict): Dictionary containing the data used for rendering the template.
+        # Construct a unique runtime directory using UUID
+        self.runtime_root = Path(os.getenv("RUNTIME_DIR"))
+        self.runtime_dir = self.runtime_root / f"runtime_{self.ob_type}_{timestamp}_{uuid.uuid4().hex[:8]}"
+        self.runtime_dir.mkdir(parents=True, exist_ok=False)
+
+        self.experiment_dir = Path(os.getenv("EXPDIR"))
+        self.dataroot = Path(os.getenv("DATAROOT"))
+
+        # Parse time-related and behavior flags
+        self.interval_hours = int(os.getenv("INTERVAL_HOURS"))
+        self.ncycles = int(os.getenv("NCYCLES"))
+        self.copy_data = cast_as_dtype(os.getenv("COPY_DATA"))
+        self.keep_data = cast_as_dtype(os.getenv("KEEP_DATA"))
+
+        # Compute start/end times of the observation window
+        self.end_time = datetime.strptime(timestamp, "%Y%m%d_%H%M%S").replace(tzinfo=timezone.utc)
+        self.start_time = self.end_time - timedelta(hours=self.interval_hours * self.ncycles)
+
+    def get_jinja_context(self):
+        """
+        Build the context dictionary passed to the Jinja template engine.
+        """
+        return {
+            "runtime_dir": str(self.runtime_dir),
+            "start_time": self.start_time,
+            "end_time": self.end_time,
+            "interval_hours": self.interval_hours,
+            "satellite": self.satellite,
+            "sensor": self.sensor,
+            "ob_type": self.ob_type
+        }
+
+
+# ------------------------
+# Helper Functions
+# ------------------------
+
+def extract_timestamp(file: Path) -> str | None:
+    """
+    Extract a timestamp string from the filename stem.
+
+    This function searches for the first sequence of 10 to 14 digits in the 
+    file's stem (filename without extension), which typically represents a 
+    timestamp in the formats: YYYYMMDDHH, YYYYMMDDHHMM, or YYYYMMDDHHMMSS.
+
+    Parameters:
+        file (Path): The full path to the file.
 
     Returns:
-        str: Path to the rendered EVA configuration file.
+        str | None: The matched timestamp string if found, otherwise None.
     """
-    jinja_render = Jinja(template_path_or_string=template_path, data=context)
-    jinja_render.save(output_file=output_path)
+    match = re.search(r'\d{10,14}', file.stem)
+    if match:
+        return match.group(0)
+    return None
+
+def find_matching_nc_files(cfg: MonitoringConfig, logger):
+    """
+    Scan DATAROOT for NetCDF files that match the ob_type and fall within the time window.
+
+    Returns:
+        List of Path objects pointing to matched NetCDF files.
+    """
+    pattern = f"{cfg.ob_type}_*.nc"
+    nc_files = []
+
+    for file in cfg.dataroot.glob(pattern):
+        try:
+            timestamp_str = extract_timestamp(file)  # extract timestamp suffix
+            file_time = datetime.strptime(timestamp_str, "%Y%m%d%H").replace(tzinfo=timezone.utc)
+            if cfg.start_time <= file_time <= cfg.end_time:
+                nc_files.append(file)
+        except ValueError:
+            logger.warning(f"Skipping file with bad timestamp: {file.name}")
+
+    logger.info(f"Found {len(nc_files)} matching NetCDF files for {cfg.ob_type}")
+
+    return nc_files
+
+
+def copy_nc_files_to_runtime(nc_files, cfg: MonitoringConfig, logger):
+    """
+    Copies matched NetCDF files to the runtime directory.
+    """
+    for file in nc_files:
+        shutil.copy2(file, cfg.runtime_dir / file.name)
+        logger.info(f"Copied: {file.name}")
+
+
+def generate_eva_config(cfg: MonitoringConfig, logger) -> Path:
+    """
+    Generates a YAML configuration file for EVA using a Jinja template.
+
+    Returns:
+        Path to the generated EVA config file.
+    """
+    context = cfg.get_jinja_context()
+    output_path = cfg.runtime_dir / "eva_config.yaml"
+    jinja = Jinja(template_path_or_string=cfg.template_path, data=context)
+    jinja.save(output_file=output_path)
+    logger.info(f"Generated EVA config: {output_path}")
+
     return output_path
 
-def copy_plots_to_public(runtime_dir: Path, logger, public_root: Path = Path("/public") / "plots"):
-    """
-    Copies all plot PNGs from runtime_dir/plots/** into the public/plots/ directory,
-    preserving all subdirectory structure.
 
-    Args:
-        runtime_dir (Path): Base runtime directory (which contains 'plots/' subfolder).
-        logger: Logger instance.
-        public_root (Path): Target base directory (default: 'public/plots/').
+def run_eva(cfg: MonitoringConfig, eva_config_path: Path, logger):
     """
-    plots_dir = runtime_dir / "plots"
+    Executes the EVA application with the generated config file.
+    """
+    # Get the eva executable
+    eva_exe = wxflow.executable.which("eva")
+    if not eva_exe:
+        logger.error("EVA executable not found in PATH.")
+        raise FileNotFoundError("EVA executable not found")
+
+    try:
+        subprocess.run([str(eva_exe), str(eva_config_path)], check=True)
+        logger.info("EVA completed successfully.")
+    except subprocess.CalledProcessError as e:
+        logger.error(f"EVA failed with code {e.returncode}")
+        raise
+
+
+def copy_plots_to_public(cfg: MonitoringConfig, logger, public_root: Path = Path("/public") / "plots"):
+    """
+    Copies generated PNG plots from the runtime directory to a public location.
+    """
+    plots_dir = cfg.runtime_dir / "plots"
     if not plots_dir.exists():
-        logger.warning(f"No 'plots/' directory found in runtime_dir: {runtime_dir}")
+        logger.warning(f"No plots/ directory in {cfg.runtime_dir}")
         return
 
     for plot_file in plots_dir.rglob("*.png"):
         rel_path = plot_file.relative_to(plots_dir)
         target_path = public_root / rel_path
-
         target_path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(plot_file, target_path)
-        logger.info(f"Copied {plot_file} → {target_path}")
-        
+        logger.info(f"Copied plot to public: {target_path}")
+
+
+def cleanup_runtime(cfg: MonitoringConfig, logger):
+    """
+    Deletes the runtime directory unless KEEP_DATA is True.
+    """
+    if cfg.runtime_dir.exists() and cfg.runtime_dir.is_dir() and "runtime_" in cfg.runtime_dir.name:
+        shutil.rmtree(cfg.runtime_dir)
+        logger.info(f"Deleted runtime dir: {cfg.runtime_dir}")
+    else:
+        logger.warning(f"Runtime dir not deleted (invalid path?): {cfg.runtime_dir}")
+
+
+# ------------------------
+# Main Job Execution
+# ------------------------
+
 def run_monitoring_job(args):
     """
-    Main driver function for observation monitoring workflow.
-
-    This function:
-    - Creates a timestamped runtime directory
-    - Copies NetCDF files matching the observation type to that directory
-    - Generates a Jinja2-based EVA configuration file
-    - Runs the EVA command using the config
-    - (Optional) Copies the results to an output directory
-
-    Args:
-        args (tuple): A tuple containing:
-            - monitor_dict (dict): A dictionary with monitoring configuration details.
-            - timestamp (str): A timestamp string in the format "%Y%m%d_%H%M%S".
+    Run one complete monitoring job:
+    - Match and copy NetCDF files
+    - Generate EVA config
+    - Run EVA
+    - Copy plots
+    - Clean up
     """
     monitor_dict, timestamp = args
+    cfg = MonitoringConfig(monitor_dict, timestamp)
+    logger = Logger(f"Obs Monitor - {cfg.ob_type}")
+    logger.info(f"Starting job for {cfg.ob_type}")
 
-    satellite = monitor_dict["satellite"]
-    sensor = monitor_dict["sensor"]
-    ob_type = f"{sensor}_{satellite}"
+    nc_files = find_matching_nc_files(cfg, logger)
+    copy_nc_files_to_runtime(nc_files, cfg, logger)
+    eva_config_path = generate_eva_config(cfg, logger)
+    run_eva(cfg, eva_config_path, logger)
 
-    logger = Logger(f"Obs Monitor - {ob_type}")
-    logger.info("Starting Observation Monitoring")
+    if cfg.copy_data:
+        copy_plots_to_public(cfg, logger)
 
-    experiment_dir = Path(os.getenv("EXPDIR"))
-    if not experiment_dir.exists():
-        raise FileNotFoundError(f"Experiment directory not found: {experiment_dir}")
-
-    runtime_root = Path(os.getenv("RUNTIME_DIR"))
-    template_path = monitor_dict["template_path"]
-
-    runtime_dir = runtime_root / f"runtime_{ob_type}_{timestamp}"
-    runtime_dir.mkdir(parents=True, exist_ok=False)
-    logger.info(f"Created runtime directory: {runtime_dir}")
-
-    dataroot = Path(os.getenv("DATAROOT"))
-    # Going to need to clean this up a bit so we grab the right dates etc.
-    nc_files = list(dataroot.glob(f"*{ob_type}_*.nc"))
-    for file in nc_files:
-        shutil.copy2(file, runtime_dir / file.name)
-        logger.info(f"Copied: {file.name}")
-
-    interval_hours = int(os.getenv("INTERVAL_HOURS"))
-    ncycles = int(os.getenv("NCYCLES"))
-
-    end_time = datetime.strptime(timestamp, "%Y%m%d_%H%M%S").replace(tzinfo=timezone.utc)
-    start_time = end_time - timedelta(hours=interval_hours * ncycles)
-
-    context = {
-        "runtime_dir": str(runtime_dir),
-        "start_time": start_time,
-        "end_time": end_time,
-        "interval_hours": interval_hours,
-        "satellite": satellite,
-        "sensor": sensor,
-        "ob_type": ob_type
-    }
-
-    template_path = os.path.expandvars(template_path)
-    eva_config_path = generate_eva_config(template_path, runtime_dir / "eva_config.yaml", context)
-
-    # Get the eva executable
-    eva_exe = wxflow.executable.which("eva")
-
-    try:
-        subprocess.run([str(eva_exe), str(eva_config_path)], check=True)
-        logger.info("EVA executed successfully.")
-    except subprocess.CalledProcessError as e:
-        logger.error(f"EVA failed with exit code {e.returncode}")
-        raise
-
-    copy_data = cast_as_dtype(os.getenv("COPY_DATA"))
-    keep_data = cast_as_dtype(os.getenv("KEEP_DATA"))
-    
-    # Copy plots to public
-    if copy_data:
-        copy_plots_to_public(runtime_dir, logger)
-
-    # Check if user wants to keep data, if not then delete runtime dir.
-    if not keep_data:
-        if os.path.exists(runtime_dir):
-            shutil.rmtree(runtime_dir)
-            print(f"Deleted runtime directory: {runtime_dir}")
-        else:
-            print(f"Runtime directory not found: {runtime_dir}")
+    if not cfg.keep_data:
+        cleanup_runtime(cfg, logger)
     else:
-        print(f"KEEP_DATA is True. Data and figures can be found in {runtime_dir}.")
-        
+        logger.info(f"KEEP_DATA=True. Results kept in: {cfg.runtime_dir}")
+
+
+# ------------------------
+# Main Entry Point
+# ------------------------
 
 def main():
     """
-    Entry point for the script. Parses command-line arguments and loads configuration.
+    Parses environment variables and runs all monitoring jobs in parallel.
     """
-    # Read environment variables set by Rocoto task's <envar>
-    cdate_str = os.getenv("CDATE")
-    if not cdate_str:
-        raise EnvironmentError("CDATE environment variable not set")
+    cdate = os.getenv("CDATE")
+    if not cdate:
+        raise EnvironmentError("CDATE is not set")
 
     try:
-        cycle_dt = datetime.strptime(cdate_str, "%Y%m%d%H")
-        timestamp = cycle_dt.strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.strptime(cdate, "%Y%m%d%H").strftime("%Y%m%d_%H%M%S")
     except ValueError:
-        raise ValueError("Invalid CDATE format, expected YYYYMMDDHH")
+        raise ValueError("CDATE must be in format YYYYMMDDHH")
 
-    config_path = Path(os.getenv("CONFIG_YAML"))
-    if not config_path:
-        raise EnvironmentError("CONFIG_YAML environment variable not set")
+    config_yaml = os.getenv("CONFIG_YAML")
+    if not config_yaml:
+        raise EnvironmentError("CONFIG_YAML is not set")
 
-    with open(config_path, "r") as f:
+    with open(config_yaml, "r") as f:
         config = yaml.safe_load(f)
 
-    # Normalize config to a list of jobs
-    if isinstance(config, dict) and "jobs" in config:
-        monitor_jobs = config["jobs"]
-    else:
-        monitor_jobs = config if isinstance(config, list) else [config]
+    job_list = config["jobs"] if isinstance(config, dict) and "jobs" in config else config
+    if not isinstance(job_list, list):
+        job_list = [job_list]
 
-    # Inject runtime_dir from environment or default
-    runtime_dir = Path(os.getenv("RUNTIME_DIR"))
-    for job in monitor_jobs:
-        job.setdefault("runtime_dir", runtime_dir)
+    job_args = [(job, timestamp) for job in job_list]
 
-    job_args = [(job, timestamp) for job in monitor_jobs]
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+    logging.info(f"Starting multiprocessing with {min(cpu_count(), len(job_args))} processes")
 
-    with Pool(processes=min(len(job_args), os.cpu_count())) as pool:
+    with Pool(processes=min(cpu_count(), len(job_args))) as pool:
         pool.map(run_monitoring_job, job_args)
+
 
 if __name__ == "__main__":
     main()
