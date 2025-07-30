@@ -11,8 +11,6 @@ Each job:
     - Cleans up runtime data unless KEEP_DATA is set
 
 Environment variables drive key configuration parameters.
-
-Author: You
 """
 
 import os
