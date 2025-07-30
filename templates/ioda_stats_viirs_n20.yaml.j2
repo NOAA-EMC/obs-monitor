@@ -26,7 +26,7 @@ graphics:
   - figure:
       layout: [1,1]
       title: '{{ ob_type }} Time Series - Mean'
-      output_name: {{ runtime_dir }}/plots/{{ sensor }}/{{ satellite }}/aerosolOpticalDepth/{{ ob_type }}_time_series_{{ start_time | to_YMDH }}_{{ end_time | to_YMDH }}.png
+      output name: {{ runtime_dir }}/plots/{{ sensor }}/{{ satellite }}/aerosolOpticalDepth/{{ ob_type }}_time_series_{{ start_time | to_YMDH }}_{{ end_time | to_YMDH }}.png
     plots:
       - add_xlabel: 'Datetime'
         add_ylabel: 'aerosolOpticalDepth (Mean)'
