@@ -40,9 +40,14 @@ class MonitoringConfig:
     Handles environment variables, time window calculation, and paths.
     """
     def __init__(self, monitor_dict: dict, timestamp: str):
-        self.satellite = monitor_dict["satellite"]
-        self.sensor = monitor_dict["sensor"]
-        self.ob_type = f"{self.sensor}_{self.satellite}"
+        self.monitor_type = monitor_dict['monitor_type']
+        if self.monitor_type == 'radiance':
+            self.satellite = monitor_dict["satellite"]
+            self.sensor = monitor_dict["sensor"]
+            self.ob_type = f"{self.sensor}_{self.satellite}"
+        elif self.monitor_type == 'conventional':
+            self.variable = monitor_dict["variable"]
+            self.ob_type = f"{self.variable}"
         self.template_path = os.path.expandvars(monitor_dict["template_path"])
         self.timestamp = timestamp
 
@@ -55,28 +60,31 @@ class MonitoringConfig:
         self.dataroot = Path(os.getenv("DATAROOT"))
 
         # Parse time-related and behavior flags
+        self.start_time = datetime.strptime(os.getenv("SDATE"), "%Y%m%d%H%M").replace(tzinfo=timezone.utc)
+        self.end_time = datetime.strptime(os.getenv("EDATE"), "%Y%m%d%H%M").replace(tzinfo=timezone.utc)
         self.interval_hours = int(os.getenv("INTERVAL_HOURS"))
-        self.ncycles = int(os.getenv("NCYCLES"))
+        self.ncycles = int((self.end_time - self.start_time) / timedelta(hours=self.interval_hours))
         self.copy_data = cast_as_dtype(os.getenv("COPY_DATA"))
         self.keep_data = cast_as_dtype(os.getenv("KEEP_DATA"))
-
-        # Compute start/end times of the observation window
-        self.end_time = datetime.strptime(timestamp, "%Y%m%d_%H%M%S").replace(tzinfo=timezone.utc)
-        self.start_time = self.end_time - timedelta(hours=self.interval_hours * self.ncycles)
 
     def get_jinja_context(self):
         """
         Build the context dictionary passed to the Jinja template engine.
         """
-        return {
+        d = {
             "runtime_dir": str(self.runtime_dir),
             "start_time": self.start_time,
             "end_time": self.end_time,
             "interval_hours": self.interval_hours,
-            "satellite": self.satellite,
-            "sensor": self.sensor,
             "ob_type": self.ob_type
         }
+        if self.monitor_type == 'radiance':
+            d['satellite'] = self.satellite
+            d['sensor'] = self.sensor
+        elif self.monitor_type == 'conventional':
+            d['variable'] = self.variable
+
+        return d
 
 
 # ------------------------

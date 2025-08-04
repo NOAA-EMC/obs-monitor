@@ -11,7 +11,6 @@ def main():
     parser.add_argument("--expdir", required=True, help="Experiment directory (EXPDIR)")
     parser.add_argument("--comroot", required=True, help="COMROOT directory")
     parser.add_argument("--dataroot", required=True, help="DATAROOT directory")
-    parser.add_argument("--ncycles", default="1", help="Number of cycles to work back from start date")
     parser.add_argument("--intervalhrs", default="6", help="Hours between cycles")
     parser.add_argument("--copydata", default=False, help="Copy data to /local")
     parser.add_argument("--keepdata", default=False, help="Keep runtime directory, data, and figures")
@@ -36,11 +35,10 @@ def main():
         DATAROOT=args.dataroot,
         RUNTIME_DIR=runtime_dir,
         CONFIG_YAML=config_yaml,
-        NCYCLES=args.ncycles,
-        INTERVAL_HOURS=args.intervalhrs,
         SCHEDULER="slurm",
         SDATE=args.start_date,
         EDATE=args.end_date,
+        INTERVAL_HOURS=args.intervalhrs,
         ACCOUNT="da-cpu",
         QUEUE="batch",
         WALLTIME="00:15:00",
