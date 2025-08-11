@@ -24,6 +24,7 @@ function App() {
   const [qTypes, setQTypes] = useState([]);
   const [tTypes, setTTypes] = useState([]);
   const [uvTypes, setUvTypes] = useState([]);
+  const [config, setConfig] = useState(null);
 
   useEffect(() => {
     fetch(withBase('data/gpstypes.json'), { cache: 'no-store' })
@@ -88,6 +89,17 @@ function App() {
       .catch(err => console.error("Failed to load geostationarySatellites:", err));
   }, []);
 
+  // Fetch config on mount
+  useEffect(() => {
+    fetch(withBase("data/configIndex.json"))
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP error! Status: ${res.status}`);
+        return res.json();
+      })
+      .then(data => setConfig(data))
+      .catch(err => console.error("Failed to load configIndex.json:", err));
+  }, []);
+
   const toggleSection = (name) => {
     setOpenSection(openSection === name ? null : name);
   };
@@ -136,7 +148,17 @@ function App() {
 
     <div className="flex min-h-screen">
       <aside className="w-64  shrink-0 bg-blue-100 p-4 border-r">
-        <h1 className="text-lg font-bold mb-4 underline">Monitoring Dashboard</h1>
+        <h1 className="text-lg font-bold mb-4">
+          <span className="underline" style={{ display: 'block', textAlign: 'center', marginBottom: '0.1rem' }} >
+            Monitoring Dashboard</span>
+
+          {/* Render config.name here if loaded */}
+          {config?.name && (
+            <span style={{ display: 'block', fontWeight: 'normal', textAlign: 'center', marginTop: '0.1rem', fontSize: '1rem' }}>
+              {config.name}
+            </span>
+          )}
+        </h1>
 
         {/* Add current cycle below header */}
         <p className="text-base text-black mb-4">

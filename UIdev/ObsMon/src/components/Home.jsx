@@ -6,6 +6,8 @@ export default function Home() {
     const [config, setConfig] = useState(null);
 
     useEffect(() => {
+        let isMounted = true; // Track if component is mounted
+
         fetch(withBase("data/configIndex.json"))
             .then((res) => {
                 if (!res.ok) {
@@ -14,15 +16,27 @@ export default function Home() {
                 return res.json();
             })
             .then((data) => {
-                setConfig(data);
+                if (isMounted) {
+                    setConfig(data);
+                }
             })
             .catch((err) => {
-                console.error("Failed to load config.json:", err);
+                if (isMounted) {
+                    console.error("Failed to load configIndex.json:", err);
+                }
             });
+
+        return () => {
+            isMounted = false; // Cleanup flag on unmount
+        };
     }, []);
 
     if (!config) {
-        return <div style={{ padding: "2rem" }}>Loading...</div>;
+        return (
+            <div style={{ padding: "2rem" }} role="status" aria-live="polite">
+                Loading...
+            </div>
+        );
     }
 
     return (
