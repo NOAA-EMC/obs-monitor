@@ -16,9 +16,6 @@ def main():
     parser.add_argument("--keepdata", default=False, help="Keep runtime directory, data, and figures")
     args = parser.parse_args()
 
-    env = Environment(loader=FileSystemLoader("."))
-    template = env.get_template("monitor_rocoto_template.xml.j2")
-
     # Assign variables first to avoid reference issues
     pslot = args.pslot
     obsmondir = args.obsmondir
@@ -26,6 +23,10 @@ def main():
     runtime_dir = f"{expdir}/{pslot}"
     config_yaml = f"{obsmondir}/driver/config.yaml"
     output_path = f"{runtime_dir}/{pslot}_obsmon_rocoto.xml"
+
+    # Point to rocoto template Jinja2 file
+    env = Environment(loader=FileSystemLoader(f"{obsmondir}"))
+    template = env.get_template("parm/monitor_rocoto_template.xml.j2")
 
     output = template.render(
         PSLOT=pslot,
