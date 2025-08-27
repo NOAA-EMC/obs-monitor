@@ -50,6 +50,7 @@ class MonitoringConfig:
             self.ob_type = f"{self.variable}"
         self.template_path = os.path.expandvars(monitor_dict["template_path"])
         self.timestamp = timestamp
+        self.component = Path(os.getenv("COMPONENT"))
 
         # Construct a unique runtime directory using UUID
         self.runtime_root = Path(os.getenv("RUNTIME_DIR"))
@@ -64,6 +65,9 @@ class MonitoringConfig:
         self.end_time = datetime.strptime(os.getenv("EDATE"), "%Y%m%d%H%M").replace(tzinfo=timezone.utc)
         self.interval_hours = int(os.getenv("INTERVAL_HOURS"))
         self.ncycles = int((self.end_time - self.start_time) / timedelta(hours=self.interval_hours))
+        self.run = Path(os.getenv("RUN"))
+        self.pdy = Path(os.getenv("PDY"))
+        self.cyc = Path(os.getenv("CYC"))
         self.copy_data = cast_as_dtype(os.getenv("COPY_DATA"))
         self.keep_data = cast_as_dtype(os.getenv("KEEP_DATA"))
 
@@ -117,21 +121,55 @@ def find_matching_nc_files(cfg: MonitoringConfig, logger):
     Returns:
         List of Path objects pointing to matched NetCDF files.
     """
-    pattern = f"{cfg.ob_type}_*.nc"
-    nc_files = []
+def find_matching_nc_files(cfg: MonitoringConfig, logger):
+    """
+    Scan DATAROOT for NetCDF files corresponding to expected cycles between start_time and end_time,
+    using interval_hours, and return a sorted list of Path objects.
+    Logs a warning if expected files are missing for a cycle.
 
-    for file in cfg.dataroot.glob(pattern):
-        try:
-            timestamp_str = extract_timestamp(file)  # extract timestamp suffix
-            file_time = datetime.strptime(timestamp_str, "%Y%m%d%H").replace(tzinfo=timezone.utc)
-            if cfg.start_time <= file_time <= cfg.end_time:
-                nc_files.append(file)
-        except ValueError:
-            logger.warning(f"Skipping file with bad timestamp: {file.name}")
+    Returns:
+        List of Path objects pointing to matched NetCDF files.
+    """
+    nc_files = []
+    pattern = f"{cfg.ob_type}_*.nc"
+
+    logger.info(f"Finding {cfg.ob_type} files from {cfg.start_time} to {cfg.end_time} every {cfg.interval_hours} hours")
+
+    # Generate all expected datetime objects based on interval_hours
+    expected_times = [
+        cfg.start_time + timedelta(hours=i * cfg.interval_hours)
+        for i in range(cfg.ncycles + 1)
+    ]
+
+    for dt in expected_times:
+        pdy_str = dt.strftime("%Y%m%d")     # gdas.PDY directory
+        cyc_str = dt.strftime("%H")         # CYC subdirectory
+        run_dir = cfg.dataroot / f"gdas.{pdy_str}" / f"{cyc_str}/products/{cfg.component}/anlmon"
+
+        if not run_dir.exists():
+            logger.warning(f"Expected directory does not exist: {run_dir}")
+            continue
+
+        # Find files matching ob_type in this directory
+        matched_files = []
+        for file in run_dir.glob(pattern):
+            timestamp_str = extract_timestamp(file)
+            if not timestamp_str:
+                logger.debug(f"No timestamp found in {file.name}, skipping")
+                continue
+
+            # Only match the first 10 digits (YYYYMMDDHH)
+            file_cycle = timestamp_str[:10]
+            if file_cycle == dt.strftime("%Y%m%d%H"):
+                matched_files.append(file)
+
+        if not matched_files:
+            logger.warning(f"No files found for expected cycle {dt.strftime('%Y%m%d%H')} in {run_dir}")
+        else:
+            nc_files.extend(matched_files)
 
     logger.info(f"Found {len(nc_files)} matching NetCDF files for {cfg.ob_type}")
-
-    return nc_files
+    return sorted(nc_files)
 
 
 def copy_nc_files_to_runtime(nc_files, cfg: MonitoringConfig, logger):

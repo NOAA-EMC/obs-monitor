@@ -5,6 +5,9 @@ from pathlib import Path
 def main():
     parser = argparse.ArgumentParser(description="Generate Rocoto XML from template.")
     parser.add_argument("--pslot", required=True, help="PSLOT name for workflow")
+    parser.add_argument("--component", required=True, type=str.lower,
+                        choices=["atmos", "snow", "ocean", "chem", "ice"],
+                        help="Analysis product. Choices: atmos, snow, ocean, chem, ice")
     parser.add_argument("--start_date", required=True, help="Cycle start date in YYYYMMDDHH format")
     parser.add_argument("--end_date", required=True, help="Cycle end date in YYYYMMDDHH format")
     parser.add_argument("--obsmondir", required=True, help="Path to base obs-monitor directory")
@@ -12,12 +15,14 @@ def main():
     parser.add_argument("--comroot", required=True, help="COMROOT directory")
     parser.add_argument("--dataroot", required=True, help="DATAROOT directory")
     parser.add_argument("--intervalhrs", default="6", help="Hours between cycles")
+    parser.add_argument("--run", default="gdas", help="gdas or gfs")
     parser.add_argument("--copydata", default=False, help="Copy data to /local")
     parser.add_argument("--keepdata", default=False, help="Keep runtime directory, data, and figures")
     args = parser.parse_args()
 
     # Assign variables first to avoid reference issues
     pslot = args.pslot
+    component = args.component
     obsmondir = args.obsmondir
     expdir = args.expdir
     runtime_dir = f"{expdir}/{pslot}"
@@ -30,6 +35,7 @@ def main():
 
     output = template.render(
         PSLOT=pslot,
+        COMPONENT=component,
         HOMEobsmon=obsmondir,
         COMROOT=args.comroot,
         EXPDIR=expdir,
@@ -45,6 +51,7 @@ def main():
         WALLTIME="00:15:00",
         TASK_NODES='1:ppn=1:tpp=1',
         TASK_MEM="4G",
+        RUN=args.run,
         COPY_DATA=args.copydata,
         KEEP_DATA=args.keepdata
     )
