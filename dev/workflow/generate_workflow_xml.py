@@ -5,7 +5,7 @@ from pathlib import Path
 def main():
     parser = argparse.ArgumentParser(description="Generate Rocoto XML from template.")
     parser.add_argument("--pslot", required=True, help="PSLOT name for workflow")
-    parser.add_argument("--component", required=True, type=str.lower,
+    parser.add_argument("--component", required=True, type=str.lower, nargs="+",
                         choices=["atmos", "snow", "ocean", "chem", "ice"],
                         help="Analysis product. Choices: atmos, snow, ocean, chem, ice")
     parser.add_argument("--start_date", required=True, help="Cycle start date in YYYYMMDDHH format")
@@ -22,7 +22,8 @@ def main():
 
     # Assign variables first to avoid reference issues
     pslot = args.pslot
-    component = args.component
+    component_list = args.component
+    component_str = ",".join(component_list) # List converted to str separated by commas
     obsmondir = args.obsmondir
     expdir = args.expdir
     runtime_dir = f"{expdir}/{pslot}"
@@ -35,7 +36,7 @@ def main():
 
     output = template.render(
         PSLOT=pslot,
-        COMPONENT=component,
+        COMPONENT=component_str,
         HOMEobsmon=obsmondir,
         COMROOT=args.comroot,
         EXPDIR=expdir,
