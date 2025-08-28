@@ -1,12 +1,12 @@
 jobs:
   - monitor_type: 'radiance'
-    component: 'aod'
+    component: 'chem'
     satellite: 'n20'
     sensor: 'viirs'
     template_path: '${HOMEobsmon}/templates/ioda_stats_viirs_n20.yaml.j2'
 
   - monitor_type: 'radiance'
-    component: 'aod'
+    component: 'chem'
     satellite: 'npp'
     sensor: 'viirs'
     template_path: '${HOMEobsmon}/templates/ioda_stats_viirs_npp.yaml.j2'
