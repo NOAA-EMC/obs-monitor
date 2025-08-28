@@ -114,13 +114,7 @@ def extract_timestamp(file: Path) -> str | None:
         return match.group(0)
     return None
 
-def find_matching_nc_files(cfg: MonitoringConfig, logger):
-    """
-    Scan DATAROOT for NetCDF files that match the ob_type and fall within the time window.
 
-    Returns:
-        List of Path objects pointing to matched NetCDF files.
-    """
 def find_matching_nc_files(cfg: MonitoringConfig, logger):
     """
     Scan DATAROOT for NetCDF files corresponding to expected cycles between start_time and end_time,
