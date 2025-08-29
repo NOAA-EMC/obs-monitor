@@ -148,12 +148,6 @@ function App() {
     lg:relative lg:translate-x-0 lg:w-64 z-50`}
       >
 
-        {/* <aside
-        className={`fixed top-0 left-0 h-full bg-blue-100 p-4 border-r overflow-y-auto transform transition-transform duration-300 ease-in-out
-          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} 
-          lg:relative lg:translate-x-0 lg:w-64`}
-      > */}
-
 
         <h1 className="text-lg font-bold mb-4 text-center">
           <span className="underline block">Monitoring Dashboard</span>
