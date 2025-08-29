@@ -81,6 +81,22 @@ button:focus-visible {
   }
 }
 
+/* Mobile layout fix: prevent content from pushing hamburger off-screen */
+@media (max-width: 1024px) {
+
+  body,
+  #root {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+
+  /* Ensure flex children don't grow too wide */
+  .flex-1,
+  .flex {
+    min-width: 0;
+  }
+}
+
 .custom-button-category {
   @apply w-full text-left px-2 py-1 text-blue-800 hover:bg-gray-200 rounded font-bold;
 }

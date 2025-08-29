@@ -57,7 +57,7 @@ function TimeSeriesWrapper() {
                 />
             )}
             {fileExists === false && (
-                <p className="text-red-600 mt-4">
+                <p className="break-words text-red-600 mt-4">
                     Image file <code>{file}</code> not available.
                 </p>
             )}

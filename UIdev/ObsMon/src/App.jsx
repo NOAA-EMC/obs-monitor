@@ -1,16 +1,24 @@
-import React, { useEffect, useState, useRef, createContent } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useEffect, useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Menu } from "lucide-react"; // hamburger icon
 import { ABI, AHI, AMSUA, ATMS, CrIS, IASI, MHS, SSMIS, OMI, OMPSNP, OMPSTC8 } from "./data/channels.js";
 import MainContent from "./MainContent.jsx";
 import { withBase } from './utils/paths.js';
 
 import RadianceCategory from './components/RadianceCategory.jsx';
-import OzoneObs from './components/OzoneObs.jsx'
+import OzoneObs from './components/OzoneObs.jsx';
 import ConventionalObs from './components/ConventionalObs.jsx';
 
 function App() {
-
   const navigate = useNavigate();
+
+  const go = (to) => {
+    navigate(to);
+    if (window.innerWidth < 1024) setSidebarOpen(false); // only close on mobile/tablet
+  };
+
+  // Sidebar toggle for mobile
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [openSection, setOpenSection] = useState(null);
   const [openSat, setOpenSat] = useState(null);
@@ -26,70 +34,64 @@ function App() {
   const [uvTypes, setUvTypes] = useState([]);
   const [config, setConfig] = useState(null);
 
+  const [cycleTime, setCycleTime] = useState(null);
+  const previousCycle = useRef(null);
+
+  // --- fetch data (unchanged) ---
   useEffect(() => {
     fetch(withBase('data/gpstypes.json'), { cache: 'no-store' })
       .then(res => res.json())
       .then(data => setGpsTypes(data))
       .catch(err => console.error("Failed to load gpsTypes:", err));
   }, []);
-
   useEffect(() => {
     fetch(withBase('data/pstypes.json'), { cache: 'no-store' })
       .then(res => res.json())
       .then(data => setPsTypes(data))
       .catch(err => console.error("Failed to load psTypes:", err));
   }, []);
-
   useEffect(() => {
     fetch(withBase('data/qtypes.json'), { cache: 'no-store' })
       .then(res => res.json())
       .then(data => setQTypes(data))
       .catch(err => console.error("Failed to load qTypes:", err));
   }, []);
-
   useEffect(() => {
     fetch(withBase('data/ttypes.json'), { cache: 'no-store' })
       .then(res => res.json())
       .then(data => setTTypes(data))
       .catch(err => console.error("Failed to load tTypes:", err));
   }, []);
-
   useEffect(() => {
     fetch(withBase('data/uvtypes.json'), { cache: 'no-store' })
       .then(res => res.json())
       .then(data => setUvTypes(data))
       .catch(err => console.error("Failed to load uvTypes:", err));
   }, []);
-
   useEffect(() => {
     fetch(withBase('data/ozonesats.json'), { cache: 'no-store' })
       .then(res => res.json())
       .then(data => setOzoneSatellites(data))
       .catch(err => console.error("Failed to load ozoneSatellites:", err));
   }, []);
-
   useEffect(() => {
     fetch(withBase('data/microwavesats.json'), { cache: 'no-store' })
       .then(res => res.json())
       .then(data => setMicrowaveSatellites(data))
       .catch(err => console.error("Failed to load microwaveSatellites:", err));
   }, []);
-
   useEffect(() => {
     fetch(withBase('data/infraredsats.json'), { cache: 'no-store' })
       .then(res => res.json())
       .then(data => setInfraredSatellites(data))
       .catch(err => console.error("Failed to load infraredSatellites:", err));
   }, []);
-
   useEffect(() => {
     fetch(withBase('data/geostationarysats.json'), { cache: 'no-store' })
       .then(res => res.json())
       .then(data => setGeostationarySatellites(data))
       .catch(err => console.error("Failed to load geostationarySatellites:", err));
   }, []);
-
-  // Fetch config on mount
   useEffect(() => {
     fetch(withBase("data/configIndex.json"))
       .then(res => {
@@ -100,6 +102,33 @@ function App() {
       .catch(err => console.error("Failed to load configIndex.json:", err));
   }, []);
 
+  // cycle fetch
+  useEffect(() => {
+    const fetchCycle = async () => {
+      try {
+        const res = await fetch(withBase('data/currentCycle.json'), { cache: 'no-store' });
+        const json = await res.json();
+        if (json.cycleTime && json.cycleTime !== previousCycle.current) {
+          setCycleTime(json.cycleTime);
+          previousCycle.current = json.cycleTime;
+        }
+      } catch (error) {
+        console.error('Failed to load current cycle:', error);
+      }
+    };
+
+    fetchCycle();
+    const interval = setInterval(fetchCycle, 300000); // 5 min
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') fetchCycle();
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
   const toggleSection = (name) => {
     setOpenSection(openSection === name ? null : name);
   };
@@ -108,61 +137,33 @@ function App() {
     setOpenSat(openSat === name ? null : name);
   };
 
-  const [cycleTime, setCycleTime] = useState(null);
-  const previousCycle = useRef(null);
-
-  // Load the current cycle and refresh periodically
-  useEffect(() => {
-    const fetchCycle = async () => {
-      try {
-        const res = await fetch(withBase('data/currentCycle.json'), { cache: 'no-store' });
-        const json = await res.json();
-        if (json.cycleTime && json.cycleTime !== previousCycle.cycleTime) {
-          setCycleTime(json.cycleTime);
-          previousCycle.cycleTime = json.cycleTime;
-        }
-      } catch (error) {
-        console.error('Failed to load current cycle:', error);
-      }
-    };
-
-    fetchCycle(); // Load on mount
-
-    const interval = setInterval(fetchCycle, 300000); // Poll every 5 min
-    // Optionally fetch when tab becomes visible again
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        fetchCycle();
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      clearInterval(interval);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, []);
-
+  // --- LAYOUT ---
   return (
+    <div className="flex flex-col lg:flex-row min-h-screen">
+
+      {/* Sidebar */}
+      <aside
+        className={`fixed top-0 left-0 h-full w-72 bg-blue-100 p-4 border-r overflow-y-auto transform transition-transform duration-300 ease-in-out
+    ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} 
+    lg:relative lg:translate-x-0 lg:w-64 z-50`}
+      >
+
+        {/* <aside
+        className={`fixed top-0 left-0 h-full bg-blue-100 p-4 border-r overflow-y-auto transform transition-transform duration-300 ease-in-out
+          ${sidebarOpen ? "translate-x-0" : "-translate-x-full"} 
+          lg:relative lg:translate-x-0 lg:w-64`}
+      > */}
 
 
-    <div className="flex min-h-screen">
-      <aside className="w-64  shrink-0 bg-blue-100 p-4 border-r">
-        <h1 className="text-lg font-bold mb-4">
-          <span className="underline" style={{ display: 'block', textAlign: 'center', marginBottom: '0.1rem' }} >
-            Monitoring Dashboard</span>
-
-          {/* Render config.name here if loaded */}
+        <h1 className="text-lg font-bold mb-4 text-center">
+          <span className="underline block">Monitoring Dashboard</span>
           {config?.name && (
-            <span style={{ display: 'block', fontWeight: 'normal', textAlign: 'center', marginTop: '0.1rem', fontSize: '1rem' }}>
-              {config.name}
-            </span>
+            <span className="block font-normal text-sm mt-1">{config.name}</span>
           )}
         </h1>
 
-        {/* Add current cycle below header */}
-        <p className="text-base text-black mb-4">
-          Current Cycle: &nbsp; &nbsp; {cycleTime || "Loading..."}
+        <p className="text-base text-black mb-4 text-center">
+          Current Cycle: {cycleTime || "Loading..."}
         </p>
 
         {geostationarySatellites.length > 0 && (
@@ -175,7 +176,7 @@ function App() {
             toggleSection={toggleSection}
             openSat={openSat}
             toggleSat={toggleSat}
-            navigate={navigate}
+            navigate={go}
             cycleTime={cycleTime}
           />
         )}
@@ -190,7 +191,7 @@ function App() {
             toggleSection={toggleSection}
             openSat={openSat}
             toggleSat={toggleSat}
-            navigate={navigate}
+            navigate={go}
             cycleTime={cycleTime}
           />
         )}
@@ -205,7 +206,7 @@ function App() {
             toggleSection={toggleSection}
             openSat={openSat}
             toggleSat={toggleSat}
-            navigate={navigate}
+            navigate={go}
             cycleTime={cycleTime}
           />
         )}
@@ -218,7 +219,7 @@ function App() {
             toggleSection={toggleSection}
             openSat={openSat}
             toggleSat={toggleSat}
-            navigate={navigate}
+            navigate={go}
             ozoneSatellites={ozoneSatellites}
             channelMap={{ OMI: OMI.channels, OMPSNP: OMPSNP.channels, OMPSTC8: OMPSTC8.channels }}
             cycleTime={cycleTime}
@@ -232,10 +233,9 @@ function App() {
           displayLabel="GPS Observations"
           openSection={openSection}
           toggleSection={toggleSection}
-          navigate={navigate}
+          navigate={go}
           cycleTime={cycleTime}
         />
-
         <ConventionalObs
           obsType="ps"
           typeList={psTypes}
@@ -243,10 +243,9 @@ function App() {
           displayLabel="PS Observations"
           openSection={openSection}
           toggleSection={toggleSection}
-          navigate={navigate}
+          navigate={go}
           cycleTime={cycleTime}
         />
-
         <ConventionalObs
           obsType="q"
           typeList={qTypes}
@@ -254,10 +253,9 @@ function App() {
           displayLabel="Q Observations"
           openSection={openSection}
           toggleSection={toggleSection}
-          navigate={navigate}
+          navigate={go}
           cycleTime={cycleTime}
         />
-
         <ConventionalObs
           obsType="t"
           typeList={tTypes}
@@ -265,10 +263,9 @@ function App() {
           displayLabel="T Observations"
           openSection={openSection}
           toggleSection={toggleSection}
-          navigate={navigate}
+          navigate={go}
           cycleTime={cycleTime}
         />
-
         <ConventionalObs
           obsType="uv"
           typeList={uvTypes}
@@ -276,18 +273,46 @@ function App() {
           displayLabel="UV Observations"
           openSection={openSection}
           toggleSection={toggleSection}
-          navigate={navigate}
+          navigate={go}
           cycleTime={cycleTime}
         />
-
       </aside>
 
-      <MainContent />
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-25 lg:hidden z-40"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
+      {/* Main content area */}
+      <main className="flex-1 flex flex-col min-w-0">
+        {/* Header */}
+        <header className="flex items-center justify-between bg-white shadow p-4">
+          <h1 className="text-xl font-bold text-center lg:text-left">
+            Monitoring Dashboard
+          </h1>
+          {/* Mobile menu button */}
+          <button
+            className="lg:hidden p-2 rounded hover:bg-gray-100"
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+          >
+            <Menu />
+          </button>
+        </header>
+
+        {/* Content */}
+        <section className="flex-1 p-4 min-w-0">
+          <MainContent />
+        </section>
+
+        {/* Footer */}
+        <footer className="bg-gray-100 text-gray-600 text-center p-2">
+          © 2025 ObsMon Dashboard
+        </footer>
+      </main>
     </div>
   );
 }
 
 export default App;
-
-

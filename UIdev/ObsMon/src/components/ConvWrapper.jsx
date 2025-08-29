@@ -53,7 +53,7 @@ export default function UnifiedWrapper() {
                 />
             )}
             {fileExists === false && (
-                <p className="text-red-600 mt-4">
+                <p className="break-words text-red-600 mt-4">
                     Image file  <code>{filePath}</code>  not available.
                 </p>
             )}

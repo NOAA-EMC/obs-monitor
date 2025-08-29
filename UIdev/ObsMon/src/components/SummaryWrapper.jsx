@@ -34,7 +34,7 @@ function SummaryWrapper() {
     }
 
     return (
-        <div className="p-4">
+        <div className="p-4 max-w-full overflow-x-auto">
             <h1 className="text-2xl font-bold mb-2">
                 {satellite.toUpperCase()} / {instrument.toUpperCase()} Summary Page
             </h1>
@@ -51,7 +51,7 @@ function SummaryWrapper() {
                 />
             )}
             {fileExists === false && (
-                <p className="text-red-600 mt-4">
+                <p className="break-words text-red-600 mt-4">
                     Image file <code>{filePath}</code> not available.
                 </p>
             )}
