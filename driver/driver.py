@@ -460,8 +460,8 @@ def main():
     """
     Parses environment variables and runs all monitoring jobs in parallel.
     """
-    print("I am in")
-    
+    main_logger = Logger("Obs Monitor - main")
+
     cdate = os.getenv("CDATE")
     if not cdate:
         raise EnvironmentError("CDATE is not set")
@@ -478,30 +478,28 @@ def main():
     with open(config_yaml, "r") as f:
         config = yaml.safe_load(f)
 
-    # job_list = config["jobs"] if isinstance(config, dict) and "jobs" in config else config
-    # if not isinstance(job_list, list):
-    #     job_list = [job_list]
-
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
-
     job_list = config["jobs"] if isinstance(config, dict) and "jobs" in config else config
     if not isinstance(job_list, list):
         job_list = [job_list]
 
-    # Read components from env var (comma-separated)
     component_filter = os.getenv("COMPONENT")
     if component_filter:
         requested_components = {c.strip() for c in component_filter.split(",")}
         original_count = len(job_list)
         job_list = [job for job in job_list if job.get("component") in requested_components]
         skipped = original_count - len(job_list)
-        logging.info(f"Filtered jobs: running {len(job_list)} matching components ({', '.join(requested_components)}), skipped {skipped}.")
+        main_logger.info(
+            f"Filtered jobs: running {len(job_list)} matching components "
+            f"({', '.join(requested_components)}), skipped {skipped}."
+        )
 
     if not job_list:
-        logging.warning("No jobs match the given COMPONENT filter.")
+        main_logger.warning("No jobs match the given COMPONENT filter. Exiting ...")
         return
 
     job_args = [(job, timestamp) for job in job_list]
+    nprocs = min(cpu_count(), len(job_args))
+    main_logger.info(f"Starting multiprocessing with {nprocs} processes")
 
     logging.info(f"Starting multiprocessing with {min(cpu_count(), len(job_args))} processes")
 

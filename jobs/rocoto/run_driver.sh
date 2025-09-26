@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-
 # enable debug mode
 set -x
 
+
+echo "Starting obs-monitor wokflow"
 source "${HOMEobsmon}/ush/detect_machine.sh"
 
 ###############################################################
@@ -15,6 +16,7 @@ export jobid="${job}.$$"
 
 ###############################################################
 # Execute the JJOB
+echo "Executing Python driver script"
 python "${HOMEobsmon}/driver/driver.py"
 
 exit $?
