@@ -21,6 +21,9 @@ import subprocess
 import yaml
 import glob
 import re
+import csv
+import numpy as np
+import xarray as xr
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from multiprocessing import Pool, cpu_count
@@ -28,6 +31,11 @@ from multiprocessing import Pool, cpu_count
 from wxflow import Logger, Jinja
 from wxflow.configuration import cast_as_dtype
 import wxflow
+from stubs import (
+    clone_schema_stub,
+    write_generic_stub,
+    guess_domain_size,
+)
 
 
 # ------------------------
@@ -51,6 +59,7 @@ class MonitoringConfig:
         self.template_path = os.path.expandvars(monitor_dict["template_path"])
         self.timestamp = timestamp
         self.component = Path(os.getenv("COMPONENT"))
+        self.filename_template = monitor_dict.get("filename_template")
 
         # Construct a unique runtime directory using UUID
         self.runtime_root = Path(os.getenv("RUNTIME_DIR"))
@@ -70,6 +79,7 @@ class MonitoringConfig:
         self.cyc = Path(os.getenv("CYC"))
         self.copy_data = cast_as_dtype(os.getenv("COPY_DATA"))
         self.keep_data = cast_as_dtype(os.getenv("KEEP_DATA"))
+        self.create_stubs = cast_as_dtype(os.getenv("CREATE_STUBS"))
 
     def get_jinja_context(self):
         """
@@ -95,12 +105,126 @@ class MonitoringConfig:
 # Helper Functions
 # ------------------------
 
+def infer_schema_from_template(cfg) -> tuple[str, bool]:
+    """
+    Inspect the Jinja YAML template to infer (product_group, include_gridded_bins).
+    Looks at lines under 'groups:' with 'name: <path>'.
+    """
+    pg = None
+    include_gridded = False
+
+    try:
+        with open(cfg.template_path, "r") as tf:
+            for line in tf:
+                m = re.search(r"name:\s*([A-Za-z0-9_\/]+)", line)
+                if not m:
+                    continue
+                path = m.group(1).strip()
+                parts = path.split("/")
+                if parts and parts[0] == "griddedBins":
+                    include_gridded = True
+                # last component tends to be the product group (e.g., totalSnowDepth, aerosolOpticalDepth)
+                if len(parts) >= 1:
+                    pg = parts[-1]
+    except Exception:
+        pass
+
+    # Sensible fallbacks if template scan didn't find anything
+    if not pg:
+        ob = cfg.ob_type.lower()
+        if "snow" in ob or "snocvr" in ob:
+            pg = "totalSnowDepth"
+        elif "aod" in ob or "viirs" in ob:
+            pg = "aerosolOpticalDepth"
+        else:
+            pg = "value"
+
+    return pg, include_gridded
+
+
+def expected_stub_filename(cfg, dt, reference_path: str | Path | None) -> str:
+    """
+    Use per-job filename_template when provided; else clone a reference name; else fallback.
+    """
+    ts = dt.strftime("%Y%m%d%H")
+
+    if getattr(cfg, "filename_template", None):
+        return dt.strftime(cfg.filename_template)
+
+    if reference_path:
+        ref_name = Path(reference_path).name
+        return re.sub(r"\d{10,14}", ts, ref_name, count=1)
+
+    # last-resort heuristic (should rarely run now)
+    return f"{cfg.ob_type}_{ts}.nc"
+
+
+def write_coverage_report(expected_times, found_times, out_path, logger):
+    """
+    Write a lightweight CSV coverage report for expected and found times for
+    easy, digestable way to view report of file coverage. Can be used with cron
+    to report users of missing files based on threshold value and can provide
+    service level indicator stats.
+    """
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    found = {dt for dt in found_times}
+    with open(out_path, "w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["time_utc", "present"])
+        for t in expected_times:
+            w.writerow([t.strftime("%Y-%m-%d %H:%M"), int(t in found)])
+        cov_num = f"{len(found)}/{len(expected_times)}"
+        cov_pct = f"{(len(found)/len(expected_times))*100:.0f}%" if expected_times else "n/a"
+        w.writerow([])
+        w.writerow(["coverage", cov_num])
+        w.writerow(["coverage_pct", cov_pct])
+    logger.info(f"[coverage] {cov_num} ({cov_pct}) -> {out_path}")
+
+    return f"{cov_num} ({cov_pct})"
+
+
+def create_stub_for_missing_cycle(cfg: MonitoringConfig, dt: datetime, logger, reference_path: str | Path | None = None):
+    """
+    Try to clone schema from any real file we found this run; if none, write a minimal byDomains stub.
+    """
+    # exact filename EVA expects for this cycle
+    fname = expected_stub_filename(cfg, dt, reference_path)
+    out = cfg.runtime_dir / fname
+
+    # Prefer clone-from-real if any real file exists
+    if reference_path:
+        try:
+            clone_schema_stub(reference_path, out, dt)
+            logger.info(f"[{cfg.ob_type}] Stub cloned from real: {Path(reference_path).name} -> {out.name}")
+            return True
+        except Exception as e:
+            logger.warning(f"[{cfg.ob_type}] Clone failed; falling back to generic stub: {e}")
+
+    # Infer product_group + whether gridded bins appear from the Jinja template
+    product_group, include_gridded = infer_schema_from_template(cfg)
+
+    try:
+        write_generic_stub(
+            out_path=out,
+            dt=dt,
+            ob_type=cfg.ob_type,
+            product_group=product_group,
+            include_gridded_bins=include_gridded,
+        )
+        logger.info(f"[{cfg.ob_type}] Generic stub written: {out.name} (pg={product_group}, gridded={include_gridded})")
+        return True
+    except Exception as e:
+        logger.error(f"[{cfg.ob_type}] Failed to write generic stub {out.name}: {e}")
+        return False
+
+
 def extract_timestamp(file: Path) -> str | None:
     """
     Extract a timestamp string from the filename stem.
 
-    This function searches for the first sequence of 10 to 14 digits in the 
-    file's stem (filename without extension), which typically represents a 
+    This function searches for the first sequence of 10 to 14 digits in the
+    file's stem (filename without extension), which typically represents a
     timestamp in the formats: YYYYMMDDHH, YYYYMMDDHHMM, or YYYYMMDDHHMMSS.
 
     Parameters:
@@ -114,23 +238,18 @@ def extract_timestamp(file: Path) -> str | None:
         return match.group(0)
     return None
 
-def find_matching_nc_files(cfg: MonitoringConfig, logger):
-    """
-    Scan DATAROOT for NetCDF files that match the ob_type and fall within the time window.
 
-    Returns:
-        List of Path objects pointing to matched NetCDF files.
-    """
 def find_matching_nc_files(cfg: MonitoringConfig, logger):
     """
     Scan DATAROOT for NetCDF files corresponding to expected cycles between start_time and end_time,
-    using interval_hours, and return a sorted list of Path objects.
-    Logs a warning if expected files are missing for a cycle.
+    using interval_hours. Return matched files, full expected timeline, and found timestamps.
 
     Returns:
-        List of Path objects pointing to matched NetCDF files.
+        (List[Path], List[datetime], List[datetime])
+        (nc_files, expected_times, found_times)
     """
     nc_files = []
+    found_times = []
     pattern = f"{cfg.ob_type}_*.nc"
 
     logger.info(f"Finding {cfg.ob_type} files from {cfg.start_time} to {cfg.end_time} every {cfg.interval_hours} hours")
@@ -150,6 +269,16 @@ def find_matching_nc_files(cfg: MonitoringConfig, logger):
             logger.warning(f"Expected directory does not exist: {run_dir}")
             continue
 
+        if getattr(cfg, "filename_template", None):
+            expected_name = dt.strftime(cfg.filename_template)
+            f = run_dir / expected_name
+            if f.exists():
+                nc_files.append(f)
+                found_times.append(dt)
+            else:
+                logger.warning(f"Missing expected file {f}")
+            continue  # skip globbing; we know the exact name
+
         # Find files matching ob_type in this directory
         matched_files = []
         for file in run_dir.glob(pattern):
@@ -167,18 +296,30 @@ def find_matching_nc_files(cfg: MonitoringConfig, logger):
             logger.warning(f"No files found for expected cycle {dt.strftime('%Y%m%d%H')} in {run_dir}")
         else:
             nc_files.extend(matched_files)
+            found_times.append(dt)
 
     logger.info(f"Found {len(nc_files)} matching NetCDF files for {cfg.ob_type}")
-    return sorted(nc_files)
+    return sorted(nc_files), expected_times, found_times
 
 
 def copy_nc_files_to_runtime(nc_files, cfg: MonitoringConfig, logger):
     """
-    Copies matched NetCDF files to the runtime directory.
+    Copies matched NetCDF files to the runtime directory. Logs and continues on per-file errors.
     """
+    copied = 0
     for file in nc_files:
-        shutil.copy2(file, cfg.runtime_dir / file.name)
-        logger.info(f"Copied: {file.name}")
+        try:
+            shutil.copy2(file, cfg.runtime_dir / file.name)
+            copied += 1
+            logger.info(f"[{cfg.ob_type}] Copied: {file.name}")
+        except FileNotFoundError:
+            logger.warning(f"[{cfg.ob_type}] Source vanished before copy: {file}")
+        except PermissionError as e:
+            logger.error(f"[{cfg.ob_type}] Permission error copying {file}: {e}")
+        except Exception as e:
+            logger.error(f"[{cfg.ob_type}] Unexpected error copying {file}: {e}")
+    if copied == 0:
+        logger.warning(f"[{cfg.ob_type}] No files were copied into runtime dir {cfg.runtime_dir}")
 
 
 def generate_eva_config(cfg: MonitoringConfig, logger) -> Path:
@@ -200,19 +341,22 @@ def generate_eva_config(cfg: MonitoringConfig, logger) -> Path:
 def run_eva(cfg: MonitoringConfig, eva_config_path: Path, logger):
     """
     Executes the EVA application with the generated config file.
+    Logs and returns on failure (non-fatal).
     """
-    # Get the eva executable
     eva_exe = wxflow.executable.which("eva")
     if not eva_exe:
-        logger.error("EVA executable not found in PATH.")
-        raise FileNotFoundError("EVA executable not found")
+        logger.error(f"[{cfg.ob_type}] EVA executable not found in PATH. Skipping EVA.")
+        return
 
     try:
         subprocess.run([str(eva_exe), str(eva_config_path)], check=True)
-        logger.info("EVA completed successfully.")
+        logger.info(f"[{cfg.ob_type}] EVA completed successfully.")
     except subprocess.CalledProcessError as e:
-        logger.error(f"EVA failed with code {e.returncode}")
-        raise
+        logger.error(f"[{cfg.ob_type}] EVA failed with code {e.returncode}. Continuing.")
+    except FileNotFoundError:
+        logger.error(f"[{cfg.ob_type}] EVA executable not found at runtime. Continuing.")
+    except Exception as e:
+        logger.error(f"[{cfg.ob_type}] Unexpected EVA error: {e}. Continuing.")
 
 
 def copy_plots_to_public(cfg: MonitoringConfig, logger, public_root: Path = Path("/public") / "plots"):
@@ -251,8 +395,9 @@ def run_monitoring_job(args):
     """
     Run one complete monitoring job:
     - Match and copy NetCDF files
+    - Optionally create stubs for missing cycles
     - Generate EVA config
-    - Run EVA
+    - Run EVA (if inputs exist)
     - Copy plots
     - Clean up
     """
@@ -261,18 +406,50 @@ def run_monitoring_job(args):
     logger = Logger(f"Obs Monitor - {cfg.ob_type}")
     logger.info(f"Starting job for {cfg.ob_type}")
 
-    nc_files = find_matching_nc_files(cfg, logger)
-    copy_nc_files_to_runtime(nc_files, cfg, logger)
-    eva_config_path = generate_eva_config(cfg, logger)
-    run_eva(cfg, eva_config_path, logger)
+    try:
+        # after discovery
+        nc_files, expected_times, found_times = find_matching_nc_files(cfg, logger)
+        cov_str = write_coverage_report(expected_times, found_times, cfg.runtime_dir / "coverage.csv", logger)
 
-    if cfg.copy_data:
-        copy_plots_to_public(cfg, logger)
+        # NEW: pick a reference if any real file exists
+        ref_path = nc_files[0] if nc_files else None
 
-    if not cfg.keep_data:
-        cleanup_runtime(cfg, logger)
-    else:
-        logger.info(f"KEEP_DATA=True. Results kept in: {cfg.runtime_dir}")
+        # optional stubs
+        if cfg.create_stubs and expected_times:
+            missing = [dt for dt in expected_times if dt not in set(found_times)]
+            if missing:
+                logger.info(f"[{cfg.ob_type}] Creating {len(missing)} stub files for missing cycles")
+                for dt in missing:
+                    create_stub_for_missing_cycle(cfg, dt, logger, reference_path=ref_path)
+
+        # Now stage real files
+        copy_nc_files_to_runtime(nc_files, cfg, logger)
+
+        # If the runtime has no .nc at all (neither real nor stubs), skip EVA
+        if not any(cfg.runtime_dir.glob("*.nc")):
+            logger.warning(f"[{cfg.ob_type}] No runtime inputs (.nc). Skipping EVA. Coverage: {cov_str}")
+            return {"ob_type": cfg.ob_type, "status": "skipped_no_input", "coverage": cov_str}
+
+        eva_config_path = generate_eva_config(cfg, logger)
+        run_eva(cfg, eva_config_path, logger)
+
+        if cfg.copy_data:
+            copy_plots_to_public(cfg, logger)
+
+        return {"ob_type": cfg.ob_type, "status": "ok", "coverage": cov_str}
+
+    except Exception as e:
+        logger.error(f"[{cfg.ob_type}] Job failed: {e}")
+        return {"ob_type": cfg.ob_type, "status": "failed", "error": str(e)}
+
+    finally:
+        if not cfg.keep_data:
+            try:
+                cleanup_runtime(cfg, logger)
+            except Exception as e:
+                logger.warning(f"[{cfg.ob_type}] Cleanup issue: {e}")
+        else:
+            logger.info(f"[{cfg.ob_type}] KEEP_DATA=True. Results kept in: {cfg.runtime_dir}")
 
 
 # ------------------------
@@ -283,6 +460,8 @@ def main():
     """
     Parses environment variables and runs all monitoring jobs in parallel.
     """
+    print("I am in")
+    
     cdate = os.getenv("CDATE")
     if not cdate:
         raise EnvironmentError("CDATE is not set")
@@ -303,6 +482,8 @@ def main():
     # if not isinstance(job_list, list):
     #     job_list = [job_list]
 
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
+
     job_list = config["jobs"] if isinstance(config, dict) and "jobs" in config else config
     if not isinstance(job_list, list):
         job_list = [job_list]
@@ -322,11 +503,19 @@ def main():
 
     job_args = [(job, timestamp) for job in job_list]
 
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
     logging.info(f"Starting multiprocessing with {min(cpu_count(), len(job_args))} processes")
 
     with Pool(processes=min(cpu_count(), len(job_args))) as pool:
-        pool.map(run_monitoring_job, job_args)
+        results = pool.map(run_monitoring_job, job_args)
+
+    ok = sum(1 for r in results if r.get("status") == "ok")
+    skipped = [r for r in results if r.get("status", "").startswith("skipped")]
+    failed = [r for r in results if r.get("status") == "failed"]
+    logging.info(f"Job summary: {ok} ok, {len(skipped)} skipped, {len(failed)} failed (non-fatal).")
+    for r in skipped:
+        logging.info(f"Skipped {r['ob_type']}: {r['status']} — coverage {r.get('coverage')}")
+    for r in failed:
+        logging.info(f"Failed {r['ob_type']}: {r.get('error')}")
 
 
 if __name__ == "__main__":

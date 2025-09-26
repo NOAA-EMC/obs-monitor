@@ -18,6 +18,8 @@ def main():
     parser.add_argument("--run", default="gdas", help="gdas or gfs")
     parser.add_argument("--copydata", default=False, help="Copy data to /local")
     parser.add_argument("--keepdata", default=False, help="Keep runtime directory, data, and figures")
+    parser.add_argument("--create_stubs", default=False, help="Create NaN stub .nc files for missing cycles")
+
     args = parser.parse_args()
 
     # Assign variables first to avoid reference issues
@@ -54,7 +56,8 @@ def main():
         TASK_MEM="4G",
         RUN=args.run,
         COPY_DATA=args.copydata,
-        KEEP_DATA=args.keepdata
+        KEEP_DATA=args.keepdata,
+        CREATE_STUBS=args.create_stubs,
     )
     
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)

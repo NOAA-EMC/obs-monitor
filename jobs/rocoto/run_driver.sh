@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# enable debug mode
+set -x
+
 source "${HOMEobsmon}/ush/detect_machine.sh"
 
 ###############################################################
