@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<!DOCTYPE workflow [
+  <!ENTITY PSLOT "{{ PSLOT }}">
+  <!ENTITY MAXTRIES "2">
+  <!ENTITY HOMEobsmon "{{ HOMEobsmon }}">
+  <!ENTITY COMROOT "{{ COMROOT }}">
+  <!ENTITY DATAROOT "{{ DATAROOT }}">
+]>
+
+<workflow realtime="F" scheduler="{{ SCHEDULER }}" cyclethrottle="1" taskthrottle="10">
+
+  <log verbosity="10"><cyclestr>{{ COMROOT }}/{{ PSLOT }}/logs/@Y@m@d@H.log</cyclestr></log>
+
+  <cycledef group="obsmon">{{ SDATE }} {{ EDATE }} 06:00:00</cycledef>
+
+  <task name="obs_monitor_driver" cycledefs="obsmon" maxtries="&MAXTRIES;">
+    <command>&HOMEobsmon;/jobs/rocoto/run_driver.sh</command>
+
+    <jobname><cyclestr>obsmon_driver_@Y@m@d@H</cyclestr></jobname>
+    <account>{{ ACCOUNT }}</account>
+    <queue>{{ QUEUE }}</queue>
+    <walltime>{{ WALLTIME }}</walltime>
+    <nodes>{{ TASK_NODES }}</nodes>
+    <memory>{{ TASK_MEM }}</memory>
+    <native>--export=NONE</native>
+
+    <join><cyclestr>&COMROOT;/&PSLOT;/logs/@Y@m@d@H/obsmon_driver.log</cyclestr></join>
+
+    <envar><name>PSLOT</name><value>&PSLOT;</value></envar>
+    <envar><name>COMPONENT</name><value>{{ COMPONENT }}</value></envar>
+    <envar><name>HOMEobsmon</name><value>&HOMEobsmon;</value></envar>
+    <envar><name>COMROOT</name><value>{{ COMROOT }}</value></envar>
+    <envar><name>EXPDIR</name><value>{{ EXPDIR }}</value></envar>
+    <envar><name>DATAROOT</name><value>{{ DATAROOT }}</value></envar>
+    <envar><name>RUNTIME_DIR</name><value>{{ RUNTIME_DIR }}</value></envar>
+    <envar><name>CONFIG_YAML</name><value>{{ CONFIG_YAML }}</value></envar>
+    <envar><name>SCHEDULER</name><value>{{ SCHEDULER }}</value></envar>
+    <envar><name>SDATE</name><value>{{ SDATE }}</value></envar>
+    <envar><name>EDATE</name><value>{{ EDATE }}</value></envar>
+    <envar><name>INTERVAL_HOURS</name><value>{{ INTERVAL_HOURS }}</value></envar>
+    <envar><name>ACCOUNT</name><value>{{ ACCOUNT }}</value></envar>
+    <envar><name>QUEUE</name><value>{{ QUEUE }}</value></envar>
+    <envar><name>WALLTIME</name><value>{{ WALLTIME }}</value></envar>
+    <envar><name>TASK_NODES</name><value>{{ TASK_NODES }}</value></envar>
+    <envar><name>TASK_MEM</name><value>{{ TASK_MEM }}</value></envar>
+    <envar><name>RUN</name><value>{{ RUN }}</value></envar>
+    <envar><name>CDATE</name><value><cyclestr>@Y@m@d@H</cyclestr></value></envar>
+    <envar><name>PDY</name><value><cyclestr>@Y@m@d</cyclestr></value></envar>
+    <envar><name>CYC</name><value><cyclestr>@H</cyclestr></value></envar>
+    <envar><name>COPY_DATA</name><value>{{ COPY_DATA }}</value></envar>
+    <envar><name>KEEP_DATA</name><value>{{ KEEP_DATA }}</value></envar>
+    <envar><name>CREATE_STUBS</name><value>{{ CREATE_STUBS }}</value></envar>
+    
+  </task>
+  
+
+</workflow>

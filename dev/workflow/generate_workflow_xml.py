@@ -1,0 +1,71 @@
+import argparse
+from jinja2 import Environment, FileSystemLoader
+from pathlib import Path
+
+def main():
+    parser = argparse.ArgumentParser(description="Generate Rocoto XML from template.")
+    parser.add_argument("--pslot", required=True, help="PSLOT name for workflow")
+    parser.add_argument("--component", required=True, type=str.lower, nargs="+",
+                        choices=["atmos", "snow", "ocean", "chem", "ice"],
+                        help="Analysis product. Choices: atmos, snow, ocean, chem, ice")
+    parser.add_argument("--start_date", required=True, help="Cycle start date in YYYYMMDDHH format")
+    parser.add_argument("--end_date", required=True, help="Cycle end date in YYYYMMDDHH format")
+    parser.add_argument("--obsmondir", required=True, help="Path to base obs-monitor directory")
+    parser.add_argument("--expdir", required=True, help="Experiment directory (EXPDIR)")
+    parser.add_argument("--comroot", required=True, help="COMROOT directory")
+    parser.add_argument("--dataroot", required=True, help="DATAROOT directory")
+    parser.add_argument("--intervalhrs", default="6", help="Hours between cycles")
+    parser.add_argument("--run", default="gdas", help="gdas or gfs")
+    parser.add_argument("--copydata", default=False, help="Copy data to /local")
+    parser.add_argument("--keepdata", default=False, help="Keep runtime directory, data, and figures")
+    parser.add_argument("--create_stubs", default=False, help="Create NaN stub .nc files for missing cycles")
+
+    args = parser.parse_args()
+
+    # Assign variables first to avoid reference issues
+    pslot = args.pslot
+    component_list = args.component
+    component_str = ",".join(component_list) # List converted to str separated by commas
+    obsmondir = args.obsmondir
+    expdir = args.expdir
+    runtime_dir = f"{expdir}/{pslot}"
+    config_yaml = f"{obsmondir}/driver/config.yaml"
+    output_path = f"{runtime_dir}/{pslot}_obsmon_rocoto.xml"
+
+    # Point to rocoto template Jinja2 file
+    env = Environment(loader=FileSystemLoader(f"{obsmondir}"))
+    template = env.get_template("parm/monitor_rocoto_template.xml.j2")
+
+    output = template.render(
+        PSLOT=pslot,
+        COMPONENT=component_str,
+        HOMEobsmon=obsmondir,
+        COMROOT=args.comroot,
+        EXPDIR=expdir,
+        DATAROOT=args.dataroot,
+        RUNTIME_DIR=runtime_dir,
+        CONFIG_YAML=config_yaml,
+        SCHEDULER="slurm",
+        SDATE=args.start_date,
+        EDATE=args.end_date,
+        INTERVAL_HOURS=args.intervalhrs,
+        ACCOUNT="da-cpu",
+        QUEUE="batch",
+        WALLTIME="00:15:00",
+        TASK_NODES='1:ppn=1:tpp=1',
+        TASK_MEM="4G",
+        RUN=args.run,
+        COPY_DATA=args.copydata,
+        KEEP_DATA=args.keepdata,
+        CREATE_STUBS=args.create_stubs,
+    )
+    
+    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+
+    with open(output_path, "w") as f:
+        f.write(output)
+    
+    print(f"Rocoto workflow written to {output_path}")
+
+if __name__ == "__main__":
+    main()

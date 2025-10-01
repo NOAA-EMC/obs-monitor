@@ -1,0 +1,20 @@
+jobs:
+  - monitor_type: 'radiance'
+    component: 'chem'
+    satellite: 'n20'
+    sensor: 'viirs'
+    template_path: '${HOMEobsmon}/templates/ioda_stats_viirs_n20.yaml.j2'
+    filename_template: 'viirs_n20_%Y%m%d%H_output_aod.nc'
+
+  - monitor_type: 'radiance'
+    component: 'chem'
+    satellite: 'npp'
+    sensor: 'viirs'
+    template_path: '${HOMEobsmon}/templates/ioda_stats_viirs_npp.yaml.j2'
+    filename_template: 'viirs_npp_%Y%m%d%H_output_aod.nc'
+
+  - monitor_type: 'conventional'
+    component: 'snow'
+    variable: 'snocvr'
+    template_path: '${HOMEobsmon}/templates/ioda_stats_snocvr.yaml.j2'
+    filename_template: 'snocvr_%Y%m%d%H_output_snow.nc'
