@@ -3,7 +3,7 @@
 set -x
 
 
-echo "Starting obs-monitor wokflow"
+echo "Starting obs-monitor workflow"
 source "${HOMEobsmon}/ush/detect_machine.sh"
 
 ###############################################################

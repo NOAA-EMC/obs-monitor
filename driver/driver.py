@@ -501,19 +501,17 @@ def main():
     nprocs = min(cpu_count(), len(job_args))
     main_logger.info(f"Starting multiprocessing with {nprocs} processes")
 
-    logging.info(f"Starting multiprocessing with {min(cpu_count(), len(job_args))} processes")
-
     with Pool(processes=min(cpu_count(), len(job_args))) as pool:
         results = pool.map(run_monitoring_job, job_args)
 
     ok = sum(1 for r in results if r.get("status") == "ok")
     skipped = [r for r in results if r.get("status", "").startswith("skipped")]
     failed = [r for r in results if r.get("status") == "failed"]
-    logging.info(f"Job summary: {ok} ok, {len(skipped)} skipped, {len(failed)} failed (non-fatal).")
+    main_logger.info(f"Job summary: {ok} ok, {len(skipped)} skipped, {len(failed)} failed (non-fatal).")
     for r in skipped:
-        logging.info(f"Skipped {r['ob_type']}: {r['status']} — coverage {r.get('coverage')}")
+        main_logger.info(f"Skipped {r['ob_type']}: {r['status']} — coverage {r.get('coverage')}")
     for r in failed:
-        logging.info(f"Failed {r['ob_type']}: {r.get('error')}")
+        main_logger.info(f"Failed {r['ob_type']}: {r.get('error')}")
 
 
 if __name__ == "__main__":
