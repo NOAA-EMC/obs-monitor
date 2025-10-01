@@ -45,6 +45,7 @@ graphics:
           loc: 'upper left'
         layers:
         - type: LinePlot
+          drop_nan: false
           x:
             variable: ObsMonitor::MetaData::validTime
           y:
@@ -54,6 +55,7 @@ graphics:
           color: 'blue'
           label: 'O-F'
         - type: LinePlot
+          drop_nan: false
           x:
             variable: ObsMonitor::MetaData::validTime
           y:
