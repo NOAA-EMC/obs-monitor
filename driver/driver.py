@@ -1,5 +1,5 @@
 """
-Observation Monitoring Driver Script (rolling windows)
+Observation Monitoring Driver Script
 
 This script runs EVA processing for multiple observation types using multiprocessing.
 Each job:
@@ -39,7 +39,7 @@ import wxflow
 from stubs import (
     clone_schema_stub,
     write_generic_stub,
-    guess_domain_size,  # imported if you use it inside write_generic_stub
+    guess_domain_size,
 )
 
 # -----------------------------------------------------------------------------
@@ -188,6 +188,7 @@ def expected_stub_filename(cfg: MonitoringConfig, dt: datetime, reference_path: 
     if reference_path:
         ref_name = Path(reference_path).name
         return re.sub(r"\d{10,14}", ts, ref_name, count=1)
+
     return f"{cfg.ob_type}_{ts}.nc"
 
 
@@ -250,6 +251,7 @@ def write_coverage_report(expected_times, found_times, out_path, logger):
         w.writerow(["coverage", cov_num])
         w.writerow(["coverage_pct", cov_pct])
     logger.info(f"[coverage] {cov_num} ({cov_pct}) -> {out_path}")
+
     return f"{cov_num} ({cov_pct})"
 
 
@@ -262,6 +264,7 @@ def build_window_endpoints(cfg: MonitoringConfig) -> list[datetime]:
              length = ncycles + 1
     """
     interval = timedelta(hours=cfg.interval_hours)
+
     return [cfg.start_time + i * interval for i in range(cfg.ncycles + 1)]
 
 
@@ -332,6 +335,7 @@ def find_matching_nc_files_for_times(cfg: MonitoringConfig, expected_times: list
             found_times.append(dt)
 
     logger.info(f"Found {len(nc_files)} files for window ending {expected_times[-1]}")
+
     return sorted(nc_files), expected_times, found_times
 
 
@@ -366,6 +370,7 @@ def generate_eva_config(cfg: MonitoringConfig, logger, runtime_dir: Path,
     jinja = Jinja(template_path_or_string=cfg.template_path, data=context)
     jinja.save(output_file=output_path)
     logger.info(f"Generated EVA config: {output_path}")
+
     return output_path
 
 
