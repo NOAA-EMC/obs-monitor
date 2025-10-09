@@ -204,7 +204,7 @@ def main() -> None:
     config_yaml_for_driver = str(obsmondir / "driver" / "config.yaml")
 
     # Output XML path
-    output_path = runtime_dir / f"{pslot}_obsmon_rocoto.xml"
+    output_path = expdir / f"{pslot}_obsmon_rocoto.xml"
 
     # Load Jinja template
     env = Environment(loader=FileSystemLoader(str(obsmondir)))

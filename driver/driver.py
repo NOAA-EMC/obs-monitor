@@ -109,10 +109,11 @@ class MonitoringConfig:
         self,
         start_time: datetime | None = None,
         end_time: datetime | None = None,
-        runtime_dir: Path | None = None
+        runtime_dir: Path | None = None,
     ):
         """
-        Build the Jinja context; optionally override start/end/runtime_dir for a window.
+        Build the context dictionary passed to the Jinja template engine.
+        Allows overriding start/end/runtime_dir for per-window renders.
         """
         d = {
             "runtime_dir": str(runtime_dir or self.runtime_dir),
@@ -126,7 +127,9 @@ class MonitoringConfig:
             d['sensor'] = self.sensor
         elif self.monitor_type == 'conventional':
             d['variable'] = self.variable
+    
         return d
+
 
 # -----------------------------------------------------------------------------
 # Helpers
@@ -270,14 +273,15 @@ def build_window_endpoints(cfg: MonitoringConfig) -> list[datetime]:
 
 def build_expected_times_for_window(t_end: datetime, interval_hours: int, cycles: int) -> list[datetime]:
     """
-    Build the expected timeline for one window: `cycles` intervals long ending at `t_end`.
+    Build the expected timeline for one window with exactly `cycles` timestamps,
+    ending at `t_end`.
 
-    Example: cycles=4, interval=6h -> 5 timestamps:
-        [t_end-24h, t_end-18h, t_end-12h, t_end-6h, t_end]
+    Example: cycles=4, interval=6h -> 4 timestamps:
+        [t_end-18h, t_end-12h, t_end-6h, t_end]
     """
     interval = timedelta(hours=interval_hours)
-    t_start = t_end - cycles * interval
-    return [t_start + i * interval for i in range(cycles)] + [t_end]
+    t_start = t_end - (cycles - 1) * interval
+    return [t_start + i * interval for i in range(cycles)]
 
 
 def find_matching_nc_files_for_times(cfg: MonitoringConfig, expected_times: list[datetime], logger):
@@ -449,8 +453,8 @@ def run_monitoring_job(args):
             )
             win_start = win_times[0]
 
-            # Per-window runtime dir: <job-root>/win_YYYYMMDDHHMM
-            window_dir = cfg.runtime_dir / f"win_{t_end.strftime('%Y%m%d%H%M')}"
+            # Per-window runtime dir: <job-root>/YYYYMMDDHHMM
+            window_dir = cfg.runtime_dir / f"{t_end.strftime('%Y%m%d%H%M')}"
             window_dir.mkdir(parents=True, exist_ok=True)
 
             # Discover files for this window
