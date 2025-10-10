@@ -1,4 +1,4 @@
-pslot: "obsmon_gdas_snow"
+pslot: "obsmon_gdas_atmos"
 component: "atmos"   # list or comma-separated string both ok
 start_date: "YYYYMMDDHHMM"
 end_date: "YYYYMMDDHHMM"

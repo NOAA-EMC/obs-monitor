@@ -1,5 +1,5 @@
-pslot: "obsmon_gdas_snow"
-component: "atmos"   # list or comma-separated string both ok
+pslot: "obsmon_gdas_ice"
+component: "ice"   # list or comma-separated string both ok
 start_date: "YYYYMMDDHHMM"
 end_date: "YYYYMMDDHHMM"
 interval_hours: 6
