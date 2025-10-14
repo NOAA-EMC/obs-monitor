@@ -1,12 +1,12 @@
 """
-Observation Monitoring Driver Script
+Observation Monitoring Driver Script — single rolling window per run
 
 This script runs EVA processing for multiple observation types using multiprocessing.
-Each job:
-    - Builds rolling windows between SDATE and EDATE (inclusive of EDATE)
-      * One figure per cycle endpoint (including end_time)
-      * Each figure's window spans `cycles` intervals ending at that endpoint
-    - For each window:
+Each run:
+    - Reads the current cycle endpoint from PDY (YYYYMMDD) and CYC (HH)
+    - Builds one rolling window ending at that endpoint with exactly `CYCLES`
+      timestamps spaced by `INTERVAL_HOURS`
+    - For that window:
         - Finds matching NetCDF observation files
         - Copies them into a per-window runtime directory
         - Optionally creates stub .nc files for missing cycles
@@ -15,9 +15,10 @@ Each job:
         - Optionally copies output plots to a public directory
     - Cleans up window/runtime data unless KEEP_DATA is set
 
-Configuration is via environment variables (set by your Rocoto template):
-  SDATE (YYYYMMDDHHMM), EDATE (YYYYMMDDHHMM), INTERVAL_HOURS, CYCLES,
-  RUN, RUNTIME_DIR, EXPDIR, DATAROOT, COMPONENT, COPY_DATA, KEEP_DATA, CREATE_STUBS, etc.
+Environment (set by Rocoto):
+  PDY (YYYYMMDD), CYC (HH), INTERVAL_HOURS, CYCLES,
+  RUN, RUNTIME_DIR, EXPDIR, DATAROOT, COMPONENT,
+  CONFIG_YAML, COPY_DATA, KEEP_DATA, CREATE_STUBS, CDATE (for naming only).
 """
 
 import os
@@ -49,7 +50,8 @@ from stubs import (
 class MonitoringConfig:
     """
     Encapsulates configuration for a single observation monitoring job.
-    Handles environment variables, time window calculation, and paths.
+    Uses PDY + CYC as the single cycle endpoint; window timestamps are
+    derived from CYCLES and INTERVAL_HOURS.
     """
 
     def __init__(self, monitor_dict: dict, timestamp: str):
@@ -73,20 +75,31 @@ class MonitoringConfig:
         if not self.component:
             raise ValueError("Job missing 'component' key.")
 
-        # Timing + behavior
-        self.timestamp = timestamp
-        self.start_time = datetime.strptime(os.getenv("SDATE"), "%Y%m%d%H%M").replace(tzinfo=timezone.utc)
-        self.end_time = datetime.strptime(os.getenv("EDATE"), "%Y%m%d%H%M").replace(tzinfo=timezone.utc)
+        # ---- Timing: ONLY PDY + CYC (no SDATE/EDATE) ----
+        pdy = os.getenv("PDY")
+        cyc = os.getenv("CYC")
+        if not pdy or not cyc:
+            raise EnvironmentError("PDY and CYC must be set (PDY=YYYYMMDD, CYC=HH).")
+        if not (pdy.isdigit() and len(pdy) == 8 and cyc.isdigit() and len(cyc) == 2):
+            raise ValueError("PDY must be YYYYMMDD and CYC must be HH (zero-padded).")
+
         self.interval_hours = int(os.getenv("INTERVAL_HOURS"))
-        self.cycles = int(os.getenv("CYCLES"))  # number of intervals per window
-        # number of interval steps between start and end; windows are inclusive of end_time
-        self.ncycles = int((self.end_time - self.start_time) / timedelta(hours=self.interval_hours))
-        if self.ncycles < 0 or (self.start_time + timedelta(hours=self.ncycles * self.interval_hours)) != self.end_time:
-            raise ValueError("EDATE - SDATE must be a non-negative exact multiple of INTERVAL_HOURS.")
+        if self.interval_hours <= 0:
+            raise ValueError("INTERVAL_HOURS must be > 0")
+
+        self.cycles = int(os.getenv("CYCLES"))  # number of timestamps per window (endpoint included)
+        if self.cycles <= 0:
+            raise ValueError("CYCLES must be > 0")
+
+        # Current run endpoint; minutes=00; UTC
+        self.end_time = datetime.strptime(pdy + cyc, "%Y%m%d%H").replace(tzinfo=timezone.utc)
+        # Convenience start_time (used as default in Jinja context)
+        self.start_time = self.end_time - (self.cycles - 1) * timedelta(hours=self.interval_hours)
 
         # Paths
+        self.timestamp = timestamp  # unique run label
         self.runtime_root = Path(os.getenv("RUNTIME_DIR"))
-        # Job root (holds per-window subdirs)
+        # Job root (holds the single per-window subdir)
         self.runtime_dir = self.runtime_root / f"runtime_{self.ob_type}_{timestamp}_{uuid.uuid4().hex[:8]}"
         self.runtime_dir.mkdir(parents=True, exist_ok=False)
 
@@ -95,8 +108,8 @@ class MonitoringConfig:
         self.run = Path(os.getenv("RUN"))
 
         # Optional ENV used elsewhere in your system
-        self.pdy = Path(os.getenv("PDY") or "")
-        self.cyc = Path(os.getenv("CYC") or "")
+        self.pdy = Path(pdy)
+        self.cyc = Path(cyc)
 
         # Flags
         self.copy_data = cast_as_dtype(os.getenv("COPY_DATA"))
@@ -113,7 +126,7 @@ class MonitoringConfig:
     ):
         """
         Build the context dictionary passed to the Jinja template engine.
-        Allows overriding start/end/runtime_dir for per-window renders.
+        Allows overriding start/end/runtime_dir for the window.
         """
         d = {
             "runtime_dir": str(runtime_dir or self.runtime_dir),
@@ -238,7 +251,7 @@ def create_stub_for_missing_cycle(
 def write_coverage_report(expected_times, found_times, out_path, logger):
     """
     Write a CSV coverage report for expected vs found times.
-    Returns a human-readable coverage string, e.g., "4/5 (80%)".
+    Returns a human-readable coverage string, e.g., "3/4 (75%)".
     """
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -258,22 +271,9 @@ def write_coverage_report(expected_times, found_times, out_path, logger):
     return f"{cov_num} ({cov_pct})"
 
 
-def build_window_endpoints(cfg: MonitoringConfig) -> list[datetime]:
-    """
-    Compute the list of cycle end-times (one per figure) between start_time and end_time,
-    **inclusive** of end_time.
-
-    Returns: [start_time, start+interval, ..., end_time]
-             length = ncycles + 1
-    """
-    interval = timedelta(hours=cfg.interval_hours)
-
-    return [cfg.start_time + i * interval for i in range(cfg.ncycles + 1)]
-
-
 def build_expected_times_for_window(t_end: datetime, interval_hours: int, cycles: int) -> list[datetime]:
     """
-    Build the expected timeline for one window with exactly `cycles` timestamps,
+    Build the expected timeline for the single window with exactly `cycles` timestamps,
     ending at `t_end`.
 
     Example: cycles=4, interval=6h -> 4 timestamps:
@@ -367,7 +367,7 @@ def copy_nc_files_to_runtime(nc_files, cfg: MonitoringConfig, logger, dest_dir: 
 def generate_eva_config(cfg: MonitoringConfig, logger, runtime_dir: Path,
                         win_start: datetime, win_end: datetime) -> Path:
     """
-    Generate an EVA YAML configuration for a specific window into `runtime_dir`.
+    Generate an EVA YAML configuration for the window into `runtime_dir`.
     """
     context = cfg.get_jinja_context(start_time=win_start, end_time=win_end, runtime_dir=runtime_dir)
     output_path = runtime_dir / "eva_config.yaml"
@@ -426,15 +426,13 @@ def cleanup_path(path: Path, logger):
         logger.info(f"Deleted runtime dir: {path}")
 
 # -----------------------------------------------------------------------------
-# Job Execution
+# Job Execution (single window per run)
 # -----------------------------------------------------------------------------
 
 def run_monitoring_job(args):
     """
-    Run the monitoring job across rolling windows:
-      For each cycle endpoint between start_time and end_time **inclusive**,
-      build a window of `cycles` intervals ending at that endpoint, gather inputs,
-      optionally stub missing, run EVA, copy plots, and clean up.
+    For the current cycle endpoint (PDY+CYC), build a window of `CYCLES` timestamps,
+    discover inputs, optionally stub missing, run EVA, copy plots, and clean up.
     """
     monitor_dict, timestamp = args
     cfg = MonitoringConfig(monitor_dict, timestamp)
@@ -442,69 +440,57 @@ def run_monitoring_job(args):
     logger.info(f"Starting job for {cfg.ob_type}")
 
     try:
-        endpoints = build_window_endpoints(cfg)  # includes end_time
-        results = []
+        # Build the single window for this run
+        t_end = cfg.end_time
+        win_times = build_expected_times_for_window(
+            t_end=t_end,
+            interval_hours=cfg.interval_hours,
+            cycles=cfg.cycles,
+        )
+        win_start = win_times[0]
 
-        for t_end in endpoints:
-            win_times = build_expected_times_for_window(
-                t_end=t_end,
-                interval_hours=cfg.interval_hours,
-                cycles=cfg.cycles,
+        # Per-window runtime dir: <job-root>/<YYYYMMDDHHMM of endpoint>
+        window_dir = cfg.runtime_dir / f"{t_end.strftime('%Y%m%d%H%M')}"
+        window_dir.mkdir(parents=True, exist_ok=True)
+
+        # Discover files for this window
+        nc_files, expected_times, found_times = find_matching_nc_files_for_times(cfg, win_times, logger)
+        cov_str = write_coverage_report(expected_times, found_times, window_dir / "coverage.csv", logger)
+
+        # Choose a reference real file (if any) for schema cloning
+        ref_path = nc_files[0] if nc_files else None
+
+        # Optionally make stubs for missing cycles
+        if cfg.create_stubs and expected_times:
+            missing = [dt for dt in expected_times if dt not in set(found_times)]
+            if missing:
+                logger.info(f"[{cfg.ob_type}] Creating {len(missing)} stub files for missing cycles "
+                            f"(window end {t_end:%Y-%m-%d %H:%M})")
+                for dt in missing:
+                    create_stub_for_missing_cycle(
+                        cfg, dt, logger, reference_path=ref_path, output_dir=window_dir
+                    )
+
+        # Stage real files into the window dir
+        copy_nc_files_to_runtime(nc_files, cfg, logger, dest_dir=window_dir)
+
+        # If the window dir has no inputs at all, skip EVA for this window
+        if not any(window_dir.glob("*.nc")):
+            logger.warning(
+                f"[{cfg.ob_type}] No inputs (.nc) in window dir {window_dir}. "
+                f"Skipping EVA. Coverage: {cov_str}"
             )
-            win_start = win_times[0]
+            return {"ob_type": cfg.ob_type, "status": "skipped_no_input", "coverage": cov_str}
 
-            # Per-window runtime dir: <job-root>/YYYYMMDDHHMM
-            window_dir = cfg.runtime_dir / f"{t_end.strftime('%Y%m%d%H%M')}"
-            window_dir.mkdir(parents=True, exist_ok=True)
+        # Generate and run EVA for this window
+        eva_config_path = generate_eva_config(cfg, logger, runtime_dir=window_dir,
+                                              win_start=win_start, win_end=t_end)
+        run_eva(cfg, eva_config_path, logger)
 
-            # Discover files for this window
-            nc_files, expected_times, found_times = find_matching_nc_files_for_times(cfg, win_times, logger)
-            cov_str = write_coverage_report(expected_times, found_times, window_dir / "coverage.csv", logger)
+        if cfg.copy_data:
+            copy_plots_to_public(cfg, logger, source_dir=window_dir)
 
-            # Choose a reference real file (if any) for schema cloning
-            ref_path = nc_files[0] if nc_files else None
-
-            # Optionally make stubs for missing cycles
-            if cfg.create_stubs and expected_times:
-                missing = [dt for dt in expected_times if dt not in set(found_times)]
-                if missing:
-                    logger.info(f"[{cfg.ob_type}] Creating {len(missing)} stub files for missing cycles "
-                                f"(window end {t_end:%Y-%m-%d %H:%M})")
-                    for dt in missing:
-                        create_stub_for_missing_cycle(
-                            cfg, dt, logger, reference_path=ref_path, output_dir=window_dir
-                        )
-
-            # Stage real files into the window dir
-            copy_nc_files_to_runtime(nc_files, cfg, logger, dest_dir=window_dir)
-
-            # If the window dir has no inputs at all, skip EVA for this window
-            if not any(window_dir.glob("*.nc")):
-                logger.warning(
-                    f"[{cfg.ob_type}] No inputs (.nc) in window dir {window_dir}. "
-                    f"Skipping EVA. Coverage: {cov_str}"
-                )
-                results.append({"ob_type": cfg.ob_type, "t_end": t_end, "status": "skipped_no_input", "coverage": cov_str})
-                if not cfg.keep_data:
-                    cleanup_path(window_dir, logger)
-                continue
-
-            # Generate and run EVA for this window
-            eva_config_path = generate_eva_config(cfg, logger, runtime_dir=window_dir,
-                                                  win_start=win_start, win_end=t_end)
-            run_eva(cfg, eva_config_path, logger)
-
-            if cfg.copy_data:
-                copy_plots_to_public(cfg, logger, source_dir=window_dir)
-
-            results.append({"ob_type": cfg.ob_type, "t_end": t_end, "status": "ok", "coverage": cov_str})
-
-            # Clean up per-window dir unless KEEP_DATA
-            if not cfg.keep_data:
-                cleanup_path(window_dir, logger)
-
-        # Return a compact summary (main() aggregates logs)
-        return {"ob_type": cfg.ob_type, "status": "ok", "windows": len(endpoints), "interval_hours": cfg.interval_hours}
+        return {"ob_type": cfg.ob_type, "status": "ok", "coverage": cov_str}
 
     except Exception as e:
         logger.error(f"[{cfg.ob_type}] Job failed: {e}")
@@ -533,13 +519,19 @@ def main():
     """
     main_logger = Logger("Obs Monitor - main")
 
+    # CDATE used only to generate a unique, stable timestamp label
     cdate = os.getenv("CDATE")
     if not cdate:
-        raise EnvironmentError("CDATE is not set")
+        # Fallback: derive from PDY+CYC
+        pdy = os.getenv("PDY")
+        cyc = os.getenv("CYC")
+        if not (pdy and cyc):
+            raise EnvironmentError("CDATE or both PDY and CYC must be set.")
+        cdate = pdy + cyc
     try:
         timestamp = datetime.strptime(cdate, "%Y%m%d%H").strftime("%Y%m%d_%H%M%S")
     except ValueError:
-        raise ValueError("CDATE must be in format YYYYMMDDHH")
+        raise ValueError("CDATE must be in format YYYYMMDDHH (or set PDY+CYC so we can derive it).")
 
     config_yaml = os.getenv("CONFIG_YAML")
     if not config_yaml:
