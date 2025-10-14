@@ -1,0 +1,28 @@
+pslot: "obsmon_gdas_snow"
+component: "atmos"   # list or comma-separated string both ok
+start_date: "YYYYMMDDHHMM"
+end_date: "YYYYMMDDHHMM"
+interval_hours: 6
+cycles: 4
+
+paths:
+  obsmondir: "~/obs-monitor"
+  expdir: "~/obsmon_exp"
+  rundir: "~/obsmon_runtime"
+  comroot: "~/obsmon_save"
+  dataroot: "~/data_root"
+
+run: "gdas"
+hpc:
+  account: "da-cpu"
+  queue: "batch"
+  scheduler: "slurm"
+resources:
+  walltime: "00:15:00"
+  task_nodes: "1:ppn=1:tpp=1"
+  task_mem: "4G"
+
+flags:
+  copy_data: false
+  keep_data: True
+  create_stubs: True

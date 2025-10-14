@@ -1,16 +1,24 @@
 """
-Observation Monitoring Driver Script
+Observation Monitoring Driver Script — single rolling window per run
 
 This script runs EVA processing for multiple observation types using multiprocessing.
-Each job:
-    - Finds matching NetCDF observation files
-    - Copies them to a unique runtime directory
-    - Generates a YAML config using Jinja templates
-    - Runs EVA using that config
-    - Optionally copies output plots to a public directory
-    - Cleans up runtime data unless KEEP_DATA is set
+Each run:
+    - Reads the current cycle endpoint from PDY (YYYYMMDD) and CYC (HH)
+    - Builds one rolling window ending at that endpoint with exactly `CYCLES`
+      timestamps spaced by `INTERVAL_HOURS`
+    - For that window:
+        - Finds matching NetCDF observation files
+        - Copies them into a per-window runtime directory
+        - Optionally creates stub .nc files for missing cycles
+        - Generates a YAML config via Jinja
+        - Runs EVA using that config
+        - Optionally copies output plots to a public directory
+    - Cleans up window/runtime data unless KEEP_DATA is set
 
-Environment variables drive key configuration parameters.
+Environment (set by Rocoto):
+  PDY (YYYYMMDD), CYC (HH), INTERVAL_HOURS, CYCLES,
+  RUN, RUNTIME_DIR, EXPDIR, DATAROOT, COMPONENT,
+  CONFIG_YAML, COPY_DATA, KEEP_DATA, CREATE_STUBS, CDATE (for naming only).
 """
 
 import os
@@ -19,11 +27,8 @@ import shutil
 import logging
 import subprocess
 import yaml
-import glob
 import re
 import csv
-import numpy as np
-import xarray as xr
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from multiprocessing import Pool, cpu_count
@@ -31,22 +36,24 @@ from multiprocessing import Pool, cpu_count
 from wxflow import Logger, Jinja
 from wxflow.configuration import cast_as_dtype
 import wxflow
+
 from stubs import (
     clone_schema_stub,
     write_generic_stub,
     guess_domain_size,
 )
 
-
-# ------------------------
-# Configuration Class
-# ------------------------
+# -----------------------------------------------------------------------------
+# Configuration
+# -----------------------------------------------------------------------------
 
 class MonitoringConfig:
     """
     Encapsulates configuration for a single observation monitoring job.
-    Handles environment variables, time window calculation, and paths.
+    Uses PDY + CYC as the single cycle endpoint; window timestamps are
+    derived from CYCLES and INTERVAL_HOURS.
     """
+
     def __init__(self, monitor_dict: dict, timestamp: str):
         self.monitor_type = monitor_dict['monitor_type']
         if self.monitor_type == 'radiance':
@@ -56,56 +63,103 @@ class MonitoringConfig:
         elif self.monitor_type == 'conventional':
             self.variable = monitor_dict["variable"]
             self.ob_type = f"{self.variable}"
+        else:
+            raise ValueError(f"Unknown monitor_type: {self.monitor_type}")
+
+        # Template + naming
         self.template_path = os.path.expandvars(monitor_dict["template_path"])
-        self.timestamp = timestamp
-        self.component = Path(os.getenv("COMPONENT"))
         self.filename_template = monitor_dict.get("filename_template")
 
-        # Construct a unique runtime directory using UUID
+        # Component comes from the job definition (env is only used as a filter in main())
+        self.component = monitor_dict.get("component")
+        if not self.component:
+            raise ValueError("Job missing 'component' key.")
+
+        # ---- Timing: ONLY PDY + CYC (no SDATE/EDATE) ----
+        pdy = os.getenv("PDY")
+        cyc = os.getenv("CYC")
+        if not pdy or not cyc:
+            raise EnvironmentError("PDY and CYC must be set (PDY=YYYYMMDD, CYC=HH).")
+        if not (pdy.isdigit() and len(pdy) == 8 and cyc.isdigit() and len(cyc) == 2):
+            raise ValueError("PDY must be YYYYMMDD and CYC must be HH (zero-padded).")
+
+        self.interval_hours = int(os.getenv("INTERVAL_HOURS"))
+        if self.interval_hours <= 0:
+            raise ValueError("INTERVAL_HOURS must be > 0")
+
+        self.cycles = int(os.getenv("CYCLES"))  # number of timestamps per window (endpoint included)
+        if self.cycles <= 0:
+            raise ValueError("CYCLES must be > 0")
+
+        # Current run endpoint; minutes=00; UTC
+        self.end_time = datetime.strptime(pdy + cyc, "%Y%m%d%H").replace(tzinfo=timezone.utc)
+        # Convenience start_time (used as default in Jinja context)
+        self.start_time = self.end_time - (self.cycles - 1) * timedelta(hours=self.interval_hours)
+
+        # Paths
+        self.timestamp = timestamp  # unique run label
         self.runtime_root = Path(os.getenv("RUNTIME_DIR"))
+        # Job root (holds the single per-window subdir)
         self.runtime_dir = self.runtime_root / f"runtime_{self.ob_type}_{timestamp}_{uuid.uuid4().hex[:8]}"
         self.runtime_dir.mkdir(parents=True, exist_ok=False)
 
         self.experiment_dir = Path(os.getenv("EXPDIR"))
         self.dataroot = Path(os.getenv("DATAROOT"))
-
-        # Parse time-related and behavior flags
-        self.start_time = datetime.strptime(os.getenv("SDATE"), "%Y%m%d%H%M").replace(tzinfo=timezone.utc)
-        self.end_time = datetime.strptime(os.getenv("EDATE"), "%Y%m%d%H%M").replace(tzinfo=timezone.utc)
-        self.interval_hours = int(os.getenv("INTERVAL_HOURS"))
-        self.ncycles = int((self.end_time - self.start_time) / timedelta(hours=self.interval_hours))
         self.run = Path(os.getenv("RUN"))
-        self.pdy = Path(os.getenv("PDY"))
-        self.cyc = Path(os.getenv("CYC"))
+
+        # Optional ENV used elsewhere in your system
+        self.pdy = Path(pdy)
+        self.cyc = Path(cyc)
+
+        # Flags
         self.copy_data = cast_as_dtype(os.getenv("COPY_DATA"))
         self.keep_data = cast_as_dtype(os.getenv("KEEP_DATA"))
         self.create_stubs = cast_as_dtype(os.getenv("CREATE_STUBS"))
 
-    def get_jinja_context(self):
+    # ------------------------ context ------------------------
+
+    def get_jinja_context(
+        self,
+        start_time: datetime | None = None,
+        end_time: datetime | None = None,
+        runtime_dir: Path | None = None,
+    ):
         """
         Build the context dictionary passed to the Jinja template engine.
+        Allows overriding start/end/runtime_dir for the window.
         """
         d = {
-            "runtime_dir": str(self.runtime_dir),
-            "start_time": self.start_time,
-            "end_time": self.end_time,
+            "runtime_dir": str(runtime_dir or self.runtime_dir),
+            "start_time": start_time or self.start_time,
+            "end_time": end_time or self.end_time,
             "interval_hours": self.interval_hours,
-            "ob_type": self.ob_type
+            "ob_type": self.ob_type,
         }
         if self.monitor_type == 'radiance':
             d['satellite'] = self.satellite
             d['sensor'] = self.sensor
         elif self.monitor_type == 'conventional':
             d['variable'] = self.variable
-
+    
         return d
 
 
-# ------------------------
-# Helper Functions
-# ------------------------
+# -----------------------------------------------------------------------------
+# Helpers
+# -----------------------------------------------------------------------------
 
-def infer_schema_from_template(cfg) -> tuple[str, bool]:
+def extract_timestamp(file: Path) -> str | None:
+    """
+    Extract a timestamp string (10–14 digits) from the filename stem.
+
+    Returns:
+        str | None: The matched timestamp string if found, otherwise None.
+    """
+    match = re.search(r'\d{10,14}', file.stem)
+    return match.group(0) if match else None
+
+
+def infer_schema_from_template(cfg: MonitoringConfig) -> tuple[str, bool]:
     """
     Inspect the Jinja YAML template to infer (product_group, include_gridded_bins).
     Looks at lines under 'groups:' with 'name: <path>'.
@@ -123,13 +177,11 @@ def infer_schema_from_template(cfg) -> tuple[str, bool]:
                 parts = path.split("/")
                 if parts and parts[0] == "griddedBins":
                     include_gridded = True
-                # last component tends to be the product group (e.g., totalSnowDepth, aerosolOpticalDepth)
                 if len(parts) >= 1:
                     pg = parts[-1]
     except Exception:
         pass
 
-    # Sensible fallbacks if template scan didn't find anything
     if not pg:
         ob = cfg.ob_type.lower()
         if "snow" in ob or "snocvr" in ob:
@@ -142,29 +194,64 @@ def infer_schema_from_template(cfg) -> tuple[str, bool]:
     return pg, include_gridded
 
 
-def expected_stub_filename(cfg, dt, reference_path: str | Path | None) -> str:
+def expected_stub_filename(cfg: MonitoringConfig, dt: datetime, reference_path: str | Path | None) -> str:
     """
     Use per-job filename_template when provided; else clone a reference name; else fallback.
     """
     ts = dt.strftime("%Y%m%d%H")
-
     if getattr(cfg, "filename_template", None):
         return dt.strftime(cfg.filename_template)
-
     if reference_path:
         ref_name = Path(reference_path).name
         return re.sub(r"\d{10,14}", ts, ref_name, count=1)
 
-    # last-resort heuristic (should rarely run now)
     return f"{cfg.ob_type}_{ts}.nc"
+
+
+def create_stub_for_missing_cycle(
+    cfg: MonitoringConfig,
+    dt: datetime,
+    logger,
+    reference_path: str | Path | None = None,
+    output_dir: Path | None = None
+):
+    """
+    Create a stub .nc for a missing cycle into `output_dir` (defaults to cfg.runtime_dir).
+    Tries cloning schema from a real file; falls back to a generic byDomains stub.
+    """
+    out_dir = output_dir or cfg.runtime_dir
+    out_dir.mkdir(parents=True, exist_ok=True)
+    fname = expected_stub_filename(cfg, dt, reference_path)
+    out = out_dir / fname
+
+    if reference_path:
+        try:
+            clone_schema_stub(reference_path, out, dt)
+            logger.info(f"[{cfg.ob_type}] Stub cloned from real: {Path(reference_path).name} -> {out.name}")
+            return True
+        except Exception as e:
+            logger.warning(f"[{cfg.ob_type}] Clone failed; falling back to generic stub: {e}")
+
+    product_group, include_gridded = infer_schema_from_template(cfg)
+    try:
+        write_generic_stub(
+            out_path=out,
+            dt=dt,
+            ob_type=cfg.ob_type,
+            product_group=product_group,
+            include_gridded_bins=include_gridded,
+        )
+        logger.info(f"[{cfg.ob_type}] Generic stub written: {out.name} (pg={product_group}, gridded={include_gridded})")
+        return True
+    except Exception as e:
+        logger.error(f"[{cfg.ob_type}] Failed to write generic stub {out.name}: {e}")
+        return False
 
 
 def write_coverage_report(expected_times, found_times, out_path, logger):
     """
-    Write a lightweight CSV coverage report for expected and found times for
-    easy, digestable way to view report of file coverage. Can be used with cron
-    to report users of missing files based on threshold value and can provide
-    service level indicator stats.
+    Write a CSV coverage report for expected vs found times.
+    Returns a human-readable coverage string, e.g., "3/4 (75%)".
     """
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -184,86 +271,40 @@ def write_coverage_report(expected_times, found_times, out_path, logger):
     return f"{cov_num} ({cov_pct})"
 
 
-def create_stub_for_missing_cycle(cfg: MonitoringConfig, dt: datetime, logger, reference_path: str | Path | None = None):
+def build_expected_times_for_window(t_end: datetime, interval_hours: int, cycles: int) -> list[datetime]:
     """
-    Try to clone schema from any real file we found this run; if none, write a minimal byDomains stub.
+    Build the expected timeline for the single window with exactly `cycles` timestamps,
+    ending at `t_end`.
+
+    Example: cycles=4, interval=6h -> 4 timestamps:
+        [t_end-18h, t_end-12h, t_end-6h, t_end]
     """
-    # exact filename EVA expects for this cycle
-    fname = expected_stub_filename(cfg, dt, reference_path)
-    out = cfg.runtime_dir / fname
-
-    # Prefer clone-from-real if any real file exists
-    if reference_path:
-        try:
-            clone_schema_stub(reference_path, out, dt)
-            logger.info(f"[{cfg.ob_type}] Stub cloned from real: {Path(reference_path).name} -> {out.name}")
-            return True
-        except Exception as e:
-            logger.warning(f"[{cfg.ob_type}] Clone failed; falling back to generic stub: {e}")
-
-    # Infer product_group + whether gridded bins appear from the Jinja template
-    product_group, include_gridded = infer_schema_from_template(cfg)
-
-    try:
-        write_generic_stub(
-            out_path=out,
-            dt=dt,
-            ob_type=cfg.ob_type,
-            product_group=product_group,
-            include_gridded_bins=include_gridded,
-        )
-        logger.info(f"[{cfg.ob_type}] Generic stub written: {out.name} (pg={product_group}, gridded={include_gridded})")
-        return True
-    except Exception as e:
-        logger.error(f"[{cfg.ob_type}] Failed to write generic stub {out.name}: {e}")
-        return False
+    interval = timedelta(hours=interval_hours)
+    t_start = t_end - (cycles - 1) * interval
+    return [t_start + i * interval for i in range(cycles)]
 
 
-def extract_timestamp(file: Path) -> str | None:
+def find_matching_nc_files_for_times(cfg: MonitoringConfig, expected_times: list[datetime], logger):
     """
-    Extract a timestamp string from the filename stem.
-
-    This function searches for the first sequence of 10 to 14 digits in the
-    file's stem (filename without extension), which typically represents a
-    timestamp in the formats: YYYYMMDDHH, YYYYMMDDHHMM, or YYYYMMDDHHMMSS.
-
-    Parameters:
-        file (Path): The full path to the file.
+    Scan DATAROOT for NetCDF files matching the given expected_times for one window.
 
     Returns:
-        str | None: The matched timestamp string if found, otherwise None.
-    """
-    match = re.search(r'\d{10,14}', file.stem)
-    if match:
-        return match.group(0)
-    return None
-
-
-def find_matching_nc_files(cfg: MonitoringConfig, logger):
-    """
-    Scan DATAROOT for NetCDF files corresponding to expected cycles between start_time and end_time,
-    using interval_hours. Return matched files, full expected timeline, and found timestamps.
-
-    Returns:
-        (List[Path], List[datetime], List[datetime])
         (nc_files, expected_times, found_times)
+        List[Path], List[datetime], List[datetime]
     """
     nc_files = []
     found_times = []
     pattern = f"{cfg.ob_type}_*.nc"
 
-    logger.info(f"Finding {cfg.ob_type} files from {cfg.start_time} to {cfg.end_time} every {cfg.interval_hours} hours")
-
-    # Generate all expected datetime objects based on interval_hours
-    expected_times = [
-        cfg.start_time + timedelta(hours=i * cfg.interval_hours)
-        for i in range(cfg.ncycles + 1)
-    ]
+    logger.info(
+        f"[{cfg.ob_type}] Window search from {expected_times[0]} to {expected_times[-1]} "
+        f"({len(expected_times)} timestamps)"
+    )
 
     for dt in expected_times:
-        pdy_str = dt.strftime("%Y%m%d")     # gdas.PDY directory
-        cyc_str = dt.strftime("%H")         # CYC subdirectory
-        run_dir = cfg.dataroot / f"gdas.{pdy_str}" / f"{cyc_str}/products/{cfg.component}/anlmon"
+        pdy_str = dt.strftime("%Y%m%d")  # gdas.PDY directory
+        cyc_str = dt.strftime("%H")      # CYC subdirectory
+        run_dir = cfg.dataroot / f"{cfg.run}.{pdy_str}" / f"{cyc_str}/products/{cfg.component}/anlmon"
 
         if not run_dir.exists():
             logger.warning(f"Expected directory does not exist: {run_dir}")
@@ -277,9 +318,8 @@ def find_matching_nc_files(cfg: MonitoringConfig, logger):
                 found_times.append(dt)
             else:
                 logger.warning(f"Missing expected file {f}")
-            continue  # skip globbing; we know the exact name
+            continue
 
-        # Find files matching ob_type in this directory
         matched_files = []
         for file in run_dir.glob(pattern):
             timestamp_str = extract_timestamp(file)
@@ -287,7 +327,7 @@ def find_matching_nc_files(cfg: MonitoringConfig, logger):
                 logger.debug(f"No timestamp found in {file.name}, skipping")
                 continue
 
-            # Only match the first 10 digits (YYYYMMDDHH)
+            # Match on cycle-hour (YYYYMMDDHH); minutes/seconds in names still ok
             file_cycle = timestamp_str[:10]
             if file_cycle == dt.strftime("%Y%m%d%H"):
                 matched_files.append(file)
@@ -298,18 +338,20 @@ def find_matching_nc_files(cfg: MonitoringConfig, logger):
             nc_files.extend(matched_files)
             found_times.append(dt)
 
-    logger.info(f"Found {len(nc_files)} matching NetCDF files for {cfg.ob_type}")
+    logger.info(f"Found {len(nc_files)} files for window ending {expected_times[-1]}")
+
     return sorted(nc_files), expected_times, found_times
 
 
-def copy_nc_files_to_runtime(nc_files, cfg: MonitoringConfig, logger):
+def copy_nc_files_to_runtime(nc_files, cfg: MonitoringConfig, logger, dest_dir: Path):
     """
-    Copies matched NetCDF files to the runtime directory. Logs and continues on per-file errors.
+    Copy matched NetCDF files into `dest_dir`. Logs and continues on per-file errors.
     """
+    dest_dir.mkdir(parents=True, exist_ok=True)
     copied = 0
     for file in nc_files:
         try:
-            shutil.copy2(file, cfg.runtime_dir / file.name)
+            shutil.copy2(file, dest_dir / file.name)
             copied += 1
             logger.info(f"[{cfg.ob_type}] Copied: {file.name}")
         except FileNotFoundError:
@@ -319,18 +361,16 @@ def copy_nc_files_to_runtime(nc_files, cfg: MonitoringConfig, logger):
         except Exception as e:
             logger.error(f"[{cfg.ob_type}] Unexpected error copying {file}: {e}")
     if copied == 0:
-        logger.warning(f"[{cfg.ob_type}] No files were copied into runtime dir {cfg.runtime_dir}")
+        logger.warning(f"[{cfg.ob_type}] No files were copied into {dest_dir}")
 
 
-def generate_eva_config(cfg: MonitoringConfig, logger) -> Path:
+def generate_eva_config(cfg: MonitoringConfig, logger, runtime_dir: Path,
+                        win_start: datetime, win_end: datetime) -> Path:
     """
-    Generates a YAML configuration file for EVA using a Jinja template.
-
-    Returns:
-        Path to the generated EVA config file.
+    Generate an EVA YAML configuration for the window into `runtime_dir`.
     """
-    context = cfg.get_jinja_context()
-    output_path = cfg.runtime_dir / "eva_config.yaml"
+    context = cfg.get_jinja_context(start_time=win_start, end_time=win_end, runtime_dir=runtime_dir)
+    output_path = runtime_dir / "eva_config.yaml"
     jinja = Jinja(template_path_or_string=cfg.template_path, data=context)
     jinja.save(output_file=output_path)
     logger.info(f"Generated EVA config: {output_path}")
@@ -340,7 +380,7 @@ def generate_eva_config(cfg: MonitoringConfig, logger) -> Path:
 
 def run_eva(cfg: MonitoringConfig, eva_config_path: Path, logger):
     """
-    Executes the EVA application with the generated config file.
+    Execute the EVA application with the generated config file.
     Logs and returns on failure (non-fatal).
     """
     eva_exe = wxflow.executable.which("eva")
@@ -359,13 +399,14 @@ def run_eva(cfg: MonitoringConfig, eva_config_path: Path, logger):
         logger.error(f"[{cfg.ob_type}] Unexpected EVA error: {e}. Continuing.")
 
 
-def copy_plots_to_public(cfg: MonitoringConfig, logger, public_root: Path = Path("/public") / "plots"):
+def copy_plots_to_public(cfg: MonitoringConfig, logger, source_dir: Path,
+                         public_root: Path = Path("/public") / "plots"):
     """
-    Copies generated PNG plots from the runtime directory to a public location.
+    Copy generated PNG plots from `source_dir/plots` to a public location.
     """
-    plots_dir = cfg.runtime_dir / "plots"
+    plots_dir = source_dir / "plots"
     if not plots_dir.exists():
-        logger.warning(f"No plots/ directory in {cfg.runtime_dir}")
+        logger.warning(f"No plots/ directory in {source_dir}")
         return
 
     for plot_file in plots_dir.rglob("*.png"):
@@ -376,30 +417,22 @@ def copy_plots_to_public(cfg: MonitoringConfig, logger, public_root: Path = Path
         logger.info(f"Copied plot to public: {target_path}")
 
 
-def cleanup_runtime(cfg: MonitoringConfig, logger):
+def cleanup_path(path: Path, logger):
     """
-    Deletes the runtime directory unless KEEP_DATA is True.
+    Delete a directory tree if it exists.
     """
-    if cfg.runtime_dir.exists() and cfg.runtime_dir.is_dir() and "runtime_" in cfg.runtime_dir.name:
-        shutil.rmtree(cfg.runtime_dir)
-        logger.info(f"Deleted runtime dir: {cfg.runtime_dir}")
-    else:
-        logger.warning(f"Runtime dir not deleted (invalid path?): {cfg.runtime_dir}")
+    if path.exists() and path.is_dir():
+        shutil.rmtree(path)
+        logger.info(f"Deleted runtime dir: {path}")
 
-
-# ------------------------
-# Main Job Execution
-# ------------------------
+# -----------------------------------------------------------------------------
+# Job Execution (single window per run)
+# -----------------------------------------------------------------------------
 
 def run_monitoring_job(args):
     """
-    Run one complete monitoring job:
-    - Match and copy NetCDF files
-    - Optionally create stubs for missing cycles
-    - Generate EVA config
-    - Run EVA (if inputs exist)
-    - Copy plots
-    - Clean up
+    For the current cycle endpoint (PDY+CYC), build a window of `CYCLES` timestamps,
+    discover inputs, optionally stub missing, run EVA, copy plots, and clean up.
     """
     monitor_dict, timestamp = args
     cfg = MonitoringConfig(monitor_dict, timestamp)
@@ -407,34 +440,55 @@ def run_monitoring_job(args):
     logger.info(f"Starting job for {cfg.ob_type}")
 
     try:
-        # after discovery
-        nc_files, expected_times, found_times = find_matching_nc_files(cfg, logger)
-        cov_str = write_coverage_report(expected_times, found_times, cfg.runtime_dir / "coverage.csv", logger)
+        # Build the single window for this run
+        t_end = cfg.end_time
+        win_times = build_expected_times_for_window(
+            t_end=t_end,
+            interval_hours=cfg.interval_hours,
+            cycles=cfg.cycles,
+        )
+        win_start = win_times[0]
 
-        # NEW: pick a reference if any real file exists
+        # Per-window runtime dir: <job-root>/<YYYYMMDDHHMM of endpoint>
+        window_dir = cfg.runtime_dir / f"{t_end.strftime('%Y%m%d%H%M')}"
+        window_dir.mkdir(parents=True, exist_ok=True)
+
+        # Discover files for this window
+        nc_files, expected_times, found_times = find_matching_nc_files_for_times(cfg, win_times, logger)
+        cov_str = write_coverage_report(expected_times, found_times, window_dir / "coverage.csv", logger)
+
+        # Choose a reference real file (if any) for schema cloning
         ref_path = nc_files[0] if nc_files else None
 
-        # optional stubs
+        # Optionally make stubs for missing cycles
         if cfg.create_stubs and expected_times:
             missing = [dt for dt in expected_times if dt not in set(found_times)]
             if missing:
-                logger.info(f"[{cfg.ob_type}] Creating {len(missing)} stub files for missing cycles")
+                logger.info(f"[{cfg.ob_type}] Creating {len(missing)} stub files for missing cycles "
+                            f"(window end {t_end:%Y-%m-%d %H:%M})")
                 for dt in missing:
-                    create_stub_for_missing_cycle(cfg, dt, logger, reference_path=ref_path)
+                    create_stub_for_missing_cycle(
+                        cfg, dt, logger, reference_path=ref_path, output_dir=window_dir
+                    )
 
-        # Now stage real files
-        copy_nc_files_to_runtime(nc_files, cfg, logger)
+        # Stage real files into the window dir
+        copy_nc_files_to_runtime(nc_files, cfg, logger, dest_dir=window_dir)
 
-        # If the runtime has no .nc at all (neither real nor stubs), skip EVA
-        if not any(cfg.runtime_dir.glob("*.nc")):
-            logger.warning(f"[{cfg.ob_type}] No runtime inputs (.nc). Skipping EVA. Coverage: {cov_str}")
+        # If the window dir has no inputs at all, skip EVA for this window
+        if not any(window_dir.glob("*.nc")):
+            logger.warning(
+                f"[{cfg.ob_type}] No inputs (.nc) in window dir {window_dir}. "
+                f"Skipping EVA. Coverage: {cov_str}"
+            )
             return {"ob_type": cfg.ob_type, "status": "skipped_no_input", "coverage": cov_str}
 
-        eva_config_path = generate_eva_config(cfg, logger)
+        # Generate and run EVA for this window
+        eva_config_path = generate_eva_config(cfg, logger, runtime_dir=window_dir,
+                                              win_start=win_start, win_end=t_end)
         run_eva(cfg, eva_config_path, logger)
 
         if cfg.copy_data:
-            copy_plots_to_public(cfg, logger)
+            copy_plots_to_public(cfg, logger, source_dir=window_dir)
 
         return {"ob_type": cfg.ob_type, "status": "ok", "coverage": cov_str}
 
@@ -443,33 +497,41 @@ def run_monitoring_job(args):
         return {"ob_type": cfg.ob_type, "status": "failed", "error": str(e)}
 
     finally:
-        if not cfg.keep_data:
+        # Remove the job root dir if empty and not keeping data
+        if not cfg.keep_data and cfg.runtime_dir.exists():
             try:
-                cleanup_runtime(cfg, logger)
+                if not any(cfg.runtime_dir.iterdir()):
+                    shutil.rmtree(cfg.runtime_dir)
+                    logger.info(f"Deleted job root dir: {cfg.runtime_dir}")
             except Exception as e:
-                logger.warning(f"[{cfg.ob_type}] Cleanup issue: {e}")
+                logger.warning(f"[{cfg.ob_type}] Cleanup issue on job root: {e}")
         else:
-            logger.info(f"[{cfg.ob_type}] KEEP_DATA=True. Results kept in: {cfg.runtime_dir}")
+            logger.info(f"[{cfg.ob_type}] KEEP_DATA=True. Results kept under: {cfg.runtime_dir}")
 
-
-# ------------------------
-# Main Entry Point
-# ------------------------
+# -----------------------------------------------------------------------------
+# Main
+# -----------------------------------------------------------------------------
 
 def main():
     """
-    Parses environment variables and runs all monitoring jobs in parallel.
+    Parse job list from CONFIG_YAML and run monitoring jobs in parallel.
+    Respects optional COMPONENT filter from the environment.
     """
     main_logger = Logger("Obs Monitor - main")
 
+    # CDATE used only to generate a unique, stable timestamp label
     cdate = os.getenv("CDATE")
     if not cdate:
-        raise EnvironmentError("CDATE is not set")
-
+        # Fallback: derive from PDY+CYC
+        pdy = os.getenv("PDY")
+        cyc = os.getenv("CYC")
+        if not (pdy and cyc):
+            raise EnvironmentError("CDATE or both PDY and CYC must be set.")
+        cdate = pdy + cyc
     try:
         timestamp = datetime.strptime(cdate, "%Y%m%d%H").strftime("%Y%m%d_%H%M%S")
     except ValueError:
-        raise ValueError("CDATE must be in format YYYYMMDDHH")
+        raise ValueError("CDATE must be in format YYYYMMDDHH (or set PDY+CYC so we can derive it).")
 
     config_yaml = os.getenv("CONFIG_YAML")
     if not config_yaml:
@@ -482,6 +544,7 @@ def main():
     if not isinstance(job_list, list):
         job_list = [job_list]
 
+    # Filter by COMPONENT env if present (can be comma-separated)
     component_filter = os.getenv("COMPONENT")
     if component_filter:
         requested_components = {c.strip() for c in component_filter.split(",")}
@@ -501,7 +564,7 @@ def main():
     nprocs = min(cpu_count(), len(job_args))
     main_logger.info(f"Starting multiprocessing with {nprocs} processes")
 
-    with Pool(processes=min(cpu_count(), len(job_args))) as pool:
+    with Pool(processes=nprocs) as pool:
         results = pool.map(run_monitoring_job, job_args)
 
     ok = sum(1 for r in results if r.get("status") == "ok")
