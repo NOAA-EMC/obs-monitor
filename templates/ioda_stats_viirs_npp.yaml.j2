@@ -21,15 +21,14 @@ graphics:
   figure_list:
 
   # Ioda Stats Time Series
-
-  # Mean Aerosol Optical Depth
+  # Observation Counts
   - figure:
       layout: [1,1]
-      title: '{{ ob_type }} Time Series - Mean'
-      output name: {{ runtime_dir }}/plots/{{ sensor }}/{{ satellite }}/aerosolOpticalDepth/{{ ob_type }}_time_series_{{ start_time | to_YMDH }}_{{ end_time | to_YMDH }}.png
+      title: '{{ ob_type }} Time Series - Observation Counts'
+      output name: {{ runtime_dir }}/plots/{{ sensor }}/{{ satellite }}/aerosolOpticalDepth/{{ ob_type }}_time_series_counts_{{ start_time | to_YMDH }}_{{ end_time | to_YMDH }}.png
     plots:
-      - add_xlabel: 'Datetime'
-        add_ylabel: 'aerosolOpticalDepth (Mean)'
+      - add_xlabel: 'Analysis Time'
+        add_ylabel: 'Observation Count'
         add_grid:
         add_legend:
           loc: 'upper left'
@@ -39,8 +38,62 @@ graphics:
           x:
             variable: ObsMonitor::MetaData::validTime
           y:
-            variable: ObsMonitor::oman_aerosolOpticalDepth::mean
-            slices: '[:,0]'
+            variable: ObsMonitor::byDomains_ombg_aerosolOpticalDepth::counts
+            slices: '[:,-1]'
           markersize: 5
           color: 'black'
-          label: 'aerosolOpticalDepth'
+          label: 'Global'
+  # Mean and Std Dev Aerosol Optical Depth
+  - figure:
+      layout: [1,1]
+      title: '{{ ob_type }} Time Series - Innovation Statistics'
+      output name: {{ runtime_dir }}/plots/{{ sensor }}/{{ satellite }}/aerosolOpticalDepth/{{ ob_type }}_time_series_innov_{{ start_time | to_YMDH }}_{{ end_time | to_YMDH }}.png
+    plots:
+      - add_xlabel: 'Analysis Time'
+        add_ylabel: 'Aerosol Optical Depth'
+        add_grid:
+        add_legend:
+          loc: 'upper left'
+        layers:
+        - type: LinePlot
+          drop_nan: false
+          x:
+            variable: ObsMonitor::MetaData::validTime
+          y:
+            variable: ObsMonitor::byDomains_ombg_aerosolOpticalDepth::mean
+            slices: '[:,-1]'
+          markersize: 5
+          color: 'black'
+          label: 'Global O-F Mean'
+        - type: LinePlot
+          drop_nan: false
+          x:
+            variable: ObsMonitor::MetaData::validTime
+          y:
+            variable: ObsMonitor::byDomains_ombg_aerosolOpticalDepth::RMS
+            slices: '[:,-1]'
+          markersize: 5
+          color: 'black'
+          label: 'Global O-F RMS'
+          linestyle: 'dashed'
+        - type: LinePlot
+          drop_nan: false
+          x:
+            variable: ObsMonitor::MetaData::validTime
+          y:
+            variable: ObsMonitor::byDomains_oman_aerosolOpticalDepth::mean
+            slices: '[:,-1]'
+          markersize: 5
+          color: 'red'
+          label: 'Global O-A Mean'
+        - type: LinePlot
+          drop_nan: false
+          x:
+            variable: ObsMonitor::MetaData::validTime
+          y:
+            variable: ObsMonitor::byDomains_oman_aerosolOpticalDepth::RMS
+            slices: '[:,-1]'
+          markersize: 5
+          color: 'red'
+          label: 'Global O-A RMS'
+          linestyle: 'dashed'

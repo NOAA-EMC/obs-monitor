@@ -2,7 +2,7 @@ datasets:
   - name: ObsMonitor
     type: IodaStats
     filenames_template:
-        template: {{ runtime_dir }}/viirs_n20_%Y%m%d%H_output_aod.nc
+        template: {{ runtime_dir }}/viirs_n21_%Y%m%d%H_output_aod.nc
         start: "{{ start_time | to_isotime }}"
         end: "{{ end_time | to_isotime }}"
         interval_hours: {{ interval_hours }}
