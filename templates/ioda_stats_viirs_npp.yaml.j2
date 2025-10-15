@@ -7,7 +7,22 @@ datasets:
         end: "{{ end_time | to_isotime }}"
         interval_hours: {{ interval_hours }}
     groups:
-    - name: oman/aerosolOpticalDepth
+    - name: byDomains/oman/aerosolOpticalDepth
+      variables:
+      - mean
+      - count
+      - RMS
+    - name: byDomains/ombg/aerosolOpticalDepth
+      variables:
+      - mean
+      - count
+      - RMS
+    - name: griddedBins/oman/aerosolOpticalDepth
+      variables:
+      - mean
+      - count
+      - RMS
+    - name: griddedBins/ombg/aerosolOpticalDepth
       variables:
       - mean
       - count
