@@ -105,6 +105,7 @@ class MonitoringConfig:
 
         self.experiment_dir = Path(os.getenv("EXPDIR"))
         self.dataroot = Path(os.getenv("DATAROOT"))
+        self.comroot = Path(os.getenv("COMROOT"))
         self.run = Path(os.getenv("RUN"))
 
         # Optional ENV used elsewhere in your system
@@ -399,6 +400,58 @@ def run_eva(cfg: MonitoringConfig, eva_config_path: Path, logger):
         logger.error(f"[{cfg.ob_type}] Unexpected EVA error: {e}. Continuing.")
 
 
+def com_plots_dir_for_window(cfg: MonitoringConfig, t_end: datetime) -> Path:
+    """
+    Build the COM destination directory for plots for this window, e.g.:
+      <COMROOT>/<RUN>.<PDY>/<CYC>/products/<component>/anlmon/plots
+    """
+    pdy = t_end.strftime("%Y%m%d")
+    cyc = t_end.strftime("%H")
+    return (
+        cfg.comroot
+        / f"{cfg.run}.{pdy}"
+        / f"{cyc}"
+        / "products"
+        / cfg.component
+        / "anlmon"
+        / "plots"
+    )
+
+
+def copy_plots_to_com(cfg: MonitoringConfig, logger, source_dir: Path, t_end: datetime):
+    """
+    Copy the entire plots/ directory produced for this window into COM.
+    This runs **every time**, regardless of COPY_DATA.
+    """
+    plots_dir = source_dir / "plots"
+    if not plots_dir.exists():
+        logger.warning(f"No plots/ directory found in {source_dir}; COM copy skipped.")
+        return
+
+    if not cfg.comroot:
+        logger.warning("COMROOT not set; cannot copy plots to COM.")
+        return
+
+    dest_dir = com_plots_dir_for_window(cfg, t_end)
+    dest_dir.mkdir(parents=True, exist_ok=True)
+
+    # Copy the tree (preserve substructure). Use copy2 per file to overwrite safely.
+    copied = 0
+    for src in plots_dir.rglob("*"):
+        if src.is_dir():
+            continue
+        rel = src.relative_to(plots_dir)
+        out = dest_dir / rel
+        out.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            shutil.copy2(src, out)
+            copied += 1
+        except Exception as e:
+            logger.error(f"Failed copying {src} -> {out}: {e}")
+
+    logger.info(f"Copied {copied} plot file(s) to COM: {dest_dir}")
+
+
 def copy_plots_to_public(cfg: MonitoringConfig, logger, source_dir: Path,
                          public_root: Path = Path("/public") / "plots"):
     """
@@ -486,6 +539,9 @@ def run_monitoring_job(args):
         eva_config_path = generate_eva_config(cfg, logger, runtime_dir=window_dir,
                                               win_start=win_start, win_end=t_end)
         run_eva(cfg, eva_config_path, logger)
+
+        # Always copy plots to COM
+        copy_plots_to_com(cfg, logger, source_dir=window_dir, t_end=t_end)
 
         if cfg.copy_data:
             copy_plots_to_public(cfg, logger, source_dir=window_dir)
