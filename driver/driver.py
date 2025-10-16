@@ -403,7 +403,7 @@ def run_eva(cfg: MonitoringConfig, eva_config_path: Path, logger):
 def com_plots_dir_for_window(cfg: MonitoringConfig, t_end: datetime) -> Path:
     """
     Build the COM destination directory for plots for this window, e.g.:
-      <COMROOT>/<RUN>.<PDY>/<CYC>/products/<component>/anlmon/plots
+      <COMROOT>/<RUN>.<PDY>/<CYC>/<component>/
     """
     pdy = t_end.strftime("%Y%m%d")
     cyc = t_end.strftime("%H")
@@ -411,10 +411,7 @@ def com_plots_dir_for_window(cfg: MonitoringConfig, t_end: datetime) -> Path:
         cfg.comroot
         / f"{cfg.run}.{pdy}"
         / f"{cyc}"
-        / "products"
         / cfg.component
-        / "anlmon"
-        / "plots"
     )
 
 
