@@ -379,25 +379,35 @@ def generate_eva_config(cfg: MonitoringConfig, logger, runtime_dir: Path,
     return output_path
 
 
-def run_eva(cfg: MonitoringConfig, eva_config_path: Path, logger):
+def run_eva(cfg: MonitoringConfig, eva_config_path: Path, logger) -> tuple[bool, str | None]:
     """
-    Execute the EVA application with the generated config file.
-    Logs and returns on failure (non-fatal).
+    Execute EVA with the generated config file.
+
+    Returns:
+        (ok, err): ok=True on success; err contains an error string on failure.
     """
     eva_exe = wxflow.executable.which("eva")
     if not eva_exe:
-        logger.error(f"[{cfg.ob_type}] EVA executable not found in PATH. Skipping EVA.")
-        return
+        msg = "EVA executable not found in PATH."
+        logger.error(f"[{cfg.ob_type}] {msg} Skipping EVA.")
+        return False, msg
 
     try:
-        subprocess.run([str(eva_exe), str(eva_config_path)], check=True)
+        cp = subprocess.run([str(eva_exe), str(eva_config_path)], check=True)
         logger.info(f"[{cfg.ob_type}] EVA completed successfully.")
+        return True, None
     except subprocess.CalledProcessError as e:
-        logger.error(f"[{cfg.ob_type}] EVA failed with code {e.returncode}. Continuing.")
+        msg = f"EVA failed with code {e.returncode}"
+        logger.error(f"[{cfg.ob_type}] {msg}. Continuing.")
+        return False, msg
     except FileNotFoundError:
-        logger.error(f"[{cfg.ob_type}] EVA executable not found at runtime. Continuing.")
+        msg = "EVA executable not found at runtime"
+        logger.error(f"[{cfg.ob_type}] {msg}. Continuing.")
+        return False, msg
     except Exception as e:
-        logger.error(f"[{cfg.ob_type}] Unexpected EVA error: {e}. Continuing.")
+        msg = f"Unexpected EVA error: {e}"
+        logger.error(f"[{cfg.ob_type}] {msg}. Continuing.")
+        return False, msg
 
 
 def com_plots_dir_for_window(cfg: MonitoringConfig, t_end: datetime) -> Path:
@@ -535,19 +545,19 @@ def run_monitoring_job(args):
         # Generate and run EVA for this window
         eva_config_path = generate_eva_config(cfg, logger, runtime_dir=window_dir,
                                               win_start=win_start, win_end=t_end)
-        run_eva(cfg, eva_config_path, logger)
+        ok_eva, err_eva = run_eva(cfg, eva_config_path, logger)
 
-        # Always copy plots to COM
+        # Always copy to COM (even if EVA failed, in case plots exist from partial work)
         copy_plots_to_com(cfg, logger, source_dir=window_dir, t_end=t_end)
 
+        # Optional public copy
         if cfg.copy_data:
             copy_plots_to_public(cfg, logger, source_dir=window_dir)
 
-        return {"ob_type": cfg.ob_type, "status": "ok", "coverage": cov_str}
-
-    except Exception as e:
-        logger.error(f"[{cfg.ob_type}] Job failed: {e}")
-        return {"ob_type": cfg.ob_type, "status": "failed", "error": str(e)}
+        if ok_eva:
+            return {"ob_type": cfg.ob_type, "status": "ok", "coverage": cov_str}
+        else:
+            return {"ob_type": cfg.ob_type, "status": "failed", "error": err_eva, "coverage": cov_str}
 
     finally:
         # Remove the job root dir if empty and not keeping data
