@@ -1,0 +1,14 @@
+dataset_template:
+  name: ObsMonitor
+  type: IodaStats
+
+  filenames_template:
+    start: "{{ start_time | to_isotime }}"
+    end: "{{ end_time | to_isotime }}"
+    interval_hours: "{{ interval_hours }}"
+
+graphics_template:
+  plotting_backend: Emcpy
+
+  # Ob_types append their figures/presets; keep this empty here.
+  figure_list: []

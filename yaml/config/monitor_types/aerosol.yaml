@@ -1,0 +1,37 @@
+ob_types:
+
+  viirs_npp:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/viirs_npp_%Y%m%d%H_output_aod.nc"
+        groups:
+          - name: "oman/aerosolOpticalDepth"
+            variables: [mean, count, RMS]
+        variables: [validTime]
+
+    figures:
+      - use: time_series_single_line
+        params:
+          title: "{{ ob_type }} Time Series - Mean"
+          variable: "aerosolOpticalDepth"
+          output: "[[runtime_dir]]/plots/{ob_type}/aerosolOpticalDepth/{ob_type}_time_series_[[start_YMDH]]_[[end_YMDH]].png"
+          y_var: "ObsMonitor::oman_aerosolOpticalDepth::mean"
+          y_slices: "[:,0]"
+
+  viirs_n20:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/viirs_n20_%Y%m%d%H_output_aod.nc"
+        groups:
+          - name: "oman/aerosolOpticalDepth"
+            variables: [mean, count, RMS]
+        variables: [validTime]
+
+    figures:
+      - use: time_series_single_line
+        params:
+          title: "{{ ob_type }} Time Series - Mean"
+          variable: "aerosolOpticalDepth"
+          output: "[[runtime_dir]]/plots/{ob_type}/aerosolOpticalDepth/{ob_type}_time_series_[[start_YMDH]]_[[end_YMDH]].png"
+          y_var: "ObsMonitor::oman_aerosolOpticalDepth::mean"
+          y_slices: "[:,0]"

@@ -1,0 +1,24 @@
+ob_types:
+
+  snocvr:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/snocvr_%Y%m%d%H_output_snow.nc"
+        groups:
+          - name: "byDomains/ombg/totalSnowDepth"
+            variables: [mean, count, RMS]
+          - name: "byDomains/oman/totalSnowDepth"
+            variables: [mean, count, RMS]
+          - name: "griddedBins/ombg/totalSnowDepth"
+            variables: [mean, count, RMS]
+        variables: [validTime]
+
+    figures:
+      - use: snow_of_oa_time_series_mean
+        params:
+          title: "{{ ob_type }} totalSnowDepth Global Time Series - Mean"
+          output: "[[runtime_dir]]/plots/{{ ob_type }}/totalSnowDepth/{{ ob_type }}_mean_totalSnowDepth_global_time_series_[[start_YMDH]]_[[end_YMDH]].png"
+          y_of: "ObsMonitor::byDomains_ombg_totalSnowDepth::mean"
+          y_oa: "ObsMonitor::byDomains_oman_totalSnowDepth::mean"
+          of_slices: "[:,-1]"
+          oa_slices: "[:,-1]"
