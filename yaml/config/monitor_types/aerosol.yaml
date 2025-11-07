@@ -10,13 +10,17 @@ ob_types:
         variables: [validTime]
 
     figures:
-      - use: time_series_single_line
+      - use: time_series_multi_line
         params:
           title: "{{ ob_type }} Time Series - Mean"
           variable: "aerosolOpticalDepth"
-          output: "[[runtime_dir]]/plots/{ob_type}/aerosolOpticalDepth/{ob_type}_time_series_[[start_YMDH]]_[[end_YMDH]].png"
-          y_var: "ObsMonitor::oman_aerosolOpticalDepth::mean"
-          y_slices: "[:,0]"
+          y_label: "aerosolOpticalDepth (Mean)"
+          output: "[[runtime_dir]]/plots/{{ ob_type }}/aerosolOpticalDepth/{{ ob_type }}_time_series_[[start_YMDH]]_[[end_YMDH]].png"
+          series:
+            - series_label: "aerosolOpticalDepth"
+              series_color: "black"
+              series_y: "ObsMonitor::oman_aerosolOpticalDepth::mean"
+              series_slices: "[:,0]"
 
   viirs_n20:
     datasets:
@@ -28,10 +32,14 @@ ob_types:
         variables: [validTime]
 
     figures:
-      - use: time_series_single_line
+      - use: time_series_multi_line
         params:
           title: "{{ ob_type }} Time Series - Mean"
           variable: "aerosolOpticalDepth"
-          output: "[[runtime_dir]]/plots/{ob_type}/aerosolOpticalDepth/{ob_type}_time_series_[[start_YMDH]]_[[end_YMDH]].png"
-          y_var: "ObsMonitor::oman_aerosolOpticalDepth::mean"
-          y_slices: "[:,0]"
+          y_label: "aerosolOpticalDepth (Mean)"
+          output: "[[runtime_dir]]/plots/{{ ob_type }}/aerosolOpticalDepth/{{ ob_type }}_time_series_[[start_YMDH]]_[[end_YMDH]].png"
+          series:
+            - series_label: "aerosolOpticalDepth"
+              series_color: "black"
+              series_y: "ObsMonitor::oman_aerosolOpticalDepth::mean"
+              series_slices: "[:,0]"

@@ -1,11 +1,15 @@
 name: time_series
 version: 1
+
 params:
   legend_loc: upper left
+  y_label: "{variable} (Mean)"
+
 figure:
   layout: [1,1]
   title: "{title}"
   output name: "{output}"
+
 plots:
   - add_xlabel: "Datetime"
     add_ylabel: "{y_label}"

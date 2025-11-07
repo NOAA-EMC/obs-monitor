@@ -14,11 +14,18 @@ ob_types:
         variables: [validTime]
 
     figures:
-      - use: snow_of_oa_time_series_mean
+      - use: time_series_multi_line
         params:
           title: "{{ ob_type }} totalSnowDepth Global Time Series - Mean"
-          output: "[[runtime_dir]]/plots/{{ ob_type }}/totalSnowDepth/{{ ob_type }}_mean_totalSnowDepth_global_time_series_[[start_YMDH]]_[[end_YMDH]].png"
-          y_of: "ObsMonitor::byDomains_ombg_totalSnowDepth::mean"
-          y_oa: "ObsMonitor::byDomains_oman_totalSnowDepth::mean"
-          of_slices: "[:,-1]"
-          oa_slices: "[:,-1]"
+          variable: "totalSnowDepth"
+          y_label: "Departure"
+          output: "[[runtime_dir]]/plots/[[variable]]/totalSnowDepth/[[variable]]_mean_totalSnowDepth_global_time_series_[[start_YMDH]]_[[end_YMDH]].png"
+          series:
+            - series_label: "O-F"
+              series_color: "blue"
+              series_y: "ObsMonitor::byDomains_ombg_totalSnowDepth::mean"
+              series_slices: "[:,-1]"
+            - series_label: "O-A"
+              series_color: "red"
+              series_y: "ObsMonitor::byDomains_oman_totalSnowDepth::mean"
+              series_slices: "[:,-1]"

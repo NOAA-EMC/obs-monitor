@@ -41,13 +41,32 @@ def _format_ok(s: str) -> bool:
     return _JINJA_BRACE_RE.search(s) is None
 
 def deep_format_jinja_safe(obj: Any, params: Dict[str, Any]) -> Any:
+    """Recursively apply str.format(**params) to strings that do NOT contain Jinja {{ }}."""
     if isinstance(obj, str):
-        return obj.format(**params) if _format_ok(obj) else obj
-    if isinstance(obj, list):
+        if _format_ok(obj):
+            try:
+                return obj.format(**params)
+            except KeyError:
+                # Leave unresolved placeholders for a later pass (e.g., layer_template expansion)
+                return obj
+        return obj
+    elif isinstance(obj, list):
         return [deep_format_jinja_safe(x, params) for x in obj]
-    if isinstance(obj, dict):
+    elif isinstance(obj, dict):
         return {k: deep_format_jinja_safe(v, params) for k, v in obj.items()}
-    return obj
+    else:
+        return obj
+
+def resolve_param_placeholders(params: Dict[str, Any]) -> Dict[str, Any]:
+    """Format string params once using the same dict, skipping Jinja strings."""
+    def fmt_one(v: Any) -> Any:
+        if isinstance(v, str) and _format_ok(v):
+            try:
+                return v.format(**params)
+            except KeyError:
+                return v
+        return v
+    return {k: fmt_one(v) for k, v in params.items()}
 
 # --------- Token replacement ----------
 TOKEN_MAP = {
@@ -87,7 +106,8 @@ yaml.add_representer(FlowList, _represent_flow_list, Dumper=yaml.SafeDumper)
 yaml.add_representer(type(None), _represent_none_as_empty, Dumper=yaml.SafeDumper)
 
 NUMERIC_KEYS = {"markersize", "linewidth", "alpha"}
-def coerce_numeric_scalars(obj):
+
+def convert_numeric_scalars(obj):
     """Turn numeric-looking strings on known keys into numbers."""
     if isinstance(obj, dict):
         for k, v in obj.items():
@@ -97,10 +117,10 @@ def coerce_numeric_scalars(obj):
                 except ValueError:
                     pass
             else:
-                coerce_numeric_scalars(v)
+                convert_numeric_scalars(v)
     elif isinstance(obj, list):
         for v in obj:
-            coerce_numeric_scalars(v)
+            convert_numeric_scalars(v)
     return obj
 
 # --------- Figure preset system --------
@@ -129,44 +149,75 @@ def resolve_extends(name: str, presets: Dict[str, dict], seen=None) -> dict:
         node = deep_merge(base, node)
     return node
 
-def resolve_param_placeholders(params: Dict[str, Any]) -> Dict[str, Any]:
-    """Format string params with the same dict, once, skipping any with Jinja braces."""
-    def fmt_one(v: Any) -> Any:
-        if isinstance(v, str) and _format_ok(v):  # reuses the Jinja-safe guard
-            try:
-                return v.format(**params)
-            except KeyError:
-                return v
-        return v
-    return {k: fmt_one(v) for k, v in params.items()}
-
 def render_figures(fig_specs: List[dict], ob_ctx: Dict[str, Any], presets: Dict[str, dict]) -> List[dict]:
     out = []
     for spec in fig_specs:
         preset_name = spec.get("use")
         if not preset_name:
             raise ValueError("Figure spec missing 'use'")
+
+        if preset_name not in presets:
+            raise ValueError(f"Preset '{preset_name}' not found. Available: {sorted(presets)}")
+
         resolved = resolve_extends(preset_name, presets)
+        if not isinstance(resolved, dict):
+            raise ValueError(f"Preset '{preset_name}' resolved to {type(resolved).__name__}, expected mapping.")
+
         defaults = resolved.get("params", {}) or {}
         caller   = spec.get("params", {}) or {}
         params   = {**defaults, **ob_ctx, **caller}
-        params = resolve_param_placeholders(params)
+        params   = resolve_param_placeholders(params)  # resolve nested like "{variable} (Mean)"
 
-        # Strip metadata; keep shape
-        block = {k: v for k, v in resolved.items() if k not in ("name", "version", "params")}
+        # Pull layer_template out before formatting block
+        layer_tmpl_raw = resolved.get("layer_template")
+
+        # Build the figure block (drop metadata & layer_template)
+        block = {k: v for k, v in resolved.items() if k not in ("name", "version", "params", "layer_template")}
         block = deep_format_jinja_safe(block, params)
         block = replace_tokens(block)
 
-        # Inline [1,1] for layout if present
+        # Robust guards
+        if not isinstance(block, dict):
+            # Helpful debug snapshot
+            raise ValueError(
+                f"Preset '{preset_name}' did not resolve to a mapping; got {type(block).__name__}. "
+                f"Check that the preset defines 'figure' and 'plots' (and they are not null)."
+            )
+
+        if "figure" not in block or block["figure"] is None:
+            raise ValueError(f"Preset '{preset_name}' must define 'figure' (missing or null).")
+
+        if "plots" not in block or block["plots"] is None:
+            raise ValueError(f"Preset '{preset_name}' must define 'plots' (missing or null).")
+
+        plots = block.get("plots")
+        if not isinstance(plots, list):
+            raise ValueError(f"Preset '{preset_name}' 'plots' must be a list (got {type(plots).__name__}).")
+
+        # Expand series using the template, if provided
+        if layer_tmpl_raw is not None:
+            layer_tmpl = deep_format_jinja_safe(copy.deepcopy(layer_tmpl_raw), params)
+            layer_tmpl = replace_tokens(layer_tmpl)
+
+            series = params.get("series") or []
+            built_layers = []
+            for item in series:
+                line_params = {**params, **item}
+                one = deep_format_jinja_safe(copy.deepcopy(layer_tmpl), line_params)
+                one = replace_tokens(one)
+                convert_numeric_scalars(one)
+                built_layers.append(one)
+
+            if plots and isinstance(plots[0], dict):
+                plots[0].setdefault("layers", [])
+                plots[0]["layers"].extend(built_layers)
+
+        # Pretty touches
         fig = block.get("figure")
         if isinstance(fig, dict) and isinstance(fig.get("layout"), list):
             fig["layout"] = FlowList(fig["layout"])
+        convert_numeric_scalars(block)
 
-        # Coerce numeric strings on known keys
-        coerce_numeric_scalars(block)
-
-        if "figure" not in block or "plots" not in block:
-            raise ValueError(f"Preset '{preset_name}' must yield a {{figure, plots}} block.")
         out.append(block)
     return out
 
@@ -175,6 +226,7 @@ def compute_output_dir(ob_type: str, ob_spec: dict) -> str:
     """
     Default: one folder per ob_type -> [[runtime_dir]]/plots/{ob_type}
     Optional override: output_subpath: "custom/sub/dir"
+    (Kept for compatibility; many presets now take full {output}.)
     """
     sub = ob_spec.get("output_subpath") or "{ob_type}"
     return f"[[runtime_dir]]/plots/{sub}"
@@ -221,7 +273,7 @@ def build_template_for_ob_type(ob_type: str) -> dict:
         ob_ctx = {
             "ob_type": ob_type,
             "variable": ob_spec.get("variable", ""),
-            "output_dir": compute_output_dir(ob_type, ob_spec),
+            "output_dir": compute_output_dir(ob_type, ob_spec),  # if a preset wants it
             # include if used by your output paths
             "sensor": ob_spec.get("sensor", ""),
             "satellite": ob_spec.get("satellite", ""),
