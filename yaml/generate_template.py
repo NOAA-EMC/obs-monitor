@@ -123,6 +123,40 @@ def convert_numeric_scalars(obj):
             convert_numeric_scalars(v)
     return obj
 
+OPTIONAL_STYLE_KEYS = {"vmin", "vmax", "norm"}  # extend if needed
+
+def prune_optional_style(obj: Any) -> Any:
+    """
+    Remove optional style keys (vmin, vmax, norm, etc.) when they are effectively unset.
+    Criteria:
+      - value is None
+      - value is empty string
+      - value is a placeholder string like "{vmin}" that never got resolved
+    Preserve FlowList so flow-style sequences (e.g., [1,1]) survive.
+    """
+    if isinstance(obj, dict):
+        new = {}
+        for k, v in obj.items():
+            v_clean = prune_optional_style(v)
+            if k in OPTIONAL_STYLE_KEYS:
+                if (
+                    v_clean is None
+                    or (isinstance(v_clean, str) and not v_clean.strip())
+                    or (isinstance(v_clean, str) and v_clean.strip().startswith("{") and v_clean.strip().endswith("}"))
+                ):
+                    # skip this key entirely
+                    continue
+            new[k] = v_clean
+        return new
+
+    elif isinstance(obj, list):
+        items = [prune_optional_style(v) for v in obj]
+        # Preserve FlowList so SafeDumper uses flow_style
+        return FlowList(items) if isinstance(obj, FlowList) else items
+
+    else:
+        return obj
+
 # --------- Figure preset system --------
 def load_presets() -> Dict[str, dict]:
     presets: Dict[str, dict] = {}
@@ -214,9 +248,14 @@ def render_figures(fig_specs: List[dict], ob_ctx: Dict[str, Any], presets: Dict[
 
         # Pretty touches
         fig = block.get("figure")
-        if isinstance(fig, dict) and isinstance(fig.get("layout"), list):
-            fig["layout"] = FlowList(fig["layout"])
+        if isinstance(fig, dict):
+            if isinstance(fig.get("layout"), list):
+                fig["layout"] = FlowList(fig["layout"])
+            if isinstance(fig.get("figure size"), list):
+                fig["figure size"] = FlowList(fig["figure size"])
+
         convert_numeric_scalars(block)
+        block = prune_optional_style(block)
 
         out.append(block)
     return out
@@ -256,34 +295,56 @@ def build_template_for_ob_type(ob_type: str) -> dict:
 
     # Global defaults
     defaults = load_yaml(CFG / "defaults" / "common.yaml")
-    dataset_defaults  = defaults.get("dataset_template", {})
-    graphics_defaults = defaults.get("graphics_template", {})
+    dataset_defaults   = defaults.get("dataset_template", {})
+    graphics_defaults  = defaults.get("graphics_template", {})
+    transform_defaults = defaults.get("transform_defaults", {})  # <-- NEW
+
+    # Build an object context we can reuse everywhere (graphics, transforms, etc.)
+    ob_ctx = {
+        "ob_type": ob_type,
+        "variable": ob_spec.get("variable", ""),
+        "output_dir": compute_output_dir(ob_type, ob_spec),
+        # include if you use them in output paths
+        "sensor": ob_spec.get("sensor", ""),
+        "satellite": ob_spec.get("satellite", ""),
+    }
 
     # Datasets: merge defaults into each dataset; carry common groups if not overridden
     datasets = []
     for ds in ob_spec.get("datasets", []):
+        # If monitor_type-level 'groups' are defined and this ds doesn't override, inherit them
         if "groups" not in ds and "groups" in ob_spec:
             ds = deep_merge({"groups": ob_spec["groups"]}, ds)
-        ds = deep_merge(dataset_defaults, ds)
+
+        # Only apply dataset_defaults to ObsMonitor/IodaStats-style datasets
+        if ds.get("type") == "IodaStats":
+            ds = deep_merge(dataset_defaults, ds)
+
         datasets.append(ds)
+
+    # Transforms: merge defaults → per-ob_type, then render with ob_ctx and convert tokens
+    transforms_out = []
+    for tr in ob_spec.get("transforms", []):
+        trm = deep_merge(transform_defaults, tr)           # apply transform defaults
+        trm = deep_format_jinja_safe(trm, ob_ctx)          # fill any {placeholders}
+        trm = replace_tokens(trm)                          # [[token]] → {{ jinja }}
+        transforms_out.append(trm)
 
     # Graphics: build from figure presets if present, else pass-through
     if "figures" in ob_spec:
         presets = load_presets()
-        ob_ctx = {
-            "ob_type": ob_type,
-            "variable": ob_spec.get("variable", ""),
-            "output_dir": compute_output_dir(ob_type, ob_spec),  # if a preset wants it
-            # include if used by your output paths
-            "sensor": ob_spec.get("sensor", ""),
-            "satellite": ob_spec.get("satellite", ""),
-        }
         figure_list = render_figures(ob_spec["figures"], ob_ctx, presets)
         graphics = deep_merge(graphics_defaults, {"figure_list": figure_list})
     else:
         graphics = deep_merge(graphics_defaults, ob_spec.get("graphics", {}))
 
-    return {"datasets": datasets, "graphics": graphics}
+    # Assemble doc (keep key order: datasets → transforms → graphics)
+    doc = {"datasets": datasets}
+    if transforms_out:
+        doc["transforms"] = transforms_out
+    doc["graphics"] = graphics
+    return doc
+
 
 # ----------------- CLI ----------------
 def main():

@@ -1,4 +1,4 @@
-jobs:
+ jobs:
   - monitor_type: 'radiance'
     component: 'chem'
     satellite: 'n20'

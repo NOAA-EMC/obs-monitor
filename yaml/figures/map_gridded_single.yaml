@@ -1,0 +1,38 @@
+name: map_gridded_single
+version: 1
+
+params:
+  title: "{title}"
+  output: "{output}"
+  legend_loc: upper left
+  colorbar_label: ""
+  projection: plcarr
+  domain: global
+  x_var: "GridDef::state::longitude"
+  y_var: "GridDef::state::latitude"
+  data_var: ""
+  data_slices: "[0,:,:]"     # slice first time/bin by default
+  markersize: 5
+
+figure:
+  figure size: [16,9]
+  layout: [1,1]
+  title: "{title}"
+  output name: "{output}"
+
+plots:
+  - mapping: { projection: "{projection}", domain: "{domain}" }
+    add_map_features: [coastline]
+    add_grid:
+    add_colorbar: { label: "{colorbar_label}" }
+    layers:
+      - type: MapGridded
+        longitude: { variable: "{x_var}" }
+        latitude:  { variable: "{y_var}" }
+        data:
+          variable: "{data_var}"
+          slicing: "{data_slices}"
+        cmap: "{cmap}"
+        vmin: "{vmin}"
+        vmax: "{vmax}"
+        norm: "{norm}"

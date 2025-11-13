@@ -11,3 +11,7 @@ ob_type_index:
   snocvr:
     monitor_type: snow
     path: config/monitor_types/snow.yaml
+
+  prepbufr_adpsfc:
+    monitortype: conventional
+    path: config/monitor_types/conventional.yaml
