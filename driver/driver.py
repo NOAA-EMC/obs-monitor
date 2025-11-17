@@ -37,6 +37,8 @@ from wxflow import Logger, Jinja
 from wxflow.configuration import cast_as_dtype
 import wxflow
 
+from yaml.generate_template import build_template_for_ob_type
+
 from stubs import (
     clone_schema_stub,
     write_generic_stub,
@@ -67,7 +69,8 @@ class MonitoringConfig:
             raise ValueError(f"Unknown monitor_type: {self.monitor_type}")
 
         # Template + naming
-        self.template_path = os.path.expandvars(monitor_dict["template_path"])
+        # Template will be generated per-run via build_template_for_ob_type().
+        self.template_path = None
         self.filename_template = monitor_dict.get("filename_template")
 
         # Component comes from the job definition (env is only used as a filter in main())
@@ -379,6 +382,30 @@ def generate_eva_config(cfg: MonitoringConfig, logger, runtime_dir: Path,
     return output_path
 
 
+def build_eva_template_for_job(cfg: MonitoringConfig, logger) -> Path:
+    """
+    Build a modular EVA YAML template for this ob_type and write it into the
+    job's runtime root directory. Updates cfg.template_path and returns it.
+
+    This is run once per job/run, so we avoid accumulating hundreds of static
+    templates on disk across cycles.
+    """
+    # Build the modular template dict for this ob_type
+    doc = build_template_for_ob_type(cfg.ob_type)
+
+    # Write a per-job template file under the job root (ephemeral)
+    template_path = cfg.runtime_dir / "eva_template.yaml.j2"
+    template_path.parent.mkdir(parents=True, exist_ok=True)
+
+    text = yaml.safe_dump(doc, sort_keys=False, width=1000)
+    template_path.write_text(text)
+
+    cfg.template_path = str(template_path)
+    logger.info(f"[{cfg.ob_type}] Built modular EVA template: {template_path}")
+
+    return template_path
+
+
 def run_eva(cfg: MonitoringConfig, eva_config_path: Path, logger) -> tuple[bool, str | None]:
     """
     Execute EVA with the generated config file.
@@ -498,6 +525,9 @@ def run_monitoring_job(args):
     cfg = MonitoringConfig(monitor_dict, timestamp)
     logger = Logger(f"Obs Monitor - {cfg.ob_type}")
     logger.info(f"Starting job for {cfg.ob_type}")
+
+    # Build the modular EVA template for this ob_type for this run
+    build_eva_template_for_job(cfg, logger)
 
     try:
         # Build the single window for this run
