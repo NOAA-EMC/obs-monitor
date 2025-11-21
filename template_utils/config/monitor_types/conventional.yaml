@@ -3,26 +3,33 @@ ob_types:
   prepbufr_adpsfc:
     datasets:
       - filenames_template:
-          template: "{{ runtime_dir }}/sfc_ps_%Y%m%d%H_output_atmos_gsi.nc"
+          template: "{{ runtime_dir }}/prepbufr_adpsfc_%Y%m%d%H_output_atmos.nc"
         groups:
           - name: "byDomains/ombg/stationPressure"
-            variables: [mean, count, RMS]
+            variables:
+              - assimilated_mean
+              - assimilated_count
+              - assimilated_RMS
           - name: "byDomains/oman/stationPressure"
-            variables: [mean, count, RMS]
+            variables:
+              - assimilated_mean
+              - assimilated_count
+              - assimilated_RMS
           - name: "griddedBins/ombg/stationPressure"
-            variables: [mean, count, RMS]
-        variables: [validTime]
+            variables:
+              - assimilated_mean
+              - assimilated_count
+              - assimilated_RMS
+          - name: "griddedBins"
+            variables:
+              - latitude
+              - longitude
 
-      # GridDef dataset (LatLon grid centers)
-      - name: GridDef
-        type: LatLon
-        filename: "{{ HOMEobsmon }}/parm/grid_def_1deg_centers.nc"
-        group: state
-        variables: [latitude, longitude]
+        variables: [validTime]
 
     transforms:
       - transform: reduce
-        source: "ObsMonitor::griddedBins_ombg_stationPressure::mean"
+        source: "ObsMonitor::griddedBins_ombg_stationPressure::assimilated_mean"
         new name: "ObsMonitor::griddedBins_ombg_stationPressure::mean_cycleAvg"
         op: "mean"
         dims: ["analysisCycle"]
@@ -38,8 +45,8 @@ ob_types:
           colorbar_label: "hPa"
           projection: plcarr
           domain: global
-          x_var: "GridDef::state::longitude"
-          y_var: "GridDef::state::latitude"
+          x_var: "ObsMonitor::griddedBins::longitude"
+          y_var: "ObsMonitor::griddedBins::longitude"
           data_var: "ObsMonitor::griddedBins_ombg_stationPressure::mean_cycleAvg"
           data_slices: "[0,:,:]"
           cmap: "coolwarm"

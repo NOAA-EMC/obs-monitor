@@ -3,9 +3,9 @@ dataset_template:
   type: IodaStats
 
   filenames_template:
-    start: "{{ start_time | to_isotime }}"
-    end: "{{ end_time | to_isotime }}"
-    interval_hours: "{{ interval_hours }}"
+    start: "[[start_iso]]"
+    end: "[[end_iso]]"
+    interval_hours: {{ interval_hours | int }}
 
 graphics_template:
   plotting_backend: Emcpy
