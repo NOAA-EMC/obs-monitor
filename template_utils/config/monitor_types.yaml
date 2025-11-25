@@ -15,3 +15,11 @@ ob_type_index:
   prepbufr_adpsfc:
     monitortype: conventional
     path: config/monitor_types/conventional.yaml
+
+  prepbufr_adpupa:
+    monitortype: conventional
+    path: config/monitor_types/conventional.yaml
+
+  prepbufr_sfcshp:
+    monitortype: conventional
+    path: config/monitor_types/conventional.yaml
