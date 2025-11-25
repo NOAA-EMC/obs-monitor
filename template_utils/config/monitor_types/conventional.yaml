@@ -37,16 +37,40 @@ ob_types:
         squeeze_binsZ: false
         mask_fill: true
 
+      - transform: reduce
+        source: "ObsMonitor::griddedBins::longitude"
+        new name: "ObsMonitor::griddedBins::longitude_2d"
+        op: "mean"
+        dims: ["analysisCycle"]
+
+      - transform: reduce
+        source: "ObsMonitor::griddedBins::latitude"
+        new name: "ObsMonitor::griddedBins::latitude_2d"
+        op: "mean"
+        dims: ["analysisCycle"]
+
     figures:
+      - use: time_series_multi_line
+        params:
+          title: "{{ ob_type }} Time Series - Mean"
+          variable: "stationPressure"
+          y_label: "Pressure (hPa)"
+          output: "[[runtime_dir]]/plots/{{ ob_type }}/stationPressure/{{ ob_type }}_time_series_[[start_YMDH]]_[[end_YMDH]].png"
+          series:
+            - series_label: "stationPressure"
+              series_color: "black"
+              series_y: "ObsMonitor::byDomains_ombg_stationPressure::assimilated_mean"
+              series_slices: "[:,0]"
+
       - use: map_gridded_single
         params:
           title: "ADPSFC stationPressure O-F — Cycle Avg (gridded)"
-          output: "[[runtime_dir]]/plots/adpsfc/stationPressure/adpsfc_mean_stationPressure_global_binned_avg_[[start_YMDH]]_[[end_YMDH]].png"
+          output: "[[runtime_dir]]/plots/{{ ob_type }}/stationPressure/{{ ob_type }}_mean_stationPressure_global_binned_avg_[[start_YMDH]]_[[end_YMDH]].png"
           colorbar_label: "hPa"
           projection: plcarr
           domain: global
-          x_var: "ObsMonitor::griddedBins::longitude"
-          y_var: "ObsMonitor::griddedBins::longitude"
+          x_var: "ObsMonitor::griddedBins::longitude_2d"
+          y_var: "ObsMonitor::griddedBins::latitude_2d"
           data_var: "ObsMonitor::griddedBins_ombg_stationPressure::mean_cycleAvg"
           data_slices: "[0,:,:]"
           cmap: "coolwarm"

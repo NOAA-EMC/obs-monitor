@@ -8,8 +8,10 @@ params:
   colorbar_label: ""
   projection: plcarr
   domain: global
-  x_var: "GridDef::state::longitude"
-  y_var: "GridDef::state::latitude"
+  x_var: ""
+  x_var_slices: "[0,:,:]"
+  y_var: ""
+  y_var_slices: "[0,:,:]"
   data_var: ""
   data_slices: "[0,:,:]"     # slice first time/bin by default
   markersize: 5
