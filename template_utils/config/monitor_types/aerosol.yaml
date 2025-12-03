@@ -12,7 +12,7 @@ ob_types:
     figures:
       - use: time_series_multi_line
         params:
-          title: "{{ ob_type }} Time Series - Mean"
+          title: "{{ ob_type }} Time Series - Assimilated Mean O-A\n[[start_YMDH]]-[[end_YMDH]]"
           variable: "aerosolOpticalDepth"
           y_label: "aerosolOpticalDepth (Mean)"
           output: "[[runtime_dir]]/plots/{{ ob_type }}/aerosolOpticalDepth/{{ ob_type }}_time_series_[[start_YMDH]]_[[end_YMDH]].png"
@@ -34,7 +34,7 @@ ob_types:
     figures:
       - use: time_series_multi_line
         params:
-          title: "{{ ob_type }} Time Series - Mean"
+          title: "{{ ob_type }} Time Series - Mean O-A\n[[start_YMDH]]-[[end_YMDH]]"
           variable: "aerosolOpticalDepth"
           y_label: "aerosolOpticalDepth (Mean)"
           output: "[[runtime_dir]]/plots/{{ ob_type }}/aerosolOpticalDepth/{{ ob_type }}_time_series_[[start_YMDH]]_[[end_YMDH]].png"

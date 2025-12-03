@@ -52,9 +52,9 @@ ob_types:
     figures:
       - use: time_series_multi_line
         params:
-          title: "{{ ob_type }} Time Series - Mean"
+          title: "{{ ob_type }} Time Series - Assimilated Mean O-F\n[[start_YMDH]]-[[end_YMDH]]"
           variable: "stationPressure"
-          y_label: "Pressure (Pa)"
+          y_label: "stationPressure (Pa)"
           output: "[[runtime_dir]]/plots/{{ ob_type }}/stationPressure/{{ ob_type }}_time_series_[[start_YMDH]]_[[end_YMDH]].png"
           series:
             - series_label: "stationPressure"
@@ -64,9 +64,9 @@ ob_types:
 
       - use: map_gridded_single
         params:
-          title: "ADPSFC stationPressure O-F — Cycle Avg (gridded)"
+          title: "{{ ob_type }} O-F — Mean Cycle Avg (gridded)\n[[start_YMDH]]-[[end_YMDH]]"
           output: "[[runtime_dir]]/plots/{{ ob_type }}/stationPressure/{{ ob_type }}_mean_stationPressure_global_binned_avg_[[start_YMDH]]_[[end_YMDH]].png"
-          colorbar_label: "Pa"
+          colorbar_label: "stationPressure (Pa)"
           projection: plcarr
           domain: global
           x_var: "ObsMonitor::griddedBins::longitude_2d"
@@ -127,9 +127,9 @@ ob_types:
     figures:
       - use: time_series_multi_line
         params:
-          title: "{{ ob_type }} Time Series - Mean"
+          title: "{{ ob_type }} Time Series - Assimilated Mean O-F\n[[start_YMDH]]-[[end_YMDH]]"
           variable: "stationPressure"
-          y_label: "Pressure (Pa)"
+          y_label: "stationPressure (Pa)"
           output: "[[runtime_dir]]/plots/{{ ob_type }}/stationPressure/{{ ob_type }}_time_series_[[start_YMDH]]_[[end_YMDH]].png"
           series:
             - series_label: "stationPressure"
@@ -139,9 +139,9 @@ ob_types:
 
       - use: map_gridded_single
         params:
-          title: "ADPSFC stationPressure O-F — Cycle Avg (gridded)"
+          title: "{{ ob_type }} O-F — Mean Cycle Avg (gridded)\n[[start_YMDH]]-[[end_YMDH]]"
           output: "[[runtime_dir]]/plots/{{ ob_type }}/stationPressure/{{ ob_type }}_mean_stationPressure_global_binned_avg_[[start_YMDH]]_[[end_YMDH]].png"
-          colorbar_label: "Pa"
+          colorbar_label: "stationPressure (Pa)"
           projection: plcarr
           domain: global
           x_var: "ObsMonitor::griddedBins::longitude_2d"
@@ -180,7 +180,7 @@ ob_types:
     figures:
       - use: time_series_multi_line
         params:
-          title: "{{ ob_type }} Time Series - Mean"
+          title: "{{ ob_type }} Time Series - Assimilated Mean O-F\n[[start_YMDH]]-[[end_YMDH]]"
           variable: "stationPressure"
           y_label: "Pressure (Pa)"
           output: "[[runtime_dir]]/plots/{{ ob_type }}/stationPressure/{{ ob_type }}_time_series_[[start_YMDH]]_[[end_YMDH]].png"
