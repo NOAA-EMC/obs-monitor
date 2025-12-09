@@ -1,0 +1,191 @@
+ob_types:
+
+  prepbufr_adpsfc:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/prepbufr_adpsfc_%Y%m%d%H_output_atmos.nc"
+        groups:
+          - name: "byDomains/ombg/stationPressure"
+            variables:
+              - assimilated_mean
+              - assimilated_count
+              - assimilated_RMS
+          - name: "byDomains/oman/stationPressure"
+            variables:
+              - assimilated_mean
+              - assimilated_count
+              - assimilated_RMS
+          - name: "griddedBins/ombg/stationPressure"
+            variables:
+              - assimilated_mean
+              - assimilated_count
+              - assimilated_RMS
+          - name: "griddedBins"
+            variables:
+              - latitude
+              - longitude
+
+        variables: [validTime]
+
+    transforms:
+      - transform: reduce
+        source: "ObsMonitor::griddedBins_ombg_stationPressure::assimilated_mean"
+        new name: "ObsMonitor::griddedBins_ombg_stationPressure::mean_cycleAvg"
+        op: "mean"
+        dims: ["analysisCycle"]
+        skipna: true
+        squeeze_binsZ: false
+        mask_fill: true
+
+      - transform: reduce
+        source: "ObsMonitor::griddedBins::longitude"
+        new name: "ObsMonitor::griddedBins::longitude_2d"
+        op: "mean"
+        dims: ["analysisCycle"]
+
+      - transform: reduce
+        source: "ObsMonitor::griddedBins::latitude"
+        new name: "ObsMonitor::griddedBins::latitude_2d"
+        op: "mean"
+        dims: ["analysisCycle"]
+
+    figures:
+      - use: time_series_multi_line
+        params:
+          title: "{{ ob_type }} Time Series - Assimilated Mean O-F\n[[start_YMDH]]-[[end_YMDH]]"
+          variable: "stationPressure"
+          y_label: "stationPressure (Pa)"
+          output: "[[runtime_dir]]/plots/{{ ob_type }}/stationPressure/{{ ob_type }}_time_series_[[start_YMDH]]_[[end_YMDH]].png"
+          series:
+            - series_label: "stationPressure"
+              series_color: "black"
+              series_y: "ObsMonitor::byDomains_ombg_stationPressure::assimilated_mean"
+              series_slices: "[:,0]"
+
+      - use: map_gridded_single
+        params:
+          title: "{{ ob_type }} O-F — Mean Cycle Avg (gridded)\n[[start_YMDH]]-[[end_YMDH]]"
+          output: "[[runtime_dir]]/plots/{{ ob_type }}/stationPressure/{{ ob_type }}_mean_stationPressure_global_binned_avg_[[start_YMDH]]_[[end_YMDH]].png"
+          colorbar_label: "stationPressure (Pa)"
+          projection: plcarr
+          domain: global
+          x_var: "ObsMonitor::griddedBins::longitude_2d"
+          y_var: "ObsMonitor::griddedBins::latitude_2d"
+          data_var: "ObsMonitor::griddedBins_ombg_stationPressure::mean_cycleAvg"
+          data_slices: "[0,:,:]"
+          cmap: "coolwarm"
+
+  prepbufr_adpupa:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/prepbufr_adpupa_%Y%m%d%H_output_atmos.nc"
+        groups:
+          - name: "byDomains/ombg/stationPressure"
+            variables:
+              - assimilated_mean
+              - assimilated_count
+              - assimilated_RMS
+          - name: "byDomains/oman/stationPressure"
+            variables:
+              - assimilated_mean
+              - assimilated_count
+              - assimilated_RMS
+          - name: "griddedBins/ombg/stationPressure"
+            variables:
+              - assimilated_mean
+              - assimilated_count
+              - assimilated_RMS
+          - name: "griddedBins"
+            variables:
+              - latitude
+              - longitude
+
+        variables: [validTime]
+
+    transforms:
+      - transform: reduce
+        source: "ObsMonitor::griddedBins_ombg_stationPressure::assimilated_mean"
+        new name: "ObsMonitor::griddedBins_ombg_stationPressure::mean_cycleAvg"
+        op: "mean"
+        dims: ["analysisCycle"]
+        skipna: true
+        squeeze_binsZ: false
+        mask_fill: true
+
+      - transform: reduce
+        source: "ObsMonitor::griddedBins::longitude"
+        new name: "ObsMonitor::griddedBins::longitude_2d"
+        op: "mean"
+        dims: ["analysisCycle"]
+
+      - transform: reduce
+        source: "ObsMonitor::griddedBins::latitude"
+        new name: "ObsMonitor::griddedBins::latitude_2d"
+        op: "mean"
+        dims: ["analysisCycle"]
+
+    figures:
+      - use: time_series_multi_line
+        params:
+          title: "{{ ob_type }} Time Series - Assimilated Mean O-F\n[[start_YMDH]]-[[end_YMDH]]"
+          variable: "stationPressure"
+          y_label: "stationPressure (Pa)"
+          output: "[[runtime_dir]]/plots/{{ ob_type }}/stationPressure/{{ ob_type }}_time_series_[[start_YMDH]]_[[end_YMDH]].png"
+          series:
+            - series_label: "stationPressure"
+              series_color: "black"
+              series_y: "ObsMonitor::byDomains_ombg_stationPressure::assimilated_mean"
+              series_slices: "[:,0]"
+
+      - use: map_gridded_single
+        params:
+          title: "{{ ob_type }} O-F — Mean Cycle Avg (gridded)\n[[start_YMDH]]-[[end_YMDH]]"
+          output: "[[runtime_dir]]/plots/{{ ob_type }}/stationPressure/{{ ob_type }}_mean_stationPressure_global_binned_avg_[[start_YMDH]]_[[end_YMDH]].png"
+          colorbar_label: "stationPressure (Pa)"
+          projection: plcarr
+          domain: global
+          x_var: "ObsMonitor::griddedBins::longitude_2d"
+          y_var: "ObsMonitor::griddedBins::latitude_2d"
+          data_var: "ObsMonitor::griddedBins_ombg_stationPressure::mean_cycleAvg"
+          data_slices: "[0,:,:]"
+          cmap: "coolwarm"
+
+  prepbufr_sfcshp:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/prepbufr_sfcshp_%Y%m%d%H_output_atmos.nc"
+        groups:
+          - name: "byDomains/ombg/stationPressure"
+            variables:
+              - assimilated_mean
+              - assimilated_count
+              - assimilated_RMS
+          - name: "byDomains/oman/stationPressure"
+            variables:
+              - assimilated_mean
+              - assimilated_count
+              - assimilated_RMS
+          - name: "griddedBins/ombg/stationPressure"
+            variables:
+              - assimilated_mean
+              - assimilated_count
+              - assimilated_RMS
+          - name: "griddedBins"
+            variables:
+              - latitude
+              - longitude
+
+        variables: [validTime]
+
+    figures:
+      - use: time_series_multi_line
+        params:
+          title: "{{ ob_type }} Time Series - Assimilated Mean O-F\n[[start_YMDH]]-[[end_YMDH]]"
+          variable: "stationPressure"
+          y_label: "Pressure (Pa)"
+          output: "[[runtime_dir]]/plots/{{ ob_type }}/stationPressure/{{ ob_type }}_time_series_[[start_YMDH]]_[[end_YMDH]].png"
+          series:
+            - series_label: "stationPressure"
+              series_color: "black"
+              series_y: "ObsMonitor::byDomains_ombg_stationPressure::assimilated_mean"
+              series_slices: "[:,0]"

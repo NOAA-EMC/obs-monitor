@@ -222,7 +222,7 @@ def main() -> None:
         SCHEDULER=str(cfg["hpc"]["scheduler"]),
         SDATE=str(cfg["start_date"]),
         EDATE=str(cfg["end_date"]),
-        INTERVAL_HOURS=str(cfg["interval_hours"]),
+        INTERVAL_HOURS=int(cfg["interval_hours"]),
         ACCOUNT=str(cfg["hpc"]["account"]),
         QUEUE=str(cfg["hpc"]["queue"]),
         WALLTIME=str(cfg["resources"]["walltime"]),
