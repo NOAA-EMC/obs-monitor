@@ -37,14 +37,7 @@ from wxflow import Logger, Jinja
 from wxflow.configuration import cast_as_dtype
 import wxflow
 
-# This will need to be fixed !!!
-# Add repo root (/obs-monitor) to sys.path
-import sys
-REPO_ROOT = Path(__file__).resolve().parents[1]
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
-
-from template_utils.generate_template import build_template_for_ob_type
+from obs_monitor import build_template_for_ob_type
 
 from stubs import (
     clone_schema_stub,
