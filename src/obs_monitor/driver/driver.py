@@ -39,7 +39,7 @@ import wxflow
 
 from obs_monitor import build_template_for_ob_type
 
-from stubs import (
+from .stubs import (
     clone_schema_stub,
     write_generic_stub,
     guess_domain_size,
