@@ -201,7 +201,7 @@ def main() -> None:
     dataroot = Path(paths["dataroot"])
 
     # Path used by your downstream driver
-    config_yaml_for_driver = str(obsmondir / "driver" / "config.yaml")
+    config_yaml_for_driver = obsmondir / "src/obs_monitor/driver/config.yaml"
 
     # Output XML path
     output_path = expdir / f"{pslot}_obsmon_rocoto.xml"
