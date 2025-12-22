@@ -37,7 +37,9 @@ from wxflow import Logger, Jinja
 from wxflow.configuration import cast_as_dtype
 import wxflow
 
-from stubs import (
+from obs_monitor import build_template_for_ob_type
+
+from .stubs import (
     clone_schema_stub,
     write_generic_stub,
     guess_domain_size,
@@ -67,7 +69,8 @@ class MonitoringConfig:
             raise ValueError(f"Unknown monitor_type: {self.monitor_type}")
 
         # Template + naming
-        self.template_path = os.path.expandvars(monitor_dict["template_path"])
+        # Template will be generated per-run via build_template_for_ob_type().
+        self.template_path = None
         self.filename_template = monitor_dict.get("filename_template")
 
         # Component comes from the job definition (env is only used as a filter in main())
@@ -141,7 +144,7 @@ class MonitoringConfig:
             d['sensor'] = self.sensor
         elif self.monitor_type == 'conventional':
             d['variable'] = self.variable
-    
+
         return d
 
 
@@ -369,6 +372,12 @@ def generate_eva_config(cfg: MonitoringConfig, logger, runtime_dir: Path,
                         win_start: datetime, win_end: datetime) -> Path:
     """
     Generate an EVA YAML configuration for the window into `runtime_dir`.
+
+    At this point:
+      - The per-job template has already had interval_hours resolved to an int
+        via Jinja-first parsing in generate_template.py (common.yaml.j2).
+      - Remaining Jinja placeholders (runtime_dir, start_time, end_time, etc.)
+        are rendered here using wxflow.Jinja.
     """
     context = cfg.get_jinja_context(start_time=win_start, end_time=win_end, runtime_dir=runtime_dir)
     output_path = runtime_dir / "eva_config.yaml"
@@ -377,6 +386,39 @@ def generate_eva_config(cfg: MonitoringConfig, logger, runtime_dir: Path,
     logger.info(f"Generated EVA config: {output_path}")
 
     return output_path
+
+
+def build_eva_template_for_job(cfg: MonitoringConfig, logger) -> Path:
+    """
+    Build a modular EVA YAML *template* for this ob_type and write it into the
+    job's runtime root directory. Updates cfg.template_path and returns it.
+
+    Jinja-first pipeline:
+      - common.yaml.j2 (and any other *.yaml.j2 defaults) are rendered once
+        with a minimal context (interval_hours), so interval_hours is an int
+        before PyYAML ever sees it.
+      - The resulting dict is dumped as YAML with embedded Jinja placeholders
+        for runtime_dir, start_time, end_time, etc., which are filled in later
+        by generate_eva_config() via wxflow.Jinja.
+    """
+    # Minimal Jinja context for config-time templating (defaults):
+    # - We only need interval_hours so common.yaml.j2 can turn it into an int.
+    jinja_ctx = {"interval_hours": cfg.interval_hours}
+
+    # Build the modular template dict for this ob_type (Jinja-first)
+    doc = build_template_for_ob_type(cfg.ob_type, jinja_ctx=jinja_ctx)
+
+    # Write a per-job template file under the job root (ephemeral)
+    template_path = cfg.runtime_dir / "eva_template.yaml.j2"
+    template_path.parent.mkdir(parents=True, exist_ok=True)
+
+    text = yaml.safe_dump(doc, sort_keys=False, width=1000)
+    template_path.write_text(text)
+
+    cfg.template_path = str(template_path)
+    logger.info(f"[{cfg.ob_type}] Built modular EVA template: {template_path}")
+
+    return template_path
 
 
 def run_eva(cfg: MonitoringConfig, eva_config_path: Path, logger) -> tuple[bool, str | None]:
@@ -498,6 +540,9 @@ def run_monitoring_job(args):
     cfg = MonitoringConfig(monitor_dict, timestamp)
     logger = Logger(f"Obs Monitor - {cfg.ob_type}")
     logger.info(f"Starting job for {cfg.ob_type}")
+
+    # Build the modular EVA template for this ob_type for this run
+    build_eva_template_for_job(cfg, logger)
 
     try:
         # Build the single window for this run

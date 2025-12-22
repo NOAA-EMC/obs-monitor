@@ -1,0 +1,32 @@
+jobs:
+  - monitor_type: 'radiance'
+    component: 'chem'
+    satellite: 'n20'
+    sensor: 'viirs'
+    filename_template: 'viirs_n20_%Y%m%d%H_output_aod.nc'
+
+  - monitor_type: 'radiance'
+    component: 'chem'
+    satellite: 'npp'
+    sensor: 'viirs'
+    filename_template: 'viirs_npp_%Y%m%d%H_output_aod.nc'
+
+  - monitor_type: 'conventional'
+    component: 'snow'
+    variable: 'snocvr'
+    filename_template: '%Y%m%d.%H%M%S.ioda_hofx_stats.snocvr.nc'
+
+  - monitor_type: 'conventional'
+    component: 'atmos'
+    variable: 'prepbufr_adpsfc'
+    filename_template: 'prepbufr_adpsfc_%Y%m%d%H_output_atmos.nc'
+
+  - monitor_type: 'conventional'
+    component: 'atmos'
+    variable: 'prepbufr_adpupa'
+    filename_template: 'prepbufr_adpupa_%Y%m%d%H_output_atmos.nc'
+
+  - monitor_type: 'conventional'
+    component: 'atmos'
+    variable: 'prepbufr_sfcshp'
+    filename_template: 'prepbufr_sfcshp_%Y%m%d%H_output_atmos.nc'

@@ -201,7 +201,7 @@ def main() -> None:
     dataroot = Path(paths["dataroot"])
 
     # Path used by your downstream driver
-    config_yaml_for_driver = str(obsmondir / "driver" / "config.yaml")
+    config_yaml_for_driver = obsmondir / "src/obs_monitor/driver/config.yaml"
 
     # Output XML path
     output_path = expdir / f"{pslot}_obsmon_rocoto.xml"
@@ -222,7 +222,7 @@ def main() -> None:
         SCHEDULER=str(cfg["hpc"]["scheduler"]),
         SDATE=str(cfg["start_date"]),
         EDATE=str(cfg["end_date"]),
-        INTERVAL_HOURS=str(cfg["interval_hours"]),
+        INTERVAL_HOURS=int(cfg["interval_hours"]),
         ACCOUNT=str(cfg["hpc"]["account"]),
         QUEUE=str(cfg["hpc"]["queue"]),
         WALLTIME=str(cfg["resources"]["walltime"]),
