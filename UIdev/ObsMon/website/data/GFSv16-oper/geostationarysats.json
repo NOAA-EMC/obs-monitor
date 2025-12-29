@@ -1,0 +1,14 @@
+[
+    {
+        "satKey": "GOES-18",
+        "displayName": "GOES-18",
+        "instrument": "ABI",
+        "channelKey": "ABI"
+    },
+    {
+        "satKey": "GOES-19",
+        "displayName": "GOES-19",
+        "instrument": "ABI",
+        "channelKey": "ABI"
+    }
+]

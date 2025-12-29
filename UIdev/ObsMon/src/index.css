@@ -100,3 +100,7 @@ button:focus-visible {
 .custom-button-category {
   @apply w-full text-left px-2 py-1 text-blue-800 hover:bg-gray-200 rounded font-bold;
 }
+
+.custom-menu-category {
+  @apply w-full text-left px-2 py-1 text-blue-800 hover:bg-gray-200 rounded font-bold;
+}

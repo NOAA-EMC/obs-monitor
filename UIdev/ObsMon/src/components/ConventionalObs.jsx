@@ -3,6 +3,7 @@ import TypeBlock from "./TypeBlock.jsx";
 import { withBase } from "../utils/paths.js";
 
 export default function ConventionalObs({
+    model,
     obsType,          // e.g., "gps", "ps", "q"
     typeList,         // e.g., gpsTypes, psTypes (array of { gpskey/pskey, displayName })
     keyProp,          // e.g., "gpskey", "pskey"
@@ -17,6 +18,8 @@ export default function ConventionalObs({
     const [filter, setFilter] = useState("all");
 
     useEffect(() => {
+        if (!model || !cycleTime) return;
+
         const fetchStatus = async () => {
             try {
                 const res = await fetch(withBase(`data/assimilationStatus_${obsType}.json`));
@@ -68,6 +71,11 @@ export default function ConventionalObs({
     }, [enrichedTypes, filter]);
 
     const categoryHasAnomaly = enrichedTypes.some((t) => t.anomaly && t.anomaly !== "ok");
+
+    if (!model || typeList.length === 0) {
+        return null;
+    }
+
 
     return (
         <div className="mb-4">

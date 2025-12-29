@@ -1,0 +1,32 @@
+[
+    {
+        "satKey": "AURA",
+        "displayName": "AURA",
+        "instrument": "OMI",
+        "channelKey": "OMI"
+    },
+    {
+        "satKey": "NOAA-20",
+        "displayName": "NOAA-20",
+        "instrument": "OMPSNP",
+        "channelKey": "OMPSNP"
+    },
+    {
+        "satKey": "NOAA-20",
+        "displayName": "NOAA-20",
+        "instrument": "OMPSTC8",
+        "channelKey": "OMPSTC8"
+    },
+    {
+        "satKey": "NOAA-21",
+        "displayName": "NOAA-21",
+        "instrument": "OMPSNP",
+        "channelKey": "OMPSNP"
+    },
+    {
+        "satKey": "NOAA-21",
+        "displayName": "NOAA-21",
+        "instrument": "OMPSTC8",
+        "channelKey": "OMPSTC8"
+    }
+]
