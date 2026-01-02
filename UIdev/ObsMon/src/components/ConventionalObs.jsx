@@ -22,7 +22,11 @@ export default function ConventionalObs({
 
         const fetchStatus = async () => {
             try {
-                const res = await fetch(withBase(`data/assimilationStatus_${obsType}.json`));
+                const res = await fetch(
+                    withBase(`data/${model}/assim_status/assimilationStatus_${obsType}.json`),
+                    { cache: "no-store" }
+                );
+
                 if (!res.ok) throw new Error("Assimilation file missing");
                 const data = await res.json();
                 setAssimilationStatus(data);
@@ -45,7 +49,7 @@ export default function ConventionalObs({
         if (cycleTime) {
             fetchStatus();
         }
-    }, [obsType, cycleTime]);
+    }, [model, obsType, cycleTime]);
 
     const enrichedTypes = useMemo(() => {
         return typeList.map((entry) => {

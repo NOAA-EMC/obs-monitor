@@ -278,6 +278,7 @@ function App() {
               toggleSat={toggleSat}
               navigate={go}
               cycleTime={cycleTime}
+              selectedModel={model}
             />
           )
         }
@@ -295,6 +296,7 @@ function App() {
               toggleSat={toggleSat}
               navigate={go}
               cycleTime={cycleTime}
+              selectedModel={model}
             />
           )
         }
@@ -312,6 +314,7 @@ function App() {
               toggleSat={toggleSat}
               navigate={go}
               cycleTime={cycleTime}
+              selectedModel={model}
             />
           )
         }
@@ -329,6 +332,7 @@ function App() {
               ozoneSatellites={ozoneSatellites}
               channelMap={{ OMI: OMI.channels, OMPSNP: OMPSNP.channels, OMPSTC8: OMPSTC8.channels }}
               cycleTime={cycleTime}
+              selectedModel={model}
             />
           )
         }

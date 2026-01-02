@@ -9,6 +9,7 @@ const getTextColor = (channel) => {
 };
 
 export default function SatelliteBlock({
+    model,
     satKey,
     displayName,
     instrument,
@@ -44,12 +45,14 @@ export default function SatelliteBlock({
     }, [anomaly, allMissing]);
 
     useEffect(() => {
+        if (!model || !cycleTime) return;
+
         const fetchStatus = async () => {
             const anomalyFile = `anomalyStatus_${satKey}_${instrument}_${cycleTime}.json`;
             const assimFile = `assimilationStatus_${satKey}_${instrument}.json`;
 
             try {
-                const anomalyRes = await fetch(withBase(`/data/${anomalyFile}`));
+                const anomalyRes = await fetch(withBase(`./data/${model}/anom_status/${anomalyFile}`));
                 if (!anomalyRes.ok) {
                     throw new Error(`Status file not found: ${anomalyFile}`);
                 }
@@ -72,7 +75,8 @@ export default function SatelliteBlock({
             }
 
             try {
-                const assimRes = await fetch(withBase(`/data/${assimFile}`));
+                const assimRes = await fetch(withBase(`data/${model}/assim_status/${assimFile}`));
+                console.log("SSIM FETCH:", assimRes);
                 if (!assimRes.ok) {
                     console.warn(`Missing assimilation file for ${satKey}/${instrument}`);
                     setStatusAvailable(false);
@@ -90,7 +94,7 @@ export default function SatelliteBlock({
         if (cycleTime) {
             fetchStatus();
         }
-    }, [satKey, instrument, cycleTime, reportAnomalyStatus]);
+    }, [model, satKey, instrument, cycleTime, reportAnomalyStatus]);
 
     const enrichedChannels = useMemo(() => {
         return channels.map((id) => ({

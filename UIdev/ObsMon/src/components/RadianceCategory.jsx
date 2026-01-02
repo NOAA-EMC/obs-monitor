@@ -13,6 +13,7 @@ export default function RadianceCategory({
     toggleSat,
     navigate,
     cycleTime,
+    selectedModel,
 }) {
     const [openInstrument, setOpenInstrument] = useState(null);
     const [anomalyMap, setAnomalyMap] = useState({});
@@ -45,7 +46,8 @@ export default function RadianceCategory({
             await Promise.all(
                 satelliteList.map(async (sat) => {
                     const key = `${sat.satKey}_${sat.instrument}`;
-                    const anomalyUrl = withBase(`data/anomalyStatus_${key}_${cycleTime}.json`);
+                    const anomalyUrl = withBase(`data/${selectedModel}/anom_status/anomalyStatus_${key}_${cycleTime}.json`);
+                    console.log("Anom FETCH:", anomalyUrl);
                     try {
                         const res = await fetch(anomalyUrl, { cache: 'no-store' });
                         if (res.ok) {
@@ -74,7 +76,7 @@ export default function RadianceCategory({
         if (cycleTime) {
             fetchAllAnomalies();
         }
-    }, [satelliteList, cycleTime]);
+    }, [satelliteList, cycleTime, selectedModel]);
 
 
     const instrumentHasAnomaly = (instrument) =>
@@ -129,6 +131,7 @@ export default function RadianceCategory({
                                                 toggleSat={toggleSat}
                                                 navigate={navigate}
                                                 cycleTime={cycleTime}
+                                                model={selectedModel}
                                                 reportAnomalyStatus={handleReportAnomalyStatus}
                                             />
                                         ))}
