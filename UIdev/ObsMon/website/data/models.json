@@ -1,0 +1,16 @@
+{
+  "models": [
+    "GFSv18-para",
+    "GFSv16-oper"
+  ],
+  "components": {
+    "GFSv18-para": [
+      "atmos"
+    ],
+    "GFSv16-oper": [
+      "atmos",
+      "ocean",
+      "wave"
+    ]
+  }
+}

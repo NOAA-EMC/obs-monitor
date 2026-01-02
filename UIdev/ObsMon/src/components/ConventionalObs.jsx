@@ -3,6 +3,7 @@ import TypeBlock from "./TypeBlock.jsx";
 import { withBase } from "../utils/paths.js";
 
 export default function ConventionalObs({
+    model,
     obsType,          // e.g., "gps", "ps", "q"
     typeList,         // e.g., gpsTypes, psTypes (array of { gpskey/pskey, displayName })
     keyProp,          // e.g., "gpskey", "pskey"
@@ -17,9 +18,15 @@ export default function ConventionalObs({
     const [filter, setFilter] = useState("all");
 
     useEffect(() => {
+        if (!model || !cycleTime) return;
+
         const fetchStatus = async () => {
             try {
-                const res = await fetch(withBase(`data/assimilationStatus_${obsType}.json`));
+                const res = await fetch(
+                    withBase(`data/${model}/assim_status/assimilationStatus_${obsType}.json`),
+                    { cache: "no-store" }
+                );
+
                 if (!res.ok) throw new Error("Assimilation file missing");
                 const data = await res.json();
                 setAssimilationStatus(data);
@@ -42,7 +49,7 @@ export default function ConventionalObs({
         if (cycleTime) {
             fetchStatus();
         }
-    }, [obsType, cycleTime]);
+    }, [model, obsType, cycleTime]);
 
     const enrichedTypes = useMemo(() => {
         return typeList.map((entry) => {
@@ -68,6 +75,11 @@ export default function ConventionalObs({
     }, [enrichedTypes, filter]);
 
     const categoryHasAnomaly = enrichedTypes.some((t) => t.anomaly && t.anomaly !== "ok");
+
+    if (!model || typeList.length === 0) {
+        return null;
+    }
+
 
     return (
         <div className="mb-4">
