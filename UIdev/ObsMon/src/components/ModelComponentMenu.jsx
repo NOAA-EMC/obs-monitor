@@ -42,7 +42,8 @@ export default function ModelComponentMenu() {
               onClick={() => {
                 setModel(m);
                 setOpenModel(false);
-                setOpenComponent(false);
+                // Automatically open component menu after model selection
+                setOpenComponent(true);
               }}
             >
               {m}

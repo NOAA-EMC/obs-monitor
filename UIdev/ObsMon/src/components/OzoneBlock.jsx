@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useMemo } from "react";
-import { withBase } from '../utils/paths.js';
+import React, { useState, useMemo } from "react";
+import useStatusFetch from '../hooks/useStatusFetch';
+import { useModel } from './ModelContext';
 
 export default function OzoneBlock({
     satKey,
@@ -12,55 +13,11 @@ export default function OzoneBlock({
     cycleTime,
     reportAnomalyStatus,
 }) {
-    const [assimilation, setAssimilation] = useState({});
-    const [anomaly, setAnomaly] = useState({});
-    const [statusAvailable, setStatusAvailable] = useState(true);
-    const [allMissing, setAllMissing] = useState(false);
+    const { model } = useModel();
+    const { assimilation, anomaly, statusAvailable, allMissing } = useStatusFetch(satKey, instrument, cycleTime, model);
     const [filter, setFilter] = useState("all");
 
-    useEffect(() => {
-        const fetchStatus = async () => {
-            try {
-                const [assimilationRes, anomalyRes] = await Promise.all([
-                    fetch(withBase(`data/assimilationStatus_${satKey}_${instrument}.json`)),
-                    fetch(withBase(`data/anomalyStatus_${satKey}_${instrument}_${cycleTime}.json`)),
-                ]);
 
-                if (!assimilationRes.ok || !anomalyRes.ok) {
-                    console.warn(`Missing status file(s) for ${satKey}/${instrument}`);
-                    setStatusAvailable(false);
-                    reportAnomalyStatus?.(satKey, false);
-                    return;
-                }
-
-                const [assimilationJson, anomalyJson] = await Promise.all([
-                    assimilationRes.json(),
-                    anomalyRes.json(),
-                ]);
-
-                setAssimilation(assimilationJson);
-
-                if (anomalyJson.all === "missing") {
-                    setAllMissing(true);
-                    setAnomaly({});
-                    reportAnomalyStatus?.(satKey, true, instrument);
-                } else {
-                    setAllMissing(false);
-                    setAnomaly(anomalyJson);
-                    const hasAnomaly = Object.values(anomalyJson).some((v) => v !== "ok");
-                    reportAnomalyStatus?.(satKey, hasAnomaly, instrument);
-                }
-
-                setStatusAvailable(true);
-            } catch (error) {
-                console.error(`Error loading status for ${satKey}/${instrument}:`, error);
-                setStatusAvailable(false);
-                reportAnomalyStatus?.(satKey, false, instrument);
-            }
-        };
-
-        fetchStatus();
-    }, [satKey, instrument, cycleTime, reportAnomalyStatus]);
 
     const enrichedChannels = useMemo(() => {
         return channels.map((id) => ({

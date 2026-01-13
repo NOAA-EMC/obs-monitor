@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useMemo } from "react";
 import TypeBlock from "./TypeBlock.jsx";
 import { withBase } from "../utils/paths.js";
+import { useModel } from "./ModelContext";
 
 export default function ConventionalObs({
-    model,
     obsType,          // e.g., "gps", "ps", "q"
     typeList,         // e.g., gpsTypes, psTypes (array of { gpskey/pskey, displayName })
     keyProp,          // e.g., "gpskey", "pskey"
@@ -11,8 +11,8 @@ export default function ConventionalObs({
     openSection,
     toggleSection,
     navigate,
-    cycleTime
 }) {
+    const { model, component, cycleTime } = useModel();
     const [assimilationStatus, setAssimilationStatus] = useState({});
     const [anomalyStatus, setAnomalyStatus] = useState({});
     const [filter, setFilter] = useState("all");
@@ -23,7 +23,7 @@ export default function ConventionalObs({
         const fetchStatus = async () => {
             try {
                 const res = await fetch(
-                    withBase(`data/${model}/assim_status/assimilationStatus_${obsType}.json`),
+                    withBase(`data/${model}/${component}/assim_status/assimilationStatus_${obsType}.json`),
                     { cache: "no-store" }
                 );
 
@@ -36,7 +36,7 @@ export default function ConventionalObs({
             }
 
             try {
-                const res = await fetch(withBase(`data/anomalyStatus_${obsType}_${cycleTime}.json`));
+                const res = await fetch(withBase(`data/${model}/${component}/anom_status/anomalyStatus_${obsType}_${cycleTime}.json`));
                 if (!res.ok) throw new Error("Anomaly file missing");
                 const data = await res.json();
                 setAnomalyStatus(data);

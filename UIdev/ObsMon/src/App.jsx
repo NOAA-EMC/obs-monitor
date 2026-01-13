@@ -6,6 +6,7 @@ import MainContent from "./MainContent.jsx";
 import { withBase } from './utils/paths.js';
 import { ATMOS_TYPES } from "./data/atmosTypes.js";
 import { CONVENTIONAL_TYPES } from "./data/conventionalTypes.js";
+import { useModel } from './components/ModelContext.jsx';
 
 import RadianceCategory from './components/RadianceCategory.jsx';
 import OzoneObs from './components/OzoneObs.jsx';
@@ -15,8 +16,7 @@ import ConventionalObs from './components/ConventionalObs.jsx';
 function App() {
 
   const navigate = useNavigate();
-  const [model, setModel] = useState(null);
-  const [component, setComponent] = useState(null);
+  const { model, setModel, component, setComponent, cycleTime } = useModel();
 
   const go = (to) => {
     navigate(to);
@@ -43,7 +43,6 @@ function App() {
 
   const [config, setConfig] = useState(null);
 
-  const [cycleTime, setCycleTime] = useState(null);
   const previousCycle = useRef(null);
 
   const satSetters = {
@@ -61,6 +60,27 @@ function App() {
     uvtype: setUvTypes
   }
 
+  // Helper to load data files for a given type mapping
+  const loadDataFiles = async (typeMap, setterMap) => {
+    Object.entries(typeMap).forEach(async ([type, { file, stateKey }]) => {
+      const setter = setterMap[stateKey];
+      if (!setter) {
+        console.error(`No setter found for stateKey="${stateKey}"`);
+        return;
+      }
+
+      const url = withBase(`data/${model}/${component}/obs_types/${file}`);
+      try {
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) throw new Error(res.statusText);
+        setter(await res.json());
+      } catch (err) {
+        console.error(`Failed to load ${file} for model ${model}`, err);
+        setter([]);
+      }
+    });
+  };
+
   useEffect(() => {
     fetch(withBase("data/models.json"), { cache: "no-store" })
       .then(res => res.json())
@@ -69,58 +89,15 @@ function App() {
   }, []);
 
   useEffect(() => {
-    if (!model) {
+    if (!model || !component) {
       Object.values(satSetters).forEach(setter => setter([]));
-      return;
-    }
-
-    Object.entries(ATMOS_TYPES).forEach(async ([type, { file, stateKey }]) => {
-      const setter = satSetters[stateKey];
-      if (!setter) {
-        console.error(`No setter found for stateKey="${stateKey}"`);
-        return;
-      }
-
-      const url = withBase(`data/${model}/${file}`);
-      console.log(`Fetching ${type} sats:`, url);
-
-      try {
-        const res = await fetch(url, { cache: "no-store" });
-        if (!res.ok) throw new Error(res.statusText);
-        setter(await res.json());
-      } catch (err) {
-        console.error(`Failed to load ${file} for model ${model}`, err);
-        setter([]);
-      }
-    });
-  }, [model]);
-
-  useEffect(() => {
-    if (!model) {
       Object.values(convSetters).forEach(setter => setter([]));
       return;
     }
 
-    Object.entries(CONVENTIONAL_TYPES).forEach(async ([obsType, { file, stateKey }]) => {
-      const setter = convSetters[stateKey];
-      if (!setter) {
-        console.error(`No setter found for stateKey="${stateKey}"`);
-        return;
-      }
-
-      const url = withBase(`data/${model}/${file}`);
-      console.log(`Fetching ${obsType} types:`, url);
-
-      try {
-        const res = await fetch(url, { cache: "no-store" });
-        if (!res.ok) throw new Error(res.statusText);
-        setter(await res.json());
-      } catch (err) {
-        console.error(`Failed to load ${file} for model ${model}`, err);
-        setter([]);
-      }
-    });
-  }, [model]);
+    loadDataFiles(ATMOS_TYPES, satSetters);
+    loadDataFiles(CONVENTIONAL_TYPES, convSetters);
+  }, [model, component]);
 
 
   useEffect(() => {
@@ -132,51 +109,6 @@ function App() {
       .then(data => setConfig(data))
       .catch(err => console.error("Failed to load configIndex.json:", err));
   }, []);
-
-  useEffect(() => {
-    if (model) {
-      setCycleTime(null);              // immediate UI update
-      previousCycle.current = null;    // force refresh
-    }
-  }, [model]);
-
-  // cycle fetch
-  useEffect(() => {
-    if (!model) {
-      setCycleTime(null);
-      previousCycle.current = null;
-      return;
-    }
-
-    const fetchCycle = async () => {
-      try {
-        const res = await fetch(
-          withBase(`data/${model}/latestCycle.json`),
-          { cache: "no-store" }
-        );
-        const json = await res.json();
-        setCycleTime(json.cycleTime ?? null);
-        previousCycle.current = json.cycleTime ?? null;
-      } catch (error) {
-        console.error(`Failed to load latestCycle.json for model ${model}:`, error);
-        setCycleTime(null);
-        previousCycle.current = null;
-      }
-    };
-
-    fetchCycle();
-    const interval = setInterval(fetchCycle, 300000);
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") fetchCycle();
-    };
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
-      clearInterval(interval);
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, [model]);
 
   const toggleSection = (name) => {
     setOpenSection(openSection === name ? null : name);
@@ -246,9 +178,6 @@ function App() {
               onChange={(e) => setComponent(e.target.value || null)}
               disabled={!model}
             >
-              <option value="">
-                {model ? "Select component…" : "Select model first"}
-              </option>
               {availableComponents.map((c) => (
                 <option key={c} value={c}>
                   {c}
@@ -268,7 +197,7 @@ function App() {
         {
           geostationarySatellites.length > 0 && (
             <RadianceCategory
-              sectionKey="geo"
+              sectionKey="geostationary"
               label="Geostationary Radiance"
               satelliteList={geostationarySatellites}
               channelMap={{ ABI: ABI.channels, AHI: AHI.channels }}
@@ -286,7 +215,7 @@ function App() {
         {
           infraredSatellites.length > 0 && (
             <RadianceCategory
-              sectionKey="inf"
+              sectionKey="infrared"
               label="Infrared Obs"
               satelliteList={infraredSatellites}
               channelMap={{ CrIS: CrIS.channels, IASI: IASI.channels }}
@@ -304,7 +233,7 @@ function App() {
         {
           microwaveSatellites.length > 0 && (
             <RadianceCategory
-              sectionKey="mic"
+              sectionKey="microwave"
               label="Microwave Observations"
               satelliteList={microwaveSatellites}
               channelMap={{ AMSUA: AMSUA.channels, ATMS: ATMS.channels, MHS: MHS.channels, SSMIS: SSMIS.channels }}
@@ -322,7 +251,7 @@ function App() {
         {
           ozoneSatellites.length > 0 && (
             <OzoneObs
-              sectionKey="ozn"
+              sectionKey="ozone"
               label="Ozone Observations"
               openSection={openSection}
               toggleSection={toggleSection}
@@ -338,7 +267,6 @@ function App() {
         }
 
         <ConventionalObs
-          model={model}
           obsType="gps"
           typeList={gpsTypes}
           keyProp="gpskey"
@@ -346,10 +274,8 @@ function App() {
           openSection={openSection}
           toggleSection={toggleSection}
           navigate={go}
-          cycleTime={cycleTime}
         />
         <ConventionalObs
-          model={model}
           obsType="ps"
           typeList={psTypes}
           keyProp="pskey"
@@ -357,10 +283,8 @@ function App() {
           openSection={openSection}
           toggleSection={toggleSection}
           navigate={go}
-          cycleTime={cycleTime}
         />
         <ConventionalObs
-          model={model}
           obsType="q"
           typeList={qTypes}
           keyProp="qkey"
@@ -368,10 +292,8 @@ function App() {
           openSection={openSection}
           toggleSection={toggleSection}
           navigate={go}
-          cycleTime={cycleTime}
         />
         <ConventionalObs
-          model={model}
           obsType="t"
           typeList={tTypes}
           keyProp="tkey"
@@ -379,10 +301,8 @@ function App() {
           openSection={openSection}
           toggleSection={toggleSection}
           navigate={go}
-          cycleTime={cycleTime}
         />
         <ConventionalObs
-          model={model}
           obsType="uv"
           typeList={uvTypes}
           keyProp="uvkey"
@@ -390,7 +310,6 @@ function App() {
           openSection={openSection}
           toggleSection={toggleSection}
           navigate={go}
-          cycleTime={cycleTime}
         />
       </aside >
 
