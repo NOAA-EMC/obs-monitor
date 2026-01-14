@@ -58,10 +58,6 @@ export function ModelProvider({ children }) {
 
                 const models = json.models || [];
                 setAvailableModels(models);
-
-                if (!model && models.length > 0) {
-                    setModel(models[0]);
-                }
             } catch (err) {
                 console.error("Could not load model configuration:", err);
             }
@@ -101,208 +97,70 @@ export function ModelProvider({ children }) {
         const comps = modelConfig.components[model] || [];
         setAvailableComponents(comps);
 
-        if (!comps.includes(component)) {
+        if (comps.length > 0 && !comps.includes(component)) {
             setComponent(comps[0] || "");
         }
     }, [model, modelConfig]);
 
-    // ✅ Load geosats when model changes
+    // Load satellite data files when model/component changes
     useEffect(() => {
-        if (!model) {
+        if (!model || !component) {
             setGeoSats([]);
-            return;
-        }
-
-        const loadGeoSats = async () => {
-            try {
-                const res = await fetch(`./data/${model}/geosats.json`, {
-                    cache: "no-store",
-                });
-
-                if (!res.ok) {
-                    setGeoSats([]);
-                    return;
-                }
-
-                const json = await res.json();
-                setGeoSats(Array.isArray(json) ? json : []);
-            } catch (err) {
-                console.error("Failed to load geosats:", err);
-                setGeoSats([]);
-            }
-        };
-
-        loadGeoSats();
-    }, [model]);
-
-    useEffect(() => {
-        if (!model) {
             setInfraSats([]);
-            return;
-        }
-
-        const loadInfraSats = async () => {
-            try {
-                const res = await fetch(`./data/${model}/infrasats.json`, {
-                    cache: "no-store",
-                });
-
-                if (!res.ok) {
-                    setInfraSats([]);
-                    return;
-                }
-
-                const json = await res.json();
-                setInfraSats(Array.isArray(json) ? json : []);
-            } catch (err) {
-                console.error("Failed to load infraSats:", err);
-                setInfraSats([]);
-            }
-        };
-
-        loadInfraSats();
-    }, [model]);
-
-    useEffect(() => {
-        if (!model) {
             setMicroSats([]);
-            return;
-        }
-
-        const loadMicroSats = async () => {
-            try {
-                const res = await fetch(`./data/${model}/microsats.json`, {
-                    cache: "no-store",
-                });
-
-                if (!res.ok) {
-                    setMicroSats([]);
-                    return;
-                }
-
-                const json = await res.json();
-                setMicroSats(Array.isArray(json) ? json : []);
-            } catch (err) {
-                console.error("Failed to load microsats.json:", err);
-                setMicroSats([]);
-            }
-        };
-
-        loadMicroSats();
-    }, [model]);
-
-    useEffect(() => {
-        if (!model) {
             setOzoneSats([]);
             return;
         }
 
-        const loadOzoneSats = async () => {
+        const loadSatelliteFile = async (filename, setter, label) => {
             try {
-                const res = await fetch(`./data/${model}/ozonesats.json`, {
+                const res = await fetch(`./data/${model}/${component}/obs_types/${filename}`, {
                     cache: "no-store",
                 });
 
                 if (!res.ok) {
-                    setOzoneSats([]);
+                    setter([]);
                     return;
                 }
 
                 const json = await res.json();
-                setOzoneSats(Array.isArray(json) ? json : []);
+                setter(Array.isArray(json) ? json : []);
             } catch (err) {
-                console.error("Failed to load ozonesats.json:", err);
-                setOzoneSats([]);
+                console.error(`Failed to load ${label}:`, err);
+                setter([]);
             }
         };
 
-        loadOzoneSats();
-    }, [model]);
+        loadSatelliteFile("geostationarysats.json", setGeoSats, "geostationarysats");
+        loadSatelliteFile("infraredsats.json", setInfraSats, "infraredsats");
+        loadSatelliteFile("microwavesats.json", setMicroSats, "microwavesats");
+        loadSatelliteFile("ozonesats.json", setOzoneSats, "ozonesats");
+    }, [model, component]);
 
-
+    // Fetch anomalies for all satellite categories
     useEffect(() => {
-        if (!cycleTime || !model) return;
+        if (!cycleTime || !model || !component) return;
 
-        const fetchMicrowaveAnomalies = async () => {
-            for (const sat of microSats) {
-                const url = `./data/${model}/${component}/anomalyStatus_${sat.satKey}_${sat.instrument}_${cycleTime}.json`;
+        const fetchAnomaliesForCategory = async (category, satellites, pathPrefix = "anom_status") => {
+            for (const sat of satellites) {
+                const url = `./data/${model}/${component}/${pathPrefix}/anomalyStatus_${sat.satKey}_${sat.instrument}_${cycleTime}.json`;
                 try {
                     const res = await fetch(url);
                     const data = await (res.ok ? res.json() : Promise.resolve({}));
                     const values = Object.values(data);
                     const hasAnomaly = values.some(v => ["high_error", "low_counts", "missing", "all"].includes(v));
-                    reportAnomaly("microwave", sat.instrument, sat.satKey, hasAnomaly);
+                    reportAnomaly(category, sat.instrument, sat.satKey, hasAnomaly);
                 } catch {
-                    reportAnomaly("microwave", sat.instrument, sat.satKey, false);
+                    reportAnomaly(category, sat.instrument, sat.satKey, false);
                 }
             }
         };
 
-        fetchMicrowaveAnomalies();
-    }, [cycleTime, model, component, microSats]);
-
-    useEffect(() => {
-        if (!cycleTime || !model) return;
-
-        const fetchInfraredAnomalies = async () => {
-            for (const sat of infraSats) {
-                const url = `./data/${model}/${component}/anomalyStatus_${sat.satKey}_${sat.instrument}_${cycleTime}.json`;
-                try {
-                    const res = await fetch(url);
-                    const data = await (res.ok ? res.json() : Promise.resolve({}));
-                    const values = Object.values(data);
-                    const hasAnomaly = values.some(v => ["high_error", "low_counts", "missing", "all"].includes(v));
-                    reportAnomaly("infrared", sat.instrument, sat.satKey, hasAnomaly);
-                } catch {
-                    reportAnomaly("infrared", sat.instrument, sat.satKey, false);
-                }
-            }
-        };
-
-        fetchInfraredAnomalies();
-    }, [cycleTime, model, component, infraSats]);
-
-    useEffect(() => {
-        if (!cycleTime || !model) return;
-
-        const fetchGeostationaryAnomalies = async () => {
-            for (const sat of geoSats) {
-                const url = `./data/${model}/${component}/anomalyStatus_${sat.satKey}_${sat.instrument}_${cycleTime}.json`;
-                try {
-                    const res = await fetch(url);
-                    const data = await (res.ok ? res.json() : Promise.resolve({}));
-                    const values = Object.values(data);
-                    const hasAnomaly = values.some(v => ["high_error", "low_counts", "missing", "all"].includes(v));
-                    reportAnomaly("geostationary", sat.instrument, sat.satKey, hasAnomaly);
-                } catch {
-                    reportAnomaly("geostationary", sat.instrument, sat.satKey, false);
-                }
-            }
-        };
-
-        fetchGeostationaryAnomalies();
-    }, [cycleTime, model, component, geoSats]);
-
-    useEffect(() => {
-        if (!cycleTime || !model) return;
-
-        const fetchOzoneAnomalies = async () => {
-            for (const sat of ozoneSats) {
-                const url = `./data/${model}/${component}/anomalyStatus_${sat.satKey}_${sat.instrument}_${cycleTime}.json`;
-                try {
-                    const res = await fetch(url);
-                    const data = await (res.ok ? res.json() : Promise.resolve({}));
-                    const values = Object.values(data);
-                    const hasAnomaly = values.some(v => ["high_error", "low_counts", "missing", "all"].includes(v));
-                    reportAnomaly("ozone", sat.instrument, sat.satKey, hasAnomaly);
-                } catch {
-                    reportAnomaly("ozone", sat.instrument, sat.satKey, false);
-                }
-            }
-        };
-
-        fetchOzoneAnomalies();
-    }, [cycleTime, model, component, ozoneSats]);
+        fetchAnomaliesForCategory("microwave", microSats);
+        fetchAnomaliesForCategory("infrared", infraSats);
+        fetchAnomaliesForCategory("geostationary", geoSats);
+        fetchAnomaliesForCategory("ozone", ozoneSats);
+    }, [cycleTime, model, component, microSats, infraSats, geoSats, ozoneSats]);
 
     return (
         <ModelContext.Provider

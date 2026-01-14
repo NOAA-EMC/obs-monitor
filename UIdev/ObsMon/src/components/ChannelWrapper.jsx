@@ -2,33 +2,24 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { withBase } from "../utils/paths.js";
 import { ABI, AHI, AMSUA, ATMS, CrIS, IASI, MHS, SSMIS, OMI, OMPSNP, OMPSTC8 } from "../data/channels";
-import { useCycle } from "./useCycle";
+import { useModel } from "./ModelContext.jsx";
+import { useFileExists } from "../hooks/useFileExists.js";
 
 function ChannelWrapper() {
     const { type, satellite, instrument, channelNumber } = useParams();
-    const [fileExists, setFileExists] = useState(null);
     const [filePath, setFilePath] = useState("");
-    const cycle = useCycle();
+    const { model, component, cycleTime } = useModel();
+    const fileExists = useFileExists(filePath);
 
     const instruments = { ABI, AHI, AMSUA, ATMS, CrIS, IASI, MHS, SSMIS, OMI, OMPSNP, OMPSTC8 };
     const instrumentData = instruments[instrument];
 
     useEffect(() => {
-        if (satellite && instrument && channelNumber && type && cycle) {
-            const file = `pngs/${type.toLowerCase()}/${instrument.toLowerCase()}_${satellite.toLowerCase()}_chan${channelNumber}_${cycle}.png`;
-            console.log("Checking file:", file);
+        if (satellite && instrument && channelNumber && type && cycleTime) {
+            const file = `data/${model}/${component}/${type.toLowerCase()}/${instrument.toLowerCase()}/${satellite.toLowerCase()}/${instrument.toLowerCase()}_${satellite.toLowerCase()}_chan_${channelNumber}_${cycleTime}.png`;
             setFilePath(file);
-
-            fetch(withBase(`/utils/checkfile.php?file=${encodeURIComponent(file)}`))
-                .then(res => res.text())
-                .then(text => {
-                    setFileExists(text.trim() === "true");
-                })
-                .catch(() => {
-                    setFileExists(false);
-                });
         }
-    }, [satellite, instrument, channelNumber, type, cycle]);
+    }, [satellite, instrument, channelNumber, type, cycleTime, model, component]);
 
     if (!instrumentData) {
         return (
@@ -52,7 +43,7 @@ function ChannelWrapper() {
             {fileExists === null && <p>Checking for image...</p>}
             {fileExists === true && (
                 <img
-                    src={withBase(`/${filePath}`)}
+                    src={withBase(filePath)}
                     alt={`${instrument}_${satellite} channel ${channelNumber}`}
                     className="mt-4 max-w-full border rounded shadow"
                 />

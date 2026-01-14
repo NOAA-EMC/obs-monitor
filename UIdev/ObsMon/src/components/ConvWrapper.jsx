@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { withBase } from "../utils/paths.js";
-import { useCycle } from "./useCycle";
+import { useModel } from "./ModelContext.jsx";
+import { useFileExists } from "../hooks/useFileExists.js";
 
 export default function UnifiedWrapper() {
     const { type, key } = useParams();
-    const [fileExists, setFileExists] = useState(null);  // null = checking
     const [filePath, setFilePath] = useState("");
-    const cycle = useCycle();
+    const { model, component, cycleTime } = useModel();
+    const fileExists = useFileExists(filePath);
 
     const titleMap = {
         q: "Q Data Time Series Page",
@@ -18,20 +19,11 @@ export default function UnifiedWrapper() {
     };
 
     useEffect(() => {
-        if (type && key && cycle) {
-            const file = `pngs/conv/${type}${key}_count_region1_lev1.${cycle}.png`;
+        if (type && key && cycleTime) {
+            const file = `data/${model}/${component}/conv/${type}/${type}${key}_count_region1_lev1.${cycleTime}.png`;
             setFilePath(file);
-
-            fetch(withBase(`/utils/checkfile.php?file=${encodeURIComponent(file)}`))
-                .then(res => res.text())
-                .then(text => {
-                    setFileExists(text.trim() === "true");
-                })
-                .catch(() => {
-                    setFileExists(false);
-                });
         }
-    }, [type, key, cycle]);
+    }, [type, key, cycleTime, model, component]);
 
     return (
         <div className="p-4">
@@ -47,7 +39,7 @@ export default function UnifiedWrapper() {
             {fileExists === true && (
 
                 <img
-                    src={withBase(`/${filePath}`)}
+                    src={withBase(filePath)}
                     alt={`${type}${key} plot`}
                     className="mt-4 max-w-full border rounded shadow"
                 />
