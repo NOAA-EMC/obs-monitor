@@ -314,6 +314,20 @@ def find_matching_nc_files_for_times(cfg: MonitoringConfig, expected_times: list
             logger.warning(f"Expected directory does not exist: {run_dir}")
             continue
 
+        # Check for archive
+        archive_name = f"gdas.t{cyc_str}z.{cfg.component}_analysis.ioda_hofx_stats.tar.gz"
+        archive_path = run_dir / archive_name
+        
+        if archive_path.exists():
+            logger.info(f"Found archive: {archive_path}, extracting...")
+            try:
+                import tarfile
+                with tarfile.open(archive_path, "r:gz") as tar:
+                    tar.extractall(path=run_dir)
+                logger.info(f"Archive extracted into {run_dir}")
+            except Exception as e:
+                logger.error(f"Failed to extract {archive_path}: {e}")
+
         if getattr(cfg, "filename_template", None):
             expected_name = dt.strftime(cfg.filename_template)
             f = run_dir / expected_name
