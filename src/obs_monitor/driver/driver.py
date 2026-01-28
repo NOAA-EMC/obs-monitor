@@ -29,6 +29,7 @@ import subprocess
 import yaml
 import re
 import csv
+import tarfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from multiprocessing import Pool, cpu_count
@@ -288,22 +289,27 @@ def build_expected_times_for_window(t_end: datetime, interval_hours: int, cycles
     return [t_start + i * interval for i in range(cycles)]
 
 
-def find_matching_nc_files_for_times(cfg: MonitoringConfig, expected_times: list[datetime], logger):
+def find_matching_inputs_for_times(
+    cfg: MonitoringConfig,
+    expected_times: list[datetime],
+    logger,
+    window_dir: Path,
+):
     """
-    Scan DATAROOT for NetCDF files matching the given expected_times for one window.
+    Scan DATAROOT for tarball files matching the given expected_times for one window.
 
     Returns:
-        (nc_files, expected_times, found_times)
-        List[Path], List[datetime], List[datetime]
+        (tarballs, expected_times, found_times)
     """
-    nc_files = []
+    tarballs_in_runtime = []
     found_times = []
-    pattern = f"{cfg.ob_type}_*.nc"
 
     logger.info(
-        f"[{cfg.ob_type}] Window search from {expected_times[0]} to {expected_times[-1]} "
+        f"[{cfg.ob_type}] Window search (tarballs) from {expected_times[0]} to {expected_times[-1]} "
         f"({len(expected_times)} timestamps)"
     )
+
+    window_dir.mkdir(parents=True, exist_ok=True)
 
     for dt in expected_times:
         pdy_str = dt.strftime("%Y%m%d")  # gdas.PDY directory
@@ -314,32 +320,103 @@ def find_matching_nc_files_for_times(cfg: MonitoringConfig, expected_times: list
             logger.warning(f"Expected directory does not exist: {run_dir}")
             continue
 
-        # Check for archive
         archive_name = f"gdas.t{cyc_str}z.{cfg.component}_analysis.ioda_hofx_stats.tar.gz"
         archive_path = run_dir / archive_name
-        
+
         if archive_path.exists():
-            logger.info(f"Found archive: {archive_path}, extracting...")
+            logger.info(
+                f"[{cfg.ob_type}] Found tarball for expected cycle "
+                f"{dt.strftime('%Y%m%d%H')}: {archive_path}"
+            )
             try:
-                import tarfile
-                with tarfile.open(archive_path, "r:gz") as tar:
-                    tar.extractall(path=run_dir)
-                logger.info(f"Archive extracted into {run_dir}")
-            except Exception as e:
-                logger.error(f"Failed to extract {archive_path}: {e}")
-
-        if getattr(cfg, "filename_template", None):
-            expected_name = dt.strftime(cfg.filename_template)
-            f = run_dir / expected_name
-            if f.exists():
-                nc_files.append(f)
+                dest_archive = window_dir / archive_path.name
+                shutil.copy2(archive_path, dest_archive)
+                logger.info(
+                    f"[{cfg.ob_type}] Copied tarball to runtime: {archive_path} -> {dest_archive}"
+                )
+                tarballs_in_runtime.append(dest_archive)
                 found_times.append(dt)
-            else:
-                logger.warning(f"Missing expected file {f}")
-            continue
+            except Exception as e:
+                logger.error(
+                    f"[{cfg.ob_type}] Failed to copy tarball {archive_path} to {window_dir}: {e}"
+                )
+        else:
+            logger.warning(
+                f"[{cfg.ob_type}] No tarball found for expected cycle "
+                f"{dt.strftime('%Y%m%d%H')} in {run_dir}"
+            )
 
+    logger.info(
+        f"[{cfg.ob_type}] Staged {len(tarballs_in_runtime)} tarball(s) into runtime for window ending "
+        f"{expected_times[-1]}"
+    )
+
+    return sorted(tarballs_in_runtime), expected_times, found_times
+
+
+def extract_tarballs_and_find_nc_for_times(
+    cfg: MonitoringConfig,
+    tarballs_in_runtime: list[Path],
+    expected_times: list[datetime],
+    logger,
+    window_dir: Path,
+):
+    """
+    In the runtime directory:
+      - Extract all tarballs.
+      - (Optional) Remove tarballs after extraction.
+      - Remove .nc files that do not belong to this ob_type.
+      - Scan for .nc files for each expected cycle.
+
+    Returns:
+        (nc_files, expected_times, found_times_nc)
+        List[Path], List[datetime], List[datetime]
+    """
+    # 1) Extract all tarballs into window_dir
+    for tar_path in tarballs_in_runtime:
+        try:
+            logger.info(f"[{cfg.ob_type}] Extracting tarball in runtime: {tar_path}")
+            with tarfile.open(tar_path, "r:gz") as tar:
+                tar.extractall(path=window_dir)
+        except Exception as e:
+            logger.error(f"[{cfg.ob_type}] Failed to extract {tar_path}: {e}")
+
+    # 1b) OPTIONAL: remove tarballs after extraction to reduce clutter/space
+    # Comment out if you want to keep them for debugging.
+    for tar_path in tarballs_in_runtime:
+        try:
+            tar_path.unlink()
+            logger.info(f"[{cfg.ob_type}] Removed tarball from runtime: {tar_path.name}")
+        except Exception as e:
+            logger.warning(f"[{cfg.ob_type}] Could not remove tarball {tar_path.name}: {e}")
+
+    # 1c) Cleanup: remove unrelated NetCDF files extracted from the tarballs
+    # Keep only files starting with "<ob_type>_" (e.g., "prepbufr_adpsfc_")
+    keep_prefix = f"{cfg.ob_type}_"
+    removed = 0
+    for nc in window_dir.glob("*.nc"):
+        if not nc.name.startswith(keep_prefix):
+            try:
+                nc.unlink()
+                removed += 1
+            except Exception as e:
+                logger.warning(f"[{cfg.ob_type}] Failed to remove unrelated file {nc.name}: {e}")
+    if removed:
+        logger.info(f"[{cfg.ob_type}] Removed {removed} unrelated .nc file(s) from runtime dir")
+
+    # 2) After extraction + cleanup, search for .nc files per expected cycle
+    nc_files = []
+    found_times = []
+    pattern = f"{cfg.ob_type}_*.nc"
+
+    logger.info(
+        f"[{cfg.ob_type}] Runtime search for .nc files from {expected_times[0]} to {expected_times[-1]} "
+        f"({len(expected_times)} timestamps) in {window_dir}"
+    )
+
+    for dt in expected_times:
         matched_files = []
-        for file in run_dir.glob(pattern):
+        for file in window_dir.glob(pattern):
             timestamp_str = extract_timestamp(file)
             if not timestamp_str:
                 logger.debug(f"No timestamp found in {file.name}, skipping")
@@ -351,35 +428,20 @@ def find_matching_nc_files_for_times(cfg: MonitoringConfig, expected_times: list
                 matched_files.append(file)
 
         if not matched_files:
-            logger.warning(f"No files found for expected cycle {dt.strftime('%Y%m%d%H')} in {run_dir}")
+            logger.warning(
+                f"[{cfg.ob_type}] No .nc files found for expected cycle "
+                f"{dt.strftime('%Y%m%d%H')} in {window_dir}"
+            )
         else:
             nc_files.extend(matched_files)
             found_times.append(dt)
 
-    logger.info(f"Found {len(nc_files)} files for window ending {expected_times[-1]}")
+    logger.info(
+        f"[{cfg.ob_type}] Found {len(nc_files)} .nc file(s) in runtime for window ending {expected_times[-1]}"
+    )
 
     return sorted(nc_files), expected_times, found_times
 
-
-def copy_nc_files_to_runtime(nc_files, cfg: MonitoringConfig, logger, dest_dir: Path):
-    """
-    Copy matched NetCDF files into `dest_dir`. Logs and continues on per-file errors.
-    """
-    dest_dir.mkdir(parents=True, exist_ok=True)
-    copied = 0
-    for file in nc_files:
-        try:
-            shutil.copy2(file, dest_dir / file.name)
-            copied += 1
-            logger.info(f"[{cfg.ob_type}] Copied: {file.name}")
-        except FileNotFoundError:
-            logger.warning(f"[{cfg.ob_type}] Source vanished before copy: {file}")
-        except PermissionError as e:
-            logger.error(f"[{cfg.ob_type}] Permission error copying {file}: {e}")
-        except Exception as e:
-            logger.error(f"[{cfg.ob_type}] Unexpected error copying {file}: {e}")
-    if copied == 0:
-        logger.warning(f"[{cfg.ob_type}] No files were copied into {dest_dir}")
 
 
 def generate_eva_config(cfg: MonitoringConfig, logger, runtime_dir: Path,
@@ -572,28 +634,38 @@ def run_monitoring_job(args):
         window_dir = cfg.runtime_dir / f"{t_end.strftime('%Y%m%d%H%M')}"
         window_dir.mkdir(parents=True, exist_ok=True)
 
-        # Discover files for this window
-        nc_files, expected_times, found_times = find_matching_nc_files_for_times(cfg, win_times, logger)
+        # 1) Discover tarballs in DATAROOT and copy them into runtime
+        tarballs_in_runtime, expected_times, found_tarball_times = find_matching_inputs_for_times(
+            cfg, win_times, logger, window_dir=window_dir)
+
+        # 2) Extract tarballs in runtime and discover actual .nc files per cycle
+        nc_files, _, found_times = extract_tarballs_and_find_nc_for_times(
+            cfg,
+            tarballs_in_runtime=tarballs_in_runtime,
+            expected_times=expected_times,
+            logger=logger,
+            window_dir=window_dir)
+
+        # 3) Now we can safely write coverage based on real .nc presence
         cov_str = write_coverage_report(expected_times, found_times, window_dir / "coverage.csv", logger)
 
         # Choose a reference real file (if any) for schema cloning
         ref_path = nc_files[0] if nc_files else None
 
-        # Optionally make stubs for missing cycles
+        # 4) Optionally make stubs for missing cycles
         if cfg.create_stubs and expected_times:
             missing = [dt for dt in expected_times if dt not in set(found_times)]
             if missing:
-                logger.info(f"[{cfg.ob_type}] Creating {len(missing)} stub files for missing cycles "
-                            f"(window end {t_end:%Y-%m-%d %H:%M})")
+                logger.info(
+                    f"[{cfg.ob_type}] Creating {len(missing)} stub files for missing cycles "
+                    f"(window end {t_end:%Y-%m-%d %H:%M})"
+                )
                 for dt in missing:
                     create_stub_for_missing_cycle(
                         cfg, dt, logger, reference_path=ref_path, output_dir=window_dir
                     )
 
-        # Stage real files into the window dir
-        copy_nc_files_to_runtime(nc_files, cfg, logger, dest_dir=window_dir)
-
-        # If the window dir has no inputs at all, skip EVA for this window
+        # 5) If the window dir has no inputs at all, skip EVA for this window
         if not any(window_dir.glob("*.nc")):
             logger.warning(
                 f"[{cfg.ob_type}] No inputs (.nc) in window dir {window_dir}. "
@@ -601,9 +673,11 @@ def run_monitoring_job(args):
             )
             return {"ob_type": cfg.ob_type, "status": "skipped_no_input", "coverage": cov_str}
 
-        # Generate and run EVA for this window
-        eva_config_path = generate_eva_config(cfg, logger, runtime_dir=window_dir,
-                                              win_start=win_start, win_end=t_end)
+        # 6) Generate and run EVA for this window
+        eva_config_path = generate_eva_config(
+            cfg, logger, runtime_dir=window_dir,
+            win_start=win_start, win_end=t_end
+        )
         ok_eva, err_eva = run_eva(cfg, eva_config_path, logger)
 
         # Always copy to COM (even if EVA failed, in case plots exist from partial work)
