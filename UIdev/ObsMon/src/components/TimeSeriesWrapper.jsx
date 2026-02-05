@@ -1,29 +1,21 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { withBase } from "../utils/paths.js";
-import { useCycle } from "./useCycle";
+import { useModel } from "./ModelContext.jsx";
+import { useFileExists } from "../hooks/useFileExists.js";
 
 function TimeSeriesWrapper() {
     const { type, satellite, instrument } = useParams();
-    const cycle = useCycle();
-    const [fileExists, setFileExists] = useState(null);
-
-    const file = (type && satellite && instrument && cycle)
-        ? `pngs/${type.toLowerCase()}/${instrument.toLowerCase()}_${satellite.toLowerCase()}_cnt_ts_${cycle}.png`
-        : "";
+    const { model, component, cycleTime } = useModel();
+    const [filePath, setFilePath] = useState("");
+    const fileExists = useFileExists(filePath);
 
     useEffect(() => {
-        if (file) {
-            fetch(withBase(`/utils/checkfile.php?file=${encodeURIComponent(file)}`))
-                .then(res => res.text())
-                .then(text => {
-                    setFileExists(text.trim() === "true");
-                })
-                .catch(() => {
-                    setFileExists(false);
-                });
+        if (type && satellite && instrument && cycleTime) {
+            const file = `data/${model}/${component}/${type.toLowerCase()}/${instrument.toLowerCase()}/${satellite.toLowerCase()}/${instrument.toLowerCase()}_${satellite.toLowerCase()}_time_${cycleTime}.png`;
+            setFilePath(file);
         }
-    }, [file]);
+    }, [type, satellite, instrument, cycleTime, model, component]);
 
     if (!satellite || !instrument) {
         return (
@@ -42,16 +34,16 @@ function TimeSeriesWrapper() {
                 Type: <strong>{type.toUpperCase()}</strong>
             </p>
             <p>
-                Cycle: <strong>{cycle || "Loading..."}</strong>
+                Cycle: <strong>{cycleTime || "Loading..."}</strong>
             </p>
             <p>
                 This is a time-series plot for <strong>{satellite.toUpperCase()}</strong> / <strong>{instrument}</strong>.
             </p>
 
-            {fileExists === null && <p>Checking for image... <code>{file}</code></p>}
+            {fileExists === null && <p>Checking for image... <code>{filePath}</code></p>}
             {fileExists === true && (
                 <img
-                    src={withBase(`/${file}`)}
+                    src={withBase(filePath)}
                     alt={`${satellite}_${instrument} summary`}
                     className="mt-4 max-w-full border rounded shadow"
                 />

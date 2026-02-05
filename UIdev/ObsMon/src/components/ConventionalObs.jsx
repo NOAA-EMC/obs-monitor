@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import TypeBlock from "./TypeBlock.jsx";
 import { withBase } from "../utils/paths.js";
+import { useModel } from "./ModelContext";
 
 export default function ConventionalObs({
     obsType,          // e.g., "gps", "ps", "q"
@@ -10,16 +11,22 @@ export default function ConventionalObs({
     openSection,
     toggleSection,
     navigate,
-    cycleTime
 }) {
+    const { model, component, cycleTime } = useModel();
     const [assimilationStatus, setAssimilationStatus] = useState({});
     const [anomalyStatus, setAnomalyStatus] = useState({});
     const [filter, setFilter] = useState("all");
 
     useEffect(() => {
+        if (!model || !cycleTime) return;
+
         const fetchStatus = async () => {
             try {
-                const res = await fetch(withBase(`data/assimilationStatus_${obsType}.json`));
+                const res = await fetch(
+                    withBase(`data/${model}/${component}/assim_status/assimilationStatus_${obsType}.json`),
+                    { cache: "no-store" }
+                );
+
                 if (!res.ok) throw new Error("Assimilation file missing");
                 const data = await res.json();
                 setAssimilationStatus(data);
@@ -29,7 +36,7 @@ export default function ConventionalObs({
             }
 
             try {
-                const res = await fetch(withBase(`data/anomalyStatus_${obsType}_${cycleTime}.json`));
+                const res = await fetch(withBase(`data/${model}/${component}/anom_status/anomalyStatus_${obsType}_${cycleTime}.json`));
                 if (!res.ok) throw new Error("Anomaly file missing");
                 const data = await res.json();
                 setAnomalyStatus(data);
@@ -42,7 +49,7 @@ export default function ConventionalObs({
         if (cycleTime) {
             fetchStatus();
         }
-    }, [obsType, cycleTime]);
+    }, [model, obsType, cycleTime]);
 
     const enrichedTypes = useMemo(() => {
         return typeList.map((entry) => {
@@ -68,6 +75,11 @@ export default function ConventionalObs({
     }, [enrichedTypes, filter]);
 
     const categoryHasAnomaly = enrichedTypes.some((t) => t.anomaly && t.anomaly !== "ok");
+
+    if (!model || typeList.length === 0) {
+        return null;
+    }
+
 
     return (
         <div className="mb-4">

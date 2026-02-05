@@ -15,9 +15,12 @@ export job="obsmon_driver"
 export jobid="${job}.$$"
 
 ###############################################################
+# Ensure the package root is importable
+export PYTHONPATH="${HOMEobsmon}/src:${PYTHONPATH:-}"
+
 # Execute the JJOB
-echo "Executing Python driver script"
-python "${HOMEobsmon}/driver/driver.py"
+echo "Executing Python driver module"
+python -m obs_monitor.driver.driver "$@"
 
 exit $?
 

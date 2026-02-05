@@ -201,53 +201,45 @@ def main() -> None:
     dataroot = Path(paths["dataroot"])
 
     # Path used by your downstream driver
-    config_yaml_for_driver = str(obsmondir / "driver" / "config.yaml")
+    config_yaml_for_driver = obsmondir / "src/obs_monitor/driver/config.yaml"
 
     # Output XML path
     output_path = expdir / f"{pslot}_obsmon_rocoto.xml"
 
-    # --- MULTI-COMPONENT RENDER: one XML per component (all are lowercase) ---
-    components = cfg["component_str"].split(",")  # e.g., ["atmos", "snow"]
-
-    # Load Jinja template once
+    # Load Jinja template
     env = Environment(loader=FileSystemLoader(str(obsmondir)))
     template = env.get_template("parm/monitor_rocoto_template.xml.j2")
 
-    for comp in components:
-        # Per-component output XML path
-        output_path = expdir / f"{pslot}_obsmon_{comp}_rocoto.xml"
-        output_path.parent.mkdir(parents=True, exist_ok=True)
+    output = template.render(
+        PSLOT=pslot,
+        COMPONENT=component_str,
+        HOMEobsmon=str(obsmondir),
+        COMROOT=str(comroot),
+        EXPDIR=str(expdir),
+        DATAROOT=str(dataroot),
+        RUNTIME_DIR=str(runtime_dir),
+        CONFIG_YAML=config_yaml_for_driver,
+        SCHEDULER=str(cfg["hpc"]["scheduler"]),
+        SDATE=str(cfg["start_date"]),
+        EDATE=str(cfg["end_date"]),
+        INTERVAL_HOURS=int(cfg["interval_hours"]),
+        ACCOUNT=str(cfg["hpc"]["account"]),
+        QUEUE=str(cfg["hpc"]["queue"]),
+        WALLTIME=str(cfg["resources"]["walltime"]),
+        TASK_NODES=str(cfg["resources"]["task_nodes"]),
+        TASK_MEM=str(cfg["resources"]["task_mem"]),
+        RUN=str(cfg["run"]),
+        COPY_DATA=bool(cfg["flags"]["copy_data"]),
+        KEEP_DATA=bool(cfg["flags"]["keep_data"]),
+        CREATE_STUBS=bool(cfg["flags"]["create_stubs"]),
+        CYCLES=cfg.get("cycles"),  # optional; included if present
+    )
 
-        # Render with COMPONENT bound to the single (lowercase) component
-        output = template.render(
-            PSLOT=pslot,
-            COMPONENT=comp,
-            HOMEobsmon=str(obsmondir),
-            COMROOT=str(comroot),
-            EXPDIR=str(expdir),
-            DATAROOT=str(dataroot),
-            RUNTIME_DIR=str(runtime_dir),
-            CONFIG_YAML=config_yaml_for_driver,
-            SCHEDULER=str(cfg["hpc"]["scheduler"]),
-            SDATE=str(cfg["start_date"]),
-            EDATE=str(cfg["end_date"]),
-            INTERVAL_HOURS=str(cfg["interval_hours"]),
-            ACCOUNT=str(cfg["hpc"]["account"]),
-            QUEUE=str(cfg["hpc"]["queue"]),
-            WALLTIME=str(cfg["resources"]["walltime"]),
-            TASK_NODES=str(cfg["resources"]["task_nodes"]),
-            TASK_MEM=str(cfg["resources"]["task_mem"]),
-            RUN=str(cfg["run"]),
-            COPY_DATA=bool(cfg["flags"]["copy_data"]),
-            KEEP_DATA=bool(cfg["flags"]["keep_data"]),
-            CREATE_STUBS=bool(cfg["flags"]["create_stubs"]),
-            CYCLES=cfg.get("cycles"),
-        )
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("w") as f:
+        f.write(output)
 
-        with output_path.open("w") as f:
-            f.write(output)
-
-        print(f"Wrote Rocoto workflow for component '{comp}' → {output_path}")
+    print(f"Rocoto workflow written to {output_path}")
 
 
 if __name__ == "__main__":

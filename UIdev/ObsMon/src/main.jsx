@@ -4,11 +4,15 @@ import { HashRouter } from 'react-router-dom';  // <-- use HashRouter instead of
 
 import App from "./App";
 import "./index.css";
+import { ModelProvider } from "./components/ModelContext";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <HashRouter>
-      <App />
+      <ModelProvider>
+        <App />
+      </ModelProvider>
     </HashRouter>
   </React.StrictMode>
 );
+71187118

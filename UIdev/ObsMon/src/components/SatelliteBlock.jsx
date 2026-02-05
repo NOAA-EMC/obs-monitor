@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useMemo } from "react";
-import { withBase } from '../utils/paths.js';
+import React, { useState, useMemo } from "react";
+import { useModel } from './ModelContext';
+import useStatusFetch from '../hooks/useStatusFetch';
 
 const getTextColor = (channel) => {
     if (!channel.assimilated) return "gray";
@@ -9,6 +10,7 @@ const getTextColor = (channel) => {
 };
 
 export default function SatelliteBlock({
+    model,
     satKey,
     displayName,
     instrument,
@@ -19,11 +21,8 @@ export default function SatelliteBlock({
     cycleTime,
     reportAnomalyStatus,
 }) {
-    const [assimilation, setAssimilation] = useState({});
-    const [anomaly, setAnomaly] = useState({});
-    const [statusAvailable, setStatusAvailable] = useState(true);
+    const { assimilation, anomaly, statusAvailable, allMissing } = useStatusFetch(satKey, instrument, cycleTime, model);
     const [filter, setFilter] = useState("all");
-    const [allMissing, setAllMissing] = useState(false);
 
     const satelliteTextColor = useMemo(() => {
         if (allMissing) return "red";
@@ -43,54 +42,7 @@ export default function SatelliteBlock({
         return "";  // No tooltip
     }, [anomaly, allMissing]);
 
-    useEffect(() => {
-        const fetchStatus = async () => {
-            const anomalyFile = `anomalyStatus_${satKey}_${instrument}_${cycleTime}.json`;
-            const assimFile = `assimilationStatus_${satKey}_${instrument}.json`;
 
-            try {
-                const anomalyRes = await fetch(withBase(`/data/${anomalyFile}`));
-                if (!anomalyRes.ok) {
-                    throw new Error(`Status file not found: ${anomalyFile}`);
-                }
-                const anomalyData = await anomalyRes.json();
-
-                setAllMissing(anomalyData.all === "missing");
-                setAnomaly(anomalyData);
-
-                const hasAnomaly =
-                    anomalyData.all === "missing" ||
-                    Object.values(anomalyData).some((v) => v !== "ok");
-
-                // Report using composite key here:
-                reportAnomalyStatus?.(`${satKey}_${instrument}`, hasAnomaly);
-            } catch (error) {
-                console.warn(`Using default empty anomalyStatus for ${satKey}_${instrument}`, error);
-                setAnomaly({});
-                setAllMissing(false);
-                reportAnomalyStatus?.(`${satKey}_${instrument}`, false);
-            }
-
-            try {
-                const assimRes = await fetch(withBase(`/data/${assimFile}`));
-                if (!assimRes.ok) {
-                    console.warn(`Missing assimilation file for ${satKey}/${instrument}`);
-                    setStatusAvailable(false);
-                    return;
-                }
-                const assimData = await assimRes.json();
-                setAssimilation(assimData);
-                setStatusAvailable(true);
-            } catch (error) {
-                console.error(`Error loading assimilation status for ${satKey}/${instrument}:`, error);
-                setStatusAvailable(false);
-            }
-        };
-
-        if (cycleTime) {
-            fetchStatus();
-        }
-    }, [satKey, instrument, cycleTime, reportAnomalyStatus]);
 
     const enrichedChannels = useMemo(() => {
         return channels.map((id) => ({

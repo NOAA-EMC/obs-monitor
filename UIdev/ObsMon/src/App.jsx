@@ -4,18 +4,26 @@ import { Menu } from "lucide-react"; // hamburger icon
 import { ABI, AHI, AMSUA, ATMS, CrIS, IASI, MHS, SSMIS, OMI, OMPSNP, OMPSTC8 } from "./data/channels.js";
 import MainContent from "./MainContent.jsx";
 import { withBase } from './utils/paths.js';
+import { ATMOS_TYPES } from "./data/atmosTypes.js";
+import { CONVENTIONAL_TYPES } from "./data/conventionalTypes.js";
+import { useModel } from './components/ModelContext.jsx';
 
 import RadianceCategory from './components/RadianceCategory.jsx';
 import OzoneObs from './components/OzoneObs.jsx';
 import ConventionalObs from './components/ConventionalObs.jsx';
 
+
 function App() {
+
   const navigate = useNavigate();
+  const { model, setModel, component, setComponent, cycleTime } = useModel();
 
   const go = (to) => {
     navigate(to);
     if (window.innerWidth < 1024) setSidebarOpen(false); // only close on mobile/tablet
   };
+
+  const [modelsConfig, setModelsConfig] = useState(null);
 
   // Sidebar toggle for mobile
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -32,66 +40,66 @@ function App() {
   const [qTypes, setQTypes] = useState([]);
   const [tTypes, setTTypes] = useState([]);
   const [uvTypes, setUvTypes] = useState([]);
+
   const [config, setConfig] = useState(null);
 
-  const [cycleTime, setCycleTime] = useState(null);
   const previousCycle = useRef(null);
 
-  // --- fetch data (unchanged) ---
+  const satSetters = {
+    microwave: setMicrowaveSatellites,
+    infrared: setInfraredSatellites,
+    geostationary: setGeostationarySatellites,
+    ozone: setOzoneSatellites
+  };
+
+  const convSetters = {
+    gpstype: setGpsTypes,
+    pstype: setPsTypes,
+    qtype: setQTypes,
+    ttype: setTTypes,
+    uvtype: setUvTypes
+  }
+
+  // Helper to load data files for a given type mapping
+  const loadDataFiles = async (typeMap, setterMap) => {
+    Object.entries(typeMap).forEach(async ([type, { file, stateKey }]) => {
+      const setter = setterMap[stateKey];
+      if (!setter) {
+        console.error(`No setter found for stateKey="${stateKey}"`);
+        return;
+      }
+
+      const url = withBase(`data/${model}/${component}/obs_types/${file}`);
+      try {
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) throw new Error(res.statusText);
+        setter(await res.json());
+      } catch (err) {
+        console.error(`Failed to load ${file} for model ${model}`, err);
+        setter([]);
+      }
+    });
+  };
+
   useEffect(() => {
-    fetch(withBase('data/gpstypes.json'), { cache: 'no-store' })
+    fetch(withBase("data/models.json"), { cache: "no-store" })
       .then(res => res.json())
-      .then(data => setGpsTypes(data))
-      .catch(err => console.error("Failed to load gpsTypes:", err));
+      .then(data => setModelsConfig(data))
+      .catch(err => console.error("Failed to load models.json:", err));
   }, []);
+
   useEffect(() => {
-    fetch(withBase('data/pstypes.json'), { cache: 'no-store' })
-      .then(res => res.json())
-      .then(data => setPsTypes(data))
-      .catch(err => console.error("Failed to load psTypes:", err));
-  }, []);
-  useEffect(() => {
-    fetch(withBase('data/qtypes.json'), { cache: 'no-store' })
-      .then(res => res.json())
-      .then(data => setQTypes(data))
-      .catch(err => console.error("Failed to load qTypes:", err));
-  }, []);
-  useEffect(() => {
-    fetch(withBase('data/ttypes.json'), { cache: 'no-store' })
-      .then(res => res.json())
-      .then(data => setTTypes(data))
-      .catch(err => console.error("Failed to load tTypes:", err));
-  }, []);
-  useEffect(() => {
-    fetch(withBase('data/uvtypes.json'), { cache: 'no-store' })
-      .then(res => res.json())
-      .then(data => setUvTypes(data))
-      .catch(err => console.error("Failed to load uvTypes:", err));
-  }, []);
-  useEffect(() => {
-    fetch(withBase('data/ozonesats.json'), { cache: 'no-store' })
-      .then(res => res.json())
-      .then(data => setOzoneSatellites(data))
-      .catch(err => console.error("Failed to load ozoneSatellites:", err));
-  }, []);
-  useEffect(() => {
-    fetch(withBase('data/microwavesats.json'), { cache: 'no-store' })
-      .then(res => res.json())
-      .then(data => setMicrowaveSatellites(data))
-      .catch(err => console.error("Failed to load microwaveSatellites:", err));
-  }, []);
-  useEffect(() => {
-    fetch(withBase('data/infraredsats.json'), { cache: 'no-store' })
-      .then(res => res.json())
-      .then(data => setInfraredSatellites(data))
-      .catch(err => console.error("Failed to load infraredSatellites:", err));
-  }, []);
-  useEffect(() => {
-    fetch(withBase('data/geostationarysats.json'), { cache: 'no-store' })
-      .then(res => res.json())
-      .then(data => setGeostationarySatellites(data))
-      .catch(err => console.error("Failed to load geostationarySatellites:", err));
-  }, []);
+    if (!model || !component) {
+      Object.values(satSetters).forEach(setter => setter([]));
+      Object.values(convSetters).forEach(setter => setter([]));
+      return;
+    }
+
+    loadDataFiles(ATMOS_TYPES, satSetters);
+    loadDataFiles(CONVENTIONAL_TYPES, convSetters);
+  }, [model, component]);
+
+
   useEffect(() => {
     fetch(withBase("data/configIndex.json"))
       .then(res => {
@@ -102,33 +110,6 @@ function App() {
       .catch(err => console.error("Failed to load configIndex.json:", err));
   }, []);
 
-  // cycle fetch
-  useEffect(() => {
-    const fetchCycle = async () => {
-      try {
-        const res = await fetch(withBase('data/currentCycle.json'), { cache: 'no-store' });
-        const json = await res.json();
-        if (json.cycleTime && json.cycleTime !== previousCycle.current) {
-          setCycleTime(json.cycleTime);
-          previousCycle.current = json.cycleTime;
-        }
-      } catch (error) {
-        console.error('Failed to load current cycle:', error);
-      }
-    };
-
-    fetchCycle();
-    const interval = setInterval(fetchCycle, 300000); // 5 min
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') fetchCycle();
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => {
-      clearInterval(interval);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, []);
-
   const toggleSection = (name) => {
     setOpenSection(openSection === name ? null : name);
   };
@@ -136,6 +117,11 @@ function App() {
   const toggleSat = (name) => {
     setOpenSat(openSat === name ? null : name);
   };
+
+  const availableComponents =
+    model && modelsConfig?.components
+      ? modelsConfig.components[model] || []
+      : [];
 
   // --- LAYOUT ---
   return (
@@ -148,7 +134,6 @@ function App() {
     lg:relative lg:translate-x-0 lg:w-64 z-50`}
       >
 
-
         <h1 className="text-lg font-bold mb-4 text-center">
           <span className="underline block">Monitoring Dashboard</span>
           {config?.name && (
@@ -156,69 +141,130 @@ function App() {
           )}
         </h1>
 
-        <p className="text-base text-black mb-4 text-center">
-          Current Cycle: {cycleTime || "Loading..."}
-        </p>
+        {/* Model / Component selectors */}
+        {modelsConfig && (
+          <div className="mb-6 p-3 bg-white rounded shadow-sm">
+            <h2 className="font-semibold text-sm mb-2 text-gray-700">
+              Model Selection
+            </h2>
 
-        {geostationarySatellites.length > 0 && (
-          <RadianceCategory
-            sectionKey="geo"
-            label="Geostationary Radiance"
-            satelliteList={geostationarySatellites}
-            channelMap={{ ABI: ABI.channels, AHI: AHI.channels }}
-            openSection={openSection}
-            toggleSection={toggleSection}
-            openSat={openSat}
-            toggleSat={toggleSat}
-            navigate={go}
-            cycleTime={cycleTime}
-          />
-        )}
+            {/* Model selector */}
+            <label className="block text-xs text-gray-600 mb-1">
+              Model
+            </label>
+            <select
+              className="custom-menu-category"
+              value={model || ""}
+              onChange={(e) => {
+                setModel(e.target.value || null);
+                setComponent(null); // reset component when model changes
+              }}
+            >
+              <option value="">Select model…</option>
+              {modelsConfig.models.map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+            </select>
 
-        {infraredSatellites.length > 0 && (
-          <RadianceCategory
-            sectionKey="inf"
-            label="Infrared Obs"
-            satelliteList={infraredSatellites}
-            channelMap={{ CrIS: CrIS.channels, IASI: IASI.channels }}
-            openSection={openSection}
-            toggleSection={toggleSection}
-            openSat={openSat}
-            toggleSat={toggleSat}
-            navigate={go}
-            cycleTime={cycleTime}
-          />
-        )}
+            {/* Component selector */}
+            <label className="block text-xs text-gray-600 mb-1">
+              Component
+            </label>
+            <select
+              className='custom-menu-category'
+              value={component || ""}
+              onChange={(e) => setComponent(e.target.value || null)}
+              disabled={!model}
+            >
+              {availableComponents.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
 
-        {microwaveSatellites.length > 0 && (
-          <RadianceCategory
-            sectionKey="mic"
-            label="Microwave Observations"
-            satelliteList={microwaveSatellites}
-            channelMap={{ AMSUA: AMSUA.channels, ATMS: ATMS.channels, MHS: MHS.channels, SSMIS: SSMIS.channels }}
-            openSection={openSection}
-            toggleSection={toggleSection}
-            openSat={openSat}
-            toggleSat={toggleSat}
-            navigate={go}
-            cycleTime={cycleTime}
-          />
-        )}
+            {/* Cycle time */}
+            <p className="text-base text-gray-900 font-medium mt-3">
+              Cycle: &nbsp;&nbsp; {cycleTime || "Loading..."}
+            </p>
+          </div>
 
-        {ozoneSatellites.length > 0 && (
-          <OzoneObs
-            sectionKey="ozn"
-            label="Ozone Observations"
-            openSection={openSection}
-            toggleSection={toggleSection}
-            openSat={openSat}
-            toggleSat={toggleSat}
-            navigate={go}
-            ozoneSatellites={ozoneSatellites}
-            channelMap={{ OMI: OMI.channels, OMPSNP: OMPSNP.channels, OMPSTC8: OMPSTC8.channels }}
-            cycleTime={cycleTime}
-          />
-        )}
+        )
+        }
+
+        {
+          geostationarySatellites.length > 0 && (
+            <RadianceCategory
+              sectionKey="geostationary"
+              label="Geostationary Radiance"
+              satelliteList={geostationarySatellites}
+              channelMap={{ ABI: ABI.channels, AHI: AHI.channels }}
+              openSection={openSection}
+              toggleSection={toggleSection}
+              openSat={openSat}
+              toggleSat={toggleSat}
+              navigate={go}
+              cycleTime={cycleTime}
+              selectedModel={model}
+            />
+          )
+        }
+
+        {
+          infraredSatellites.length > 0 && (
+            <RadianceCategory
+              sectionKey="infrared"
+              label="Infrared Obs"
+              satelliteList={infraredSatellites}
+              channelMap={{ CrIS: CrIS.channels, IASI: IASI.channels }}
+              openSection={openSection}
+              toggleSection={toggleSection}
+              openSat={openSat}
+              toggleSat={toggleSat}
+              navigate={go}
+              cycleTime={cycleTime}
+              selectedModel={model}
+            />
+          )
+        }
+
+        {
+          microwaveSatellites.length > 0 && (
+            <RadianceCategory
+              sectionKey="microwave"
+              label="Microwave Observations"
+              satelliteList={microwaveSatellites}
+              channelMap={{ AMSUA: AMSUA.channels, ATMS: ATMS.channels, MHS: MHS.channels, SSMIS: SSMIS.channels }}
+              openSection={openSection}
+              toggleSection={toggleSection}
+              openSat={openSat}
+              toggleSat={toggleSat}
+              navigate={go}
+              cycleTime={cycleTime}
+              selectedModel={model}
+            />
+          )
+        }
+
+        {
+          ozoneSatellites.length > 0 && (
+            <OzoneObs
+              sectionKey="ozone"
+              label="Ozone Observations"
+              openSection={openSection}
+              toggleSection={toggleSection}
+              openSat={openSat}
+              toggleSat={toggleSat}
+              navigate={go}
+              ozoneSatellites={ozoneSatellites}
+              channelMap={{ OMI: OMI.channels, OMPSNP: OMPSNP.channels, OMPSTC8: OMPSTC8.channels }}
+              cycleTime={cycleTime}
+              selectedModel={model}
+            />
+          )
+        }
 
         <ConventionalObs
           obsType="gps"
@@ -228,7 +274,6 @@ function App() {
           openSection={openSection}
           toggleSection={toggleSection}
           navigate={go}
-          cycleTime={cycleTime}
         />
         <ConventionalObs
           obsType="ps"
@@ -238,7 +283,6 @@ function App() {
           openSection={openSection}
           toggleSection={toggleSection}
           navigate={go}
-          cycleTime={cycleTime}
         />
         <ConventionalObs
           obsType="q"
@@ -248,7 +292,6 @@ function App() {
           openSection={openSection}
           toggleSection={toggleSection}
           navigate={go}
-          cycleTime={cycleTime}
         />
         <ConventionalObs
           obsType="t"
@@ -258,7 +301,6 @@ function App() {
           openSection={openSection}
           toggleSection={toggleSection}
           navigate={go}
-          cycleTime={cycleTime}
         />
         <ConventionalObs
           obsType="uv"
@@ -268,9 +310,8 @@ function App() {
           openSection={openSection}
           toggleSection={toggleSection}
           navigate={go}
-          cycleTime={cycleTime}
         />
-      </aside>
+      </aside >
 
       {sidebarOpen && (
         <div
@@ -305,7 +346,7 @@ function App() {
           © 2025 ObsMon Dashboard
         </footer>
       </main>
-    </div>
+    </div >
   );
 }
 
