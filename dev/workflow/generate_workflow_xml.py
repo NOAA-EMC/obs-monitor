@@ -193,7 +193,8 @@ def main() -> None:
     pslot = cfg["pslot"]
     component_str = cfg["component_str"]
     paths = cfg["paths"]
-
+    machine_id = cfg["machine_id"]
+    
     obsmondir = Path(paths["obsmondir"])
     expdir = Path(paths["expdir"])
     runtime_dir = Path(paths["rundir"])
@@ -233,6 +234,8 @@ def main() -> None:
         KEEP_DATA=bool(cfg["flags"]["keep_data"]),
         CREATE_STUBS=bool(cfg["flags"]["create_stubs"]),
         CYCLES=cfg.get("cycles"),  # optional; included if present
+        NATIVE=str(cfg["resources"]["native"]),
+        MACHINE_ID=machine_id
     )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)

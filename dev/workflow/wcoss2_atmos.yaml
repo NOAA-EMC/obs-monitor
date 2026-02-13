@@ -1,0 +1,33 @@
+pslot: "obsmon_gdas_atmos"
+component: "atmos, ocean"   # list or comma-separated string both ok
+start_date: "202512170000"
+end_date: "202512181800"
+interval_hours: 6
+cycles: 4
+machine_id: "wcoss2"
+
+paths:
+  obsmondir: "/lfs/h2/emc/da/noscrub/edward.safford/git/obs-monitor"
+  expdir: "/lfs/h2/emc/da/noscrub/edward.safford/obsmon_exp"
+  rundir: "/lfs/h2/emc/da/noscrub/edward.safford/obsmon_runtime"
+  comroot: "/lfs/h2/emc/da/noscrub/edward.safford/obsmon_save"
+  dataroot: "/lfs/h2/emc/da/noscrub/edward.safford/data_root"
+
+run: "gdas"
+
+hpc:
+  account: "GFS-DEV"
+  queue: "dev"
+  scheduler: "pbspro"
+
+resources:
+  walltime: "00:15:00"
+  task_nodes: "1"
+  task_nodes: "1:ppn=1:tpp=1"
+  task_mem: "4G"
+  native: "-l select=1:ncpus=1:mem=4GB"
+
+flags:
+  copy_data: false
+  keep_data: True
+  create_stubs: True
