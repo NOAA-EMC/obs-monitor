@@ -1,17 +1,17 @@
-pslot: "obsmon_gdas_atmos"
-component: "atmos, ocean"   # list or comma-separated string both ok
-start_date: "202512170000"
-end_date: "202512181800"
+pslot: "prjedi"
+component: "atmos"   # list or comma-separated string both ok
+start_date: "202602161200"
+end_date: "202602170000"
 interval_hours: 6
-cycles: 4
+cycles: 5
 machine_id: "wcoss2"
 
 paths:
   obsmondir: "/lfs/h2/emc/da/noscrub/edward.safford/git/obs-monitor"
-  expdir: "/lfs/h2/emc/da/noscrub/edward.safford/obsmon_exp"
-  rundir: "/lfs/h2/emc/da/noscrub/edward.safford/obsmon_runtime"
-  comroot: "/lfs/h2/emc/da/noscrub/edward.safford/obsmon_save"
-  dataroot: "/lfs/h2/emc/da/noscrub/edward.safford/data_root"
+  expdir: "/lfs/h2/emc/da/noscrub/edward.safford/prjedi_exp"
+  rundir: "/lfs/h2/emc/da/noscrub/edward.safford/prjedi_runtime"
+  comroot: "/lfs/h2/emc/da/noscrub/edward.safford/prjedi_save"
+  dataroot: "/lfs/h2/emc/da/noscrub/russ.treadon/COMROOT/prjedi/"
 
 run: "gdas"
 
