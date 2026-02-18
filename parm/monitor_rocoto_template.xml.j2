@@ -5,6 +5,8 @@
   <!ENTITY HOMEobsmon "{{ HOMEobsmon }}">
   <!ENTITY COMROOT "{{ COMROOT }}">
   <!ENTITY DATAROOT "{{ DATAROOT }}">
+  <!ENTITY RUN "{{ RUN }}">
+  <!ENTITY COMPONENT "{{ COMPONENT }}">
 ]>
 
 <workflow realtime="F" scheduler="{{ SCHEDULER }}" cyclethrottle="1" taskthrottle="10">
@@ -49,6 +51,12 @@
     <envar><name>COPY_DATA</name><value>{{ COPY_DATA }}</value></envar>
     <envar><name>KEEP_DATA</name><value>{{ KEEP_DATA }}</value></envar>
     <envar><name>CREATE_STUBS</name><value>{{ CREATE_STUBS }}</value></envar>
+
+    <dependency>
+    <datadep age="00:10:00" minsize="1K">
+	<cyclestr>&DATAROOT;/&RUN;.@Y@m@d/@H/products/&COMPONENT;/anlmon/&RUN;.t@Hz.&COMPONENT;_stats.txt</cyclestr>
+    </datadep>
+  </dependency>
     
   </task>
   
