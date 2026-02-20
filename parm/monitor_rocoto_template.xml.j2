@@ -22,11 +22,13 @@
     <walltime>{{ WALLTIME }}</walltime>
     <nodes>{{ TASK_NODES }}</nodes>
     <memory>{{ TASK_MEM }}</memory>
-    <native>{{ NATIVE }}</native>
+    <native>{{ NATIVE|default('--export=NONE') }}</native>
 
     <join><cyclestr>&COMROOT;/&PSLOT;/logs/@Y@m@d@H/obsmon_driver.log</cyclestr></join>
 
+    {% if MACHINE_ID is defined and MACHINE_ID %}
     <envar><name>MACHINE_ID</name><value>{{ MACHINE_ID }}</value></envar>
+    {% endif %}
     <envar><name>PSLOT</name><value>&PSLOT;</value></envar>
     <envar><name>COMPONENT</name><value>{{ COMPONENT }}</value></envar>
     <envar><name>HOMEobsmon</name><value>&HOMEobsmon;</value></envar>
