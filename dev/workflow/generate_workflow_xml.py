@@ -229,6 +229,7 @@ def main() -> None:
         "WALLTIME": str(cfg["resources"]["walltime"]),
         "TASK_NODES": str(cfg["resources"]["task_nodes"]),
         "TASK_MEM": str(cfg["resources"]["task_mem"]),
+        "NATIVE": str(cfg.get("resources", {}).get("native", "--export=NONE")),
         "RUN": str(cfg["run"]),
         "COPY_DATA": bool(cfg["flags"]["copy_data"]),
         "KEEP_DATA": bool(cfg["flags"]["keep_data"]),
