@@ -193,7 +193,7 @@ def main() -> None:
     pslot = cfg["pslot"]
     component_str = cfg["component_str"]
     paths = cfg["paths"]
-    machine_id = cfg["machine_id"]
+    machine_id = cfg.get("machine_id")
     
     obsmondir = Path(paths["obsmondir"])
     expdir = Path(paths["expdir"])
@@ -211,32 +211,36 @@ def main() -> None:
     env = Environment(loader=FileSystemLoader(str(obsmondir)))
     template = env.get_template("parm/monitor_rocoto_template.xml.j2")
 
-    output = template.render(
-        PSLOT=pslot,
-        COMPONENT=component_str,
-        HOMEobsmon=str(obsmondir),
-        COMROOT=str(comroot),
-        EXPDIR=str(expdir),
-        DATAROOT=str(dataroot),
-        RUNTIME_DIR=str(runtime_dir),
-        CONFIG_YAML=config_yaml_for_driver,
-        SCHEDULER=str(cfg["hpc"]["scheduler"]),
-        SDATE=str(cfg["start_date"]),
-        EDATE=str(cfg["end_date"]),
-        INTERVAL_HOURS=int(cfg["interval_hours"]),
-        ACCOUNT=str(cfg["hpc"]["account"]),
-        QUEUE=str(cfg["hpc"]["queue"]),
-        WALLTIME=str(cfg["resources"]["walltime"]),
-        TASK_NODES=str(cfg["resources"]["task_nodes"]),
-        TASK_MEM=str(cfg["resources"]["task_mem"]),
-        RUN=str(cfg["run"]),
-        COPY_DATA=bool(cfg["flags"]["copy_data"]),
-        KEEP_DATA=bool(cfg["flags"]["keep_data"]),
-        CREATE_STUBS=bool(cfg["flags"]["create_stubs"]),
-        CYCLES=cfg.get("cycles"),  # optional; included if present
-        NATIVE=str(cfg["resources"]["native"]),
-        MACHINE_ID=machine_id
-    )
+    render_kwargs = {
+        "PSLOT": pslot,
+        "COMPONENT": component_str,
+        "HOMEobsmon": str(obsmondir),
+        "COMROOT": str(comroot),
+        "EXPDIR": str(expdir),
+        "DATAROOT": str(dataroot),
+        "RUNTIME_DIR": str(runtime_dir),
+        "CONFIG_YAML": config_yaml_for_driver,
+        "SCHEDULER": str(cfg["hpc"]["scheduler"]),
+        "SDATE": str(cfg["start_date"]),
+        "EDATE": str(cfg["end_date"]),
+        "INTERVAL_HOURS": int(cfg["interval_hours"]),
+        "ACCOUNT": str(cfg["hpc"]["account"]),
+        "QUEUE": str(cfg["hpc"]["queue"]),
+        "WALLTIME": str(cfg["resources"]["walltime"]),
+        "TASK_NODES": str(cfg["resources"]["task_nodes"]),
+        "TASK_MEM": str(cfg["resources"]["task_mem"]),
+        "RUN": str(cfg["run"]),
+        "COPY_DATA": bool(cfg["flags"]["copy_data"]),
+        "KEEP_DATA": bool(cfg["flags"]["keep_data"]),
+        "CREATE_STUBS": bool(cfg["flags"]["create_stubs"]),
+        "CYCLES": cfg.get("cycles"),
+    }
+
+    # Add MACHINE_ID only if it has a value
+    if machine_id:
+        render_kwargs["MACHINE_ID"] = machine_id
+
+    output = template.render(**render_kwargs)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w") as f:
