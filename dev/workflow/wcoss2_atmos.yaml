@@ -1,17 +1,17 @@
-pslot: "prjedi"
+pslot: "obsmon_gdas_atmos"
 component: "atmos"   # list or comma-separated string both ok
-start_date: "202602161200"
-end_date: "202602170000"
+start_date: "YYYYMMDDHHMM"
+end_date: "YYYYMMDDHHMM"
 interval_hours: 6
-cycles: 5
+cycles: 4
 machine_id: "wcoss2"
 
 paths:
-  obsmondir: "/lfs/h2/emc/da/noscrub/edward.safford/git/obs-monitor"
-  expdir: "/lfs/h2/emc/da/noscrub/edward.safford/prjedi_exp"
-  rundir: "/lfs/h2/emc/da/noscrub/edward.safford/prjedi_runtime"
-  comroot: "/lfs/h2/emc/da/noscrub/edward.safford/prjedi_save"
-  dataroot: "/lfs/h2/emc/da/noscrub/russ.treadon/COMROOT/prjedi/"
+  obsmondir: "~/obs-monitor"
+  expdir: "~/obsmon_exp"
+  rundir: "~/obsmon_runtime"
+  comroot: "~/obsmon_save"
+  dataroot: "~/obsmon_dataroot"
 
 run: "gdas"
 
@@ -21,10 +21,10 @@ hpc:
   scheduler: "pbspro"
 
 resources:
-  walltime: "00:15:00"
+  walltime: "00:45:00"
   task_nodes: "1"
   task_nodes: "1:ppn=1:tpp=1"
-  task_mem: "4G"
+  task_mem: "4GB"
   native: "-l select=1:ncpus=1:mem=4GB"
 
 flags:
