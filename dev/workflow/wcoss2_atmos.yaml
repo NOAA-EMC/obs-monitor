@@ -4,7 +4,6 @@ start_date: "YYYYMMDDHHMM"
 end_date: "YYYYMMDDHHMM"
 interval_hours: 6
 cycles: 4
-machine_id: "wcoss2"
 
 paths:
   obsmondir: "~/obs-monitor"
