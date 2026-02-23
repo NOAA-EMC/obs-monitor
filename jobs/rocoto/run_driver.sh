@@ -4,6 +4,7 @@ set -x
 
 
 echo "Starting obs-monitor workflow"
+MACHINE="UNKNOWN"
 source "${HOMEobsmon}/ush/detect_machine.sh"
 
 ###############################################################
