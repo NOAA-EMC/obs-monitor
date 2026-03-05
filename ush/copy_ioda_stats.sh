@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# -------------------------------------------------------
+# --------------------------------------------------------
 #  copy_ioda_stats.sh
 #
 #  Copy these files: 
 #
-#     - gdas.t[HH]z.atmos_analysis.ioda_stats.tar.gz 
+#     - gdas.t[HH]z.atmos_analysis.ioda_hofx_stats.tar.gz 
 #     - gdas.t[HH]z.atmos_stats.txt
 #
 #  from SOURCE to TARGET preserving the source directory 
@@ -13,7 +13,7 @@
 #
 #  Only copy files that are non-zero sized and older 
 #  than 10 minutes to avoid copying partial files.
-# -------------------------------------------------------
+# --------------------------------------------------------
 
 usage() {
     echo "Usage: $0 [ -s | --src SOURCE_DIR ] [ -t | --target TARGET_DIR ]"
@@ -59,7 +59,6 @@ while [[ $# -gt 0 ]]; do
         *)
             echo "Unknown: $1"; 
             usage
-	    exit 1
 	    ;;
     esac
 done
@@ -81,7 +80,7 @@ if [[ ! -d "$SOURCE" ]]; then
    exit 2
 fi
 if [[ ! -d "$TARGET" ]]; then
-   echo "Source $TARGET is not a valid directory"
+   echo "Target $TARGET is not a valid directory"
    exit 2
 fi
 
@@ -106,7 +105,6 @@ if [[ ${#cycles[@]} -eq 0 ]]; then
     echo "WARNING:  No cycle times found in TARGET directory. Assuming TARGET directory is new/empty"
     LAST_TARGET_CYCLE=0
 else
-    CYCLE_TIME=$(echo "$PATH_VAR" | sed -n 's/.*gdas\.\([0-9]\{8\}\)\/\([0-9]\{2\}\).*/\1\2/p')
     LAST_TARGET_CYCLE="${cycles[-1]}"
 fi
 
