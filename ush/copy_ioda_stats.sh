@@ -5,8 +5,8 @@
 #
 #  Copy these files: 
 #
-#     - gdas.t[HH]z.atmos_analysis.ioda_hofx_stats.tar.gz 
-#     - gdas.t[HH]z.atmos_stats.txt
+#     - ${RUN}.t[HH]z.${COMPONENT}.ioda_hofx_stats.tar.gz 
+#     - ${RUN}.t[HH]z.${COMPONENT}.txt
 #
 #  from SOURCE to TARGET preserving the source directory 
 #  structure.  
@@ -16,15 +16,18 @@
 # --------------------------------------------------------
 
 usage() {
+    echo ""
     echo "Usage: $0 [ -s | --src SOURCE_DIR ] [ -t | --target TARGET_DIR ]"
+    echo ""
+    echo "  optional parameters:   -r | --run RUN (default is gdas)"
+    echo "                         -c | --run COMPONENT (default is atmos)"
     exit 1
 }
 
-ioda_file="atmos_analysis.ioda_hofx_stats.tar.gz"
-atmos_file="atmos_stats.txt"
-
 SOURCE=""
 TARGET=""
+RUN="gdas"
+COMPONENT="atmos"
 
 # ------------------------
 # Handle input parameters
@@ -47,12 +50,28 @@ while [[ $# -gt 0 ]]; do
                 exit 1
             fi
             SOURCE="$2"; shift 2 ;;
+
 	-t|--target)
             if [[ -z "$2" || "$2" == -* ]]; then
                 echo "Error: -t|--target requires a value."
                 exit 1
             fi
             TARGET="$2"; shift 2 ;;
+
+        -r|--run)
+            if [[ -z "$2" || "$2" == -* ]]; then
+                echo "Error: -t|--target requires a value."
+                exit 1
+            fi
+            RUN="$2"; shift 2 ;;
+
+        -c|--component)
+            if [[ -z "$2" || "$2" == -* ]]; then
+                echo "Error: -t|--target requires a value."
+                exit 1
+            fi
+            COMPONENT="$2"; shift 2 ;;
+
         -h|--help)
             usage
             ;;
@@ -64,9 +83,9 @@ while [[ $# -gt 0 ]]; do
 done
 
 
-# ------------------------------------------------------
-# Confirm both parameters have been provided and parsed
-# ------------------------------------------------------
+# ----------------------------------------------------------
+# Confirm required parameters have been provided and parsed
+# ----------------------------------------------------------
 if [[ -z "$SOURCE" ]] || [[ -z "$TARGET" ]]; then
     echo "Error: Both --src and --target are required."
     usage
@@ -85,8 +104,13 @@ if [[ ! -d "$TARGET" ]]; then
 fi
 
 echo; echo "using:"
-echo "  SOURCE = $SOURCE"
-echo "  TARGET = $TARGET"; echo
+echo "  SOURCE    = $SOURCE"
+echo "  TARGET    = $TARGET"
+echo "  RUN       = $RUN"
+echo "  COMPONENT = $COMPONENT";echo
+
+ioda_file="${COMPONENT}_analysis.ioda_hofx_stats.tar.gz"
+atmos_file="${COMPONENT}_stats.txt"
 
 
 # ------------------------------------------------------------
@@ -96,9 +120,9 @@ echo "  TARGET = $TARGET"; echo
 # 2. Use sed to extract YYYYMMDD and HH from the path
 # 3. Sort and Unique to ensure each cycle is only listed once
 # ------------------------------------------------------------
-mapfile -t cycles < <(find "$TARGET" -type f \
-	\( -name "gdas.t[0-9][0-9]z.${ioda_file}" \) \
-    | sed -n 's/.*gdas\.\([0-9]\{8\}\)\/\([0-9]\{2\}\).*/\1\2/p' \
+mapfile -t cycles < <(find "${TARGET}" -type f \
+    \( -name "${RUN}.t[0-9][0-9]z.${ioda_file}" \) \
+    | sed -n "s/.*${RUN}\.\([0-9]\{8\}\)\/\([0-9]\{2\}\).*/\1\2/p" \
     | sort -u)
 
 if [[ ${#cycles[@]} -eq 0 ]]; then
@@ -113,17 +137,17 @@ echo; echo "latest cycle in TARGET: $LAST_TARGET_CYCLE"; echo
 # -----------------------------------------------------
 # In source directory get an array of available cycles 
 # -----------------------------------------------------
-mapfile -t cycles < <(find "$SOURCE" -type f \
-    \( -name "gdas.t[0-9][0-9]z.${ioda_file}" \
-    -o -name "gdas.t[0-9][0-9]z.${atmos_file}" \) \
-    | sed -n 's/.*gdas\.\([0-9]\{8\}\)\/\([0-9]\{2\}\).*/\1\2/p' \
+mapfile -t cycles < <(find "${SOURCE}" -type f \
+    \( -name "${RUN}.t[0-9][0-9]z.${ioda_file}" \
+    -o -name "${RUN}.t[0-9][0-9]z.${atmos_file}" \) \
+    | sed -n "s/.*${RUN}\.\([0-9]\{8\}\)\/\([0-9]\{2\}\).*/\1\2/p" \
     | sort -u)
 
 if [[ ${#cycles[@]} -eq 0 ]]; then
     echo "No matching files found. Check your SOURCE or file patterns."
 
 else
-    SOURCE_CYCLE_TIME=$(echo "$PATH_VAR" | sed -n 's/.*gdas\.\([0-9]\{8\}\)\/\([0-9]\{2\}\).*/\1\2/p')
+    SOURCE_CYCLE_TIME=$(echo "$PATH_VAR" | sed -n 's/.*${RUN}\.\([0-9]\{8\}\)\/\([0-9]\{2\}\).*/\1\2/p')
     echo "$SOURCE_CYCLE_TIME"
 
 fi
@@ -138,7 +162,7 @@ for cycle in "${cycles[@]}"; do
         hh="${cycle:8:2}"
         
         # Define the base directory for this cycle
-        cycle_base="gdas.${ymd}/${hh}"
+        cycle_base="${RUN}.${ymd}/${hh}"
 
 	#-------------------------------------------------------------
         # Find the specific files we want within this cycle's folder.
@@ -149,8 +173,8 @@ for cycle in "${cycles[@]}"; do
 	#-------------------------------------------------------------
 	
 	find "${SOURCE}/${cycle_base}" -type f \( \
-            -name "gdas.t${hh}z.${ioda_file}" -o \
-            -name "gdas.t${hh}z.${atmos_file}" \
+            -name "${RUN}.t${hh}z.${ioda_file}" -o \
+            -name "${RUN}.t${hh}z.${atmos_file}" \
         \) -mmin +10 -size +0c | while read -r full_src_path; do
 
             # -------------------------------------
@@ -158,10 +182,10 @@ for cycle in "${cycles[@]}"; do
             # -------------------------------------
             rel_file_path="${full_src_path#$SOURCE/}"
            
-	    # ----------------------------------------------- 
+	    # ------------------------------------------------------- 
             # Get the directory portion of the relative path
-            # e.g., gdas.20260224/06/products/atmos/anlmon
-	    # ----------------------------------------------- 
+            # e.g., ${RUN}.20260224/06/products/${COMPNONENT}/anlmon
+	    # ------------------------------------------------------- 
             rel_dir_path=$(dirname "${rel_file_path}")
 
 	    # --------------------------------------
