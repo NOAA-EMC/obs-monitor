@@ -146,7 +146,13 @@ def clone_schema_stub(ref_path: str | Path, out_path: str | Path, dt: datetime) 
             fv = src_var.getncattr("_FillValue")
         except Exception:
             fv = None
-        kind = src_var.dtype.kind
+
+        # Check if the dtype is the Python string class or the string 'str'
+        if src_var.dtype == str or str(src_var.dtype) == 'str':
+            kind = "S"
+        else:
+            kind = src_var.dtype.kind
+
         if fv is not None and kind in ("f", "i", "u"):
             dst_var = dst_grp.createVariable(src_var.name, src_var.dtype, src_var.dimensions, fill_value=fv, **kwargs)
         else:
@@ -166,7 +172,13 @@ def clone_schema_stub(ref_path: str | Path, out_path: str | Path, dt: datetime) 
                 if size is None:
                     size = 1
                 shape.append(size)
-        kind = var.dtype.kind
+
+        # Check if the dtype is the Python string class or the string 'str'
+        if var.dtype == str or str(var.dtype) == 'str':
+            kind = "S"
+        else:
+            kind = var.dtype.kind
+
         if kind == "f":
             # Write real NaNs for floats so plotting breaks the line at missing points
             var[:] = np.nan
