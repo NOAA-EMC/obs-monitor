@@ -134,6 +134,8 @@ def load_config(path: Path) -> Dict[str, Any]:
     cfg["resources"].setdefault("walltime", "00:15:00")
     cfg["resources"].setdefault("task_nodes", "1:ppn=1:tpp=1")
     cfg["resources"].setdefault("task_mem", "4G")
+    cfg["resources"].setdefault("server", "None")
+
     cfg.setdefault("flags", {})
     cfg["flags"].setdefault("copy_data", False)
     cfg["flags"].setdefault("keep_data", False)
@@ -230,11 +232,23 @@ def main() -> None:
         "TASK_NODES": str(cfg["resources"]["task_nodes"]),
         "TASK_MEM": str(cfg["resources"]["task_mem"]),
         "NATIVE": str(cfg.get("resources", {}).get("native", "--export=NONE")),
+
+        "PUSH_QUEUE": str(cfg["hpc"]["push_queue"]),
+        "PUSH_NATIVE": str(cfg.get("resources", {}).get("push_native", "--export=NONE")),
+        "PUSH_WALLTIME": str(cfg["resources"]["push_walltime"]),
+        "PUSH_MEM": str(cfg["resources"]["push_mem"]),
+        "PUSH_NODES": str(cfg["resources"]["push_nodes"]),
+        "PUSH_NATIVE": str(cfg.get("resources", {}).get("push_native", "--export=NONE")),
+        "SERVER": str(cfg["resources"]["server"]),
+        "SERVER_PATH": str(cfg["resources"]["server_path"]),
+        "SERVER_USER": str(cfg["resources"]["server_user"]),
+
         "RUN": str(cfg["run"]),
         "COPY_DATA": bool(cfg["flags"]["copy_data"]),
         "KEEP_DATA": bool(cfg["flags"]["keep_data"]),
         "CREATE_STUBS": bool(cfg["flags"]["create_stubs"]),
         "CYCLES": cfg.get("cycles"),
+        "PUSH_FILES": bool(cfg["flags"]["push_files"]),
     }
 
     # Add MACHINE_ID only if it has a value

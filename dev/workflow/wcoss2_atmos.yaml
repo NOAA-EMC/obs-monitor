@@ -1,7 +1,7 @@
 pslot: "obsmon_gdas_atmos"
 component: "atmos"   # list or comma-separated string both ok
-start_date: "YYYYMMDDHHMM"
-end_date: "YYYYMMDDHHMM"
+start_date: "202603260000"
+end_date: "202603260000"
 interval_hours: 6
 cycles: 4
 
@@ -17,15 +17,24 @@ run: "gdas"
 hpc:
   account: "GFS-DEV"
   queue: "dev"
+  push_queue: "dev_transfer"
   scheduler: "pbspro"
 
 resources:
-  walltime: "00:45:00"
+  walltime: "00:15:00"
+  push_walltime: "00:10:00"
   task_nodes: "1:ppn=1:tpp=1"
+  push_nodes: "1:ppn=1"
   task_mem: "4GB"
+  push_mem: "1GB"
   native: "-l select=1:ncpus=1:mem=4GB"
+  push_native: "-l select=1:ncpus=1:mem=1GB"
+  server: "emcrzdm"
+  server_path: "~/obsmon/"
+  server_user: "$USER"
 
 flags:
   copy_data: false
   keep_data: True
   create_stubs: True
+  push_files: True
