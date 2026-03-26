@@ -20,7 +20,7 @@ export PYTHONPATH="${HOMEobsmon}/src:${PYTHONPATH:-}"
 
 # Execute the JJOB
 echo "Executing Python file_push module"
-python -m obs_monitor.driver.file_push "$@"
+python -m obs_monitor.driver.push_files "$@"
 
 exit $?
 
