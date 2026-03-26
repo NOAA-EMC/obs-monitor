@@ -247,7 +247,7 @@ def main() -> None:
         "KEEP_DATA": bool(cfg["flags"]["keep_data"]),
         "CREATE_STUBS": bool(cfg["flags"]["create_stubs"]),
         "CYCLES": cfg.get("cycles"),
-        "PUSH_FILES": cfg.get("flags", {}).get("push_files", "False") == "True",
+        "PUSH_FILES": str(cfg.get("flags", {}).get("push_files", "False"))
     }
 
     # Add MACHINE_ID only if it has a value
