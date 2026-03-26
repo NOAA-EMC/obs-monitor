@@ -11,7 +11,7 @@ source "${HOMEobsmon}/ush/detect_machine.sh"
 module use ${HOMEobsmon}/modulefiles
 module load obs-monitor/${MACHINE_ID} 
 
-export job="obsmon_driver"
+export job="obsmon_push_files_driver"
 export jobid="${job}.$$"
 
 ###############################################################

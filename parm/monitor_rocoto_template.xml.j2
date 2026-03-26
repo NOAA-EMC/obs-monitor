@@ -69,8 +69,7 @@
     <walltime>{{ PUSH_WALLTIME }}</walltime>
     <nodes>{{ PUSH_NODES }}</nodes>
     <memory>{{ PUSH_MEM }}</memory>
-
-    <native>-l select=1:ncpus=1:mem=1GB></native>
+    <native>{{ PUSH_NATIVE|default('--export=NONE') }}</native>
 
     <join><cyclestr>&COMROOT;/&PSLOT;/logs/@Y@m@d@H/push_to_server.log</cyclestr></join>
 

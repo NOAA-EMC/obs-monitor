@@ -1,15 +1,15 @@
 """
-Observation Monitoring File Push Script 
+Observation Monitoring File Push Script
 
 This script runs an rsync command to push image directories and files
-to a websever.
+to a webserver.
 
 Algorithm:
     - Get the current cycle window endpoint from PDY (YYYYMMDD) 
       and CYC (HH) or CDATE.
     - Create latestCycle.json file for the current cycle.
     - Run rsync command to push image directories and files to server
-      while preserving the server's project configiguration files.
+      while preserving the server's project configuration files.
 
 Environment (set by Rocoto):
   PDY (YYYYMMDD), CYC (HH), PSLOT, COMPONENT,
@@ -21,7 +21,7 @@ import subprocess
 import json
 
 from pathlib import Path
-from wxflow import Logger, Jinja
+from wxflow import Logger
 
 
 def create_latest_cycle_json(path: Path, cdate, logger):
@@ -32,9 +32,10 @@ def create_latest_cycle_json(path: Path, cdate, logger):
         with open(output_file, 'w', encoding='utf-8') as f:
             json.dump(cycle_data, f, indent=4)
         logger.info(f"Successfully created: {output_file}")
-        
+
     except Exception as e:
         logger.error(f"Failed to write JSON: {e}")
+        raise
 
 
 # -----------------------------------------------------------------------------
@@ -43,8 +44,9 @@ def create_latest_cycle_json(path: Path, cdate, logger):
 
 def main():
     """
-    Parse job list from CONFIG_YAML and run monitoring jobs in parallel.
-    Respects optional COMPONENT filter from the environment.
+    Determine the current cycle time from CDATE or PDY/CYC, create a
+    latestCycle.json file in COMROOT for that cycle, and run an rsync
+    command to push image directories and files to the configured server.
     """
     main_logger = Logger("Obs Monitor File Push - main")
 
@@ -54,31 +56,34 @@ def main():
 
     if not (cdate) and not (pdy and cyc):
         raise EnvironmentError("CDATE or both PDY and CYC must be set.")
-    
+
     if not (cdate):
         cdate = pdy + cyc
 
     pslot = os.getenv("PSLOT")
-    component = os.getenv("COMPONENT")
     comroot = os.getenv("COMROOT")
     server = os.getenv("SERVER")
     server_path = os.getenv("SERVER_PATH")
     server_user = os.getenv("SERVER_USER")
-    run = os.getenv("RUN")
 
     #--------------------------------------
     # Add latestCycle.json file to comroot
     #--------------------------------------
     create_latest_cycle_json(comroot, cdate, main_logger)
 
-    command = (
-        f"/usr/bin/rsync -ave ssh --update --delete-during "
-        f"--exclude {pslot} --exclude '/atmos' "
-        f"{comroot}/ {server_user}@{server}:{server_path}")
+    command = [
+        "/usr/bin/rsync",
+        "-ave", "ssh",
+        "--update",
+        "--delete-during",
+        "--exclude", str(pslot),
+        "--exclude", "/atmos",
+        f"{comroot}/",
+        f"{server_user}@{server}:{server_path}",
+    ]
+    main_logger.info(f"rsync command: {' '.join(command)}")
 
-    main_logger.info(f"rsync command: {command}")
-
-    result = subprocess.run(command, shell=True, capture_output=True, text=True)
+    result = subprocess.run(command, shell=False, capture_output=True, text=True)
 
     main_logger.info(f"Output: {result.stdout}")
     main_logger.info(f"Return Code: {result.returncode}") # 0 means success
