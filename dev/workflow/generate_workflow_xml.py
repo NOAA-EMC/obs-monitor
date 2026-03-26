@@ -233,22 +233,21 @@ def main() -> None:
         "TASK_MEM": str(cfg["resources"]["task_mem"]),
         "NATIVE": str(cfg.get("resources", {}).get("native", "--export=NONE")),
 
-        "PUSH_QUEUE": str(cfg["hpc"]["push_queue"]),
+        "PUSH_QUEUE": str(cfg.get("hpc", {}).get("push_queue", "transfer")),
         "PUSH_NATIVE": str(cfg.get("resources", {}).get("push_native", "--export=NONE")),
-        "PUSH_WALLTIME": str(cfg["resources"]["push_walltime"]),
-        "PUSH_MEM": str(cfg["resources"]["push_mem"]),
-        "PUSH_NODES": str(cfg["resources"]["push_nodes"]),
-        "PUSH_NATIVE": str(cfg.get("resources", {}).get("push_native", "--export=NONE")),
-        "SERVER": str(cfg["resources"]["server"]),
-        "SERVER_PATH": str(cfg["resources"]["server_path"]),
-        "SERVER_USER": str(cfg["resources"]["server_user"]),
+        "PUSH_WALLTIME": str(cfg.get("resources", {}).get("push_walltime", "00:10:00")),
+        "PUSH_MEM": str(cfg.get("resources", {}).get("push_mem", "1GB")),
+        "PUSH_NODES": str(cfg.get("resources", {}).get("push_nodes", "1:ppn=1")),
+        "SERVER": str(cfg.get("resources", {}).get("server", "emcrzdm")),
+        "SERVER_PATH": str(cfg.get("resources", {}).get("server_path", "~/")),
+        "SERVER_USER": str(cfg.get("resources", {}).get("server_user", "$USER")),
 
         "RUN": str(cfg["run"]),
         "COPY_DATA": bool(cfg["flags"]["copy_data"]),
         "KEEP_DATA": bool(cfg["flags"]["keep_data"]),
         "CREATE_STUBS": bool(cfg["flags"]["create_stubs"]),
         "CYCLES": cfg.get("cycles"),
-        "PUSH_FILES": bool(cfg["flags"]["push_files"]),
+        "PUSH_FILES": cfg.get("flags", {}).get("push_files", "False") == "True",
     }
 
     # Add MACHINE_ID only if it has a value
