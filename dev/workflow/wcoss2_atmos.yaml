@@ -1,7 +1,7 @@
 pslot: "obsmon_gdas_atmos"
 component: "atmos"   # list or comma-separated string both ok
-start_date: "202603260000"
-end_date: "202603260000"
+start_date: "YYYYMMDDHHMM"
+end_date: "YYYYMMDDHHMM"
 interval_hours: 6
 cycles: 4
 
