@@ -16,6 +16,7 @@ function MainContent() {
                 <Route path="/:type/:satellite/:instrument/time" element={<TimeSeriesWrapper />} />
                 <Route path="/:type/:satellite/:instrument/:channelNumber" element={<ChannelWrapper />} />
 
+                <Route path="/:type/:key/:plot_type" element={<UnifiedWrapper />} />
                 <Route path="/:type/:key" element={<UnifiedWrapper />} />
                 {/* Add more routes here as needed */}
             </Routes>
