@@ -5,7 +5,7 @@ import ChannelWrapper from "./components/ChannelWrapper";
 import SummaryWrapper from "./components/SummaryWrapper";
 import Home from "./components/Home";
 import TimeSeriesWrapper from "./components/TimeSeriesWrapper";
-import UnifiedWrapper from "./components/ConvWrapper";
+import ConvWrapper from "./components/ConvWrapper";
 
 function MainContent() {
     return (
@@ -16,8 +16,8 @@ function MainContent() {
                 <Route path="/:type/:satellite/:instrument/time" element={<TimeSeriesWrapper />} />
                 <Route path="/:type/:satellite/:instrument/:channelNumber" element={<ChannelWrapper />} />
 
-                <Route path="/:type/:key/:plot_type" element={<UnifiedWrapper />} />
-                <Route path="/:type/:key" element={<UnifiedWrapper />} />
+                <Route path="/:type/:key/:plot_type" element={<ConvWrapper />} />
+                <Route path="/:type/:key" element={<ConvWrapper />} />
                 {/* Add more routes here as needed */}
             </Routes>
         </main>

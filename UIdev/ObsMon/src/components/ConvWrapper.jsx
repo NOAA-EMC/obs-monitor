@@ -5,7 +5,7 @@ import { useModel } from "./ModelContext.jsx";
 import { useResolveFile } from "../hooks/useFileExists.js";
 import { CONVENTIONAL_TYPES } from "../data/conventionalTypes.js";
 
-export default function noscUnifiedWrapper() {
+export default function ConvWrapper() {
     const { type, key, plot_type } = useParams();
     const [filePath, setFilePath] = useState("");
     const [plotTypeConfig, setPlotTypeConfig] = useState(null);
