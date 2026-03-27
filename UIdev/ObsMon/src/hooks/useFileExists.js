@@ -13,17 +13,27 @@ export function useResolveFile(pattern) {
     const [notFound, setNotFound] = useState(false);
 
     useEffect(() => {
+        let isActive = true;
+        const controller = new AbortController();
+
         if (!pattern) {
             setResolvedPath(null);
             setNotFound(false);
-            return;
+            return () => {
+                isActive = false;
+                controller.abort();
+            };
         }
         setResolvedPath(null);
         setNotFound(false);
 
-        fetch(withBase(`utils/checkfile.php?file=${encodeURIComponent(pattern)}`))
+        fetch(withBase(`utils/checkfile.php?file=${encodeURIComponent(pattern)}`), {
+            signal: controller.signal,
+        })
             .then(res => res.text())
             .then(text => {
+                if (!isActive) return;
+
                 const result = text.trim();
                 if (result === "false") {
                     setNotFound(true);
@@ -35,7 +45,15 @@ export function useResolveFile(pattern) {
                     setResolvedPath(result);
                 }
             })
-            .catch(() => setNotFound(true));
+            .catch((error) => {
+                if (!isActive || error?.name === "AbortError") return;
+                setNotFound(true);
+            });
+
+        return () => {
+            isActive = false;
+            controller.abort();
+        };
     }, [pattern]);
 
     return { resolvedPath, notFound };
@@ -50,19 +68,34 @@ export function useFileExists(file) {
     const [fileExists, setFileExists] = useState(null);
 
     useEffect(() => {
+        let isActive = true;
+        const controller = new AbortController();
+
         if (!file) {
             setFileExists(null);
-            return;
+            return () => {
+                isActive = false;
+                controller.abort();
+            };
         }
 
-        fetch(withBase(`utils/checkfile.php?file=${encodeURIComponent(file)}`))
+        fetch(withBase(`utils/checkfile.php?file=${encodeURIComponent(file)}`), {
+            signal: controller.signal,
+        })
             .then(res => res.text())
             .then(text => {
+                if (!isActive) return;
                 setFileExists(text.trim() === "true");
             })
-            .catch(() => {
+            .catch((error) => {
+                if (!isActive || error?.name === "AbortError") return;
                 setFileExists(false);
             });
+
+        return () => {
+            isActive = false;
+            controller.abort();
+        };
     }, [file]);
 
     return fileExists;

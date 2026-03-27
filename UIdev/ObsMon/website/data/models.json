@@ -1,8 +1,7 @@
 {
   "models": [
     "GFSv18-para",
-    "GFSv16-oper",
-    "prjedi"
+    "GFSv16-oper"
   ],
   "components": {
     "GFSv18-para": [
@@ -12,9 +11,6 @@
       "atmos",
       "ocean",
       "wave"
-    ],
-    "prjedi": [
-      "atmos"
     ]
   }
 }
