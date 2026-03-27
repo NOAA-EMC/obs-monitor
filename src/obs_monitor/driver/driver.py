@@ -329,7 +329,10 @@ def find_matching_inputs_for_times(
                 f"{dt.strftime('%Y%m%d%H')}: {archive_path}"
             )
             try:
-                dest_archive = window_dir / archive_path.name
+                time_prefix = dt.strftime("%Y%m%d%H")
+                dest_filename = f"{time_prefix}_{archive_path.name}"
+                dest_archive = window_dir / dest_filename
+
                 shutil.copy2(archive_path, dest_archive)
                 logger.info(
                     f"[{cfg.ob_type}] Copied tarball to runtime: {archive_path} -> {dest_archive}"

@@ -134,6 +134,8 @@ def load_config(path: Path) -> Dict[str, Any]:
     cfg["resources"].setdefault("walltime", "00:15:00")
     cfg["resources"].setdefault("task_nodes", "1:ppn=1:tpp=1")
     cfg["resources"].setdefault("task_mem", "4G")
+    cfg["resources"].setdefault("server", "None")
+
     cfg.setdefault("flags", {})
     cfg["flags"].setdefault("copy_data", False)
     cfg["flags"].setdefault("keep_data", False)
@@ -193,7 +195,7 @@ def main() -> None:
     pslot = cfg["pslot"]
     component_str = cfg["component_str"]
     paths = cfg["paths"]
-    machine_id = cfg["machine_id"]
+    machine_id = cfg.get("machine_id")
     
     obsmondir = Path(paths["obsmondir"])
     expdir = Path(paths["expdir"])
@@ -211,32 +213,48 @@ def main() -> None:
     env = Environment(loader=FileSystemLoader(str(obsmondir)))
     template = env.get_template("parm/monitor_rocoto_template.xml.j2")
 
-    output = template.render(
-        PSLOT=pslot,
-        COMPONENT=component_str,
-        HOMEobsmon=str(obsmondir),
-        COMROOT=str(comroot),
-        EXPDIR=str(expdir),
-        DATAROOT=str(dataroot),
-        RUNTIME_DIR=str(runtime_dir),
-        CONFIG_YAML=config_yaml_for_driver,
-        SCHEDULER=str(cfg["hpc"]["scheduler"]),
-        SDATE=str(cfg["start_date"]),
-        EDATE=str(cfg["end_date"]),
-        INTERVAL_HOURS=int(cfg["interval_hours"]),
-        ACCOUNT=str(cfg["hpc"]["account"]),
-        QUEUE=str(cfg["hpc"]["queue"]),
-        WALLTIME=str(cfg["resources"]["walltime"]),
-        TASK_NODES=str(cfg["resources"]["task_nodes"]),
-        TASK_MEM=str(cfg["resources"]["task_mem"]),
-        RUN=str(cfg["run"]),
-        COPY_DATA=bool(cfg["flags"]["copy_data"]),
-        KEEP_DATA=bool(cfg["flags"]["keep_data"]),
-        CREATE_STUBS=bool(cfg["flags"]["create_stubs"]),
-        CYCLES=cfg.get("cycles"),  # optional; included if present
-        NATIVE=str(cfg["resources"]["native"]),
-        MACHINE_ID=machine_id
-    )
+    render_kwargs = {
+        "PSLOT": pslot,
+        "COMPONENT": component_str,
+        "HOMEobsmon": str(obsmondir),
+        "COMROOT": str(comroot),
+        "EXPDIR": str(expdir),
+        "DATAROOT": str(dataroot),
+        "RUNTIME_DIR": str(runtime_dir),
+        "CONFIG_YAML": config_yaml_for_driver,
+        "SCHEDULER": str(cfg["hpc"]["scheduler"]),
+        "SDATE": str(cfg["start_date"]),
+        "EDATE": str(cfg["end_date"]),
+        "INTERVAL_HOURS": int(cfg["interval_hours"]),
+        "ACCOUNT": str(cfg["hpc"]["account"]),
+        "QUEUE": str(cfg["hpc"]["queue"]),
+        "WALLTIME": str(cfg["resources"]["walltime"]),
+        "TASK_NODES": str(cfg["resources"]["task_nodes"]),
+        "TASK_MEM": str(cfg["resources"]["task_mem"]),
+        "NATIVE": str(cfg.get("resources", {}).get("native", "--export=NONE")),
+
+        "PUSH_QUEUE": str(cfg.get("hpc", {}).get("push_queue", "transfer")),
+        "PUSH_NATIVE": str(cfg.get("resources", {}).get("push_native", "--export=NONE")),
+        "PUSH_WALLTIME": str(cfg.get("resources", {}).get("push_walltime", "00:10:00")),
+        "PUSH_MEM": str(cfg.get("resources", {}).get("push_mem", "1GB")),
+        "PUSH_NODES": str(cfg.get("resources", {}).get("push_nodes", "1:ppn=1")),
+        "SERVER": str(cfg.get("resources", {}).get("server", "emcrzdm")),
+        "SERVER_PATH": str(cfg.get("resources", {}).get("server_path", "~/")),
+        "SERVER_USER": str(cfg.get("resources", {}).get("server_user", "$USER")),
+
+        "RUN": str(cfg["run"]),
+        "COPY_DATA": bool(cfg["flags"]["copy_data"]),
+        "KEEP_DATA": bool(cfg["flags"]["keep_data"]),
+        "CREATE_STUBS": bool(cfg["flags"]["create_stubs"]),
+        "CYCLES": cfg.get("cycles"),
+        "PUSH_FILES": str(cfg.get("flags", {}).get("push_files", "False"))
+    }
+
+    # Add MACHINE_ID only if it has a value
+    if machine_id:
+        render_kwargs["MACHINE_ID"] = machine_id
+
+    output = template.render(**render_kwargs)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("w") as f:
