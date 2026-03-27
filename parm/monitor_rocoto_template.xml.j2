@@ -5,6 +5,9 @@
   <!ENTITY HOMEobsmon "{{ HOMEobsmon }}">
   <!ENTITY COMROOT "{{ COMROOT }}">
   <!ENTITY DATAROOT "{{ DATAROOT }}">
+  <!ENTITY RUN "{{ RUN }}">
+  <!ENTITY COMPONENT "{{ COMPONENT }}">
+  <!ENTITY PUSH_FILES "{{ PUSH_FILES }}">
 ]>
 
 <workflow realtime="F" scheduler="{{ SCHEDULER }}" cyclethrottle="1" taskthrottle="10">
@@ -22,11 +25,13 @@
     <walltime>{{ WALLTIME }}</walltime>
     <nodes>{{ TASK_NODES }}</nodes>
     <memory>{{ TASK_MEM }}</memory>
-    <native>{{ NATIVE }}</native>
+    <native>{{ NATIVE|default('--export=NONE') }}</native>
 
     <join><cyclestr>&COMROOT;/&PSLOT;/logs/@Y@m@d@H/obsmon_driver.log</cyclestr></join>
 
+    {% if MACHINE_ID is defined and MACHINE_ID %}
     <envar><name>MACHINE_ID</name><value>{{ MACHINE_ID }}</value></envar>
+    {% endif %}
     <envar><name>PSLOT</name><value>&PSLOT;</value></envar>
     <envar><name>COMPONENT</name><value>{{ COMPONENT }}</value></envar>
     <envar><name>HOMEobsmon</name><value>&HOMEobsmon;</value></envar>
@@ -37,12 +42,6 @@
     <envar><name>CONFIG_YAML</name><value>{{ CONFIG_YAML }}</value></envar>
     <envar><name>INTERVAL_HOURS</name><value>{{ INTERVAL_HOURS }}</value></envar>
     <envar><name>CYCLES</name><value>{{ CYCLES }}</value></envar>
-    <envar><name>ACCOUNT</name><value>{{ ACCOUNT }}</value></envar>
-    <envar><name>QUEUE</name><value>{{ QUEUE }}</value></envar>
-    <envar><name>SCHEDULER</name><value>{{ SCHEDULER }}</value></envar>
-    <envar><name>WALLTIME</name><value>{{ WALLTIME }}</value></envar>
-    <envar><name>TASK_NODES</name><value>{{ TASK_NODES }}</value></envar>
-    <envar><name>TASK_MEM</name><value>{{ TASK_MEM }}</value></envar>
     <envar><name>RUN</name><value>{{ RUN }}</value></envar>
     <envar><name>CDATE</name><value><cyclestr>@Y@m@d@H</cyclestr></value></envar>
     <envar><name>PDY</name><value><cyclestr>@Y@m@d</cyclestr></value></envar>
@@ -50,8 +49,51 @@
     <envar><name>COPY_DATA</name><value>{{ COPY_DATA }}</value></envar>
     <envar><name>KEEP_DATA</name><value>{{ KEEP_DATA }}</value></envar>
     <envar><name>CREATE_STUBS</name><value>{{ CREATE_STUBS }}</value></envar>
+
+    <dependency>
+    <datadep age="00:10:00" minsize="1K">
+	<cyclestr>&DATAROOT;/&RUN;.@Y@m@d/@H/products/&COMPONENT;/anlmon/&RUN;.t@Hz.&COMPONENT;_stats.txt</cyclestr>
+    </datadep>
+  </dependency>
     
   </task>
-  
+
+  <task name="push_to_server" cycledefs="obsmon" maxtries="&MAXTRIES;">
+
+    <command>&HOMEobsmon;/jobs/rocoto/push_files_driver.sh</command>
+
+
+    <jobname><cyclestr>push_@Y@m@d@H</cyclestr></jobname>
+    <account>{{ ACCOUNT }}</account>
+    <queue>{{ PUSH_QUEUE }}</queue>
+    <walltime>{{ PUSH_WALLTIME }}</walltime>
+    <nodes>{{ PUSH_NODES }}</nodes>
+    <memory>{{ PUSH_MEM }}</memory>
+    <native>{{ PUSH_NATIVE|default('--export=NONE') }}</native>
+
+    <join><cyclestr>&COMROOT;/&PSLOT;/logs/@Y@m@d@H/push_to_server.log</cyclestr></join>
+
+    <envar><name>CDATE</name><value><cyclestr>@Y@m@d@H</cyclestr></value></envar>
+    <envar><name>PDY</name><value><cyclestr>@Y@m@d</cyclestr></value></envar>
+    <envar><name>CYC</name><value><cyclestr>@H</cyclestr></value></envar>
+    <envar><name>HOMEobsmon</name><value>&HOMEobsmon;</value></envar>
+    <envar><name>PSLOT</name><value>&PSLOT;</value></envar>
+    <envar><name>COMPONENT</name><value>{{ COMPONENT }}</value></envar>
+    <envar><name>COMROOT</name><value>{{ COMROOT }}</value></envar>
+    <envar><name>RUN</name><value>{{ RUN }}</value></envar>
+    <envar><name>SERVER</name><value>{{ SERVER }}</value></envar>
+    <envar><name>SERVER_PATH</name><value>{{ SERVER_PATH }}</value></envar>
+    <envar><name>SERVER_USER</name><value>{{ SERVER_USER }}</value></envar>
+
+    <dependency>
+        <and>
+            <taskdep task="obs_monitor_driver"/>
+            <strneq>
+                <left>&PUSH_FILES;</left>
+                <right>False</right>
+            </strneq>
+        </and>
+    </dependency>
+  </task>
 
 </workflow>

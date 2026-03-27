@@ -2,8 +2,7 @@
 # enable debug mode
 set -x
 
-
-echo "Starting obs-monitor workflow"
+echo "Starting obs-monitor file push driver"
 MACHINE="UNKNOWN"
 source "${HOMEobsmon}/ush/detect_machine.sh"
 
@@ -12,7 +11,7 @@ source "${HOMEobsmon}/ush/detect_machine.sh"
 module use ${HOMEobsmon}/modulefiles
 module load obs-monitor/${MACHINE_ID} 
 
-export job="obsmon_driver"
+export job="obsmon_push_files_driver"
 export jobid="${job}.$$"
 
 ###############################################################
@@ -20,8 +19,8 @@ export jobid="${job}.$$"
 export PYTHONPATH="${HOMEobsmon}/src:${PYTHONPATH:-}"
 
 # Execute the JJOB
-echo "Executing Python driver module"
-python -m obs_monitor.driver.driver "$@"
+echo "Executing Python file_push module"
+python -m obs_monitor.driver.push_files "$@"
 
 exit $?
 
