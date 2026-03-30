@@ -59,12 +59,21 @@ function hasWildcardInDirectorySegments($path)
 
     // Only allow wildcard usage in the final segment (typically the filename).
     for ($i = 0; $i < count($segments) - 1; $i++) {
-        if (strpos($segments[$i], '*') !== false) {
+        if (strpbrk($segments[$i], '*?[]') !== false) {
             return true;
         }
     }
 
     return false;
+}
+
+function hasUnsupportedFilenameGlob($path)
+{
+    $segments = explode(DIRECTORY_SEPARATOR, $path);
+    $filename = end($segments);
+
+    // In the filename segment, only '*' is supported.
+    return strpbrk($filename, '?[]') !== false;
 }
 
 $normalizedPath = normalizeRelativePath($relativePath);
@@ -75,6 +84,11 @@ if ($normalizedPath === false) {
 }
 
 if (hasWildcardInDirectorySegments($normalizedPath)) {
+    echo "false";
+    exit;
+}
+
+if (hasUnsupportedFilenameGlob($normalizedPath)) {
     echo "false";
     exit;
 }
