@@ -1,0 +1,30 @@
+[
+    {
+        "pskey": "prepbufr_adpsfc",
+        "displayName": "adpsfc",
+	"plot_types": [
+	    { "plot_type": "gridded-mean", 
+	      "label": "Mean Cycle",
+	      "path_template": "data/${model}/gdas.${pdy}/${cyc}/${component}/${key}/stationPressure/${key}_mean_stationPressure_global_binned_avg_*_${cycleTime}.png"},
+
+	    { "plot_type": "time-series", 
+	      "label": "Time Series",
+	      "path_template": "data/${model}/gdas.${pdy}/${cyc}/${component}/${key}/stationPressure/${key}_time_series_*_${cycleTime}.png"}
+	]
+    },
+    {
+        "pskey": "prepbufr_adpupa",
+        "displayName": "adpupa",
+	"plot_types": [
+	    { "plot_type": "gridded-mean", "label": "Mean Cycle" },
+	    { "plot_type": "time-series", "label": "Time Series" }
+	]
+    },
+    {
+        "pskey": "prepbufr_sfcshp",
+        "displayName": "sfcshp",
+	"plot_types": [
+	    { "plot_type": "time-series", "label": "Time Series" }
+	]
+    }
+]

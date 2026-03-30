@@ -7,9 +7,21 @@ const getTextColor = (assimilated, anomaly) => {
     return "black";
 };
 
-export default function TypeBlock({ type, id, displayName, assimilated, anomaly, navigate }) {
+export default function TypeBlock({
+    type,
+    id,
+    displayName,
+    assimilated,
+    anomaly,
+    navigate,
+    plotTypes = [],
+    isOpen = false,
+    onToggle,
+}) {
     const textColor = getTextColor(assimilated, anomaly);
     const fontStyle = assimilated ? "normal" : "italic";
+    const hasPlotTypes = Array.isArray(plotTypes) && plotTypes.length > 0;
+    const submenuId = `typeblock-submenu-${String(type)}-${String(id)}`;
 
     const tooltip = useMemo(() => {
         if (anomaly === "missing") return "Data missing from current cycle";
@@ -21,13 +33,41 @@ export default function TypeBlock({ type, id, displayName, assimilated, anomaly,
     return (
         <div className="mb-2">
             <button
-                onClick={() => navigate(`/${type}/${id}`)}
+                onClick={() => {
+                    if (hasPlotTypes) {
+                        onToggle?.();
+                    } else {
+                        navigate(`/${type}/${id}`);
+                    }
+                }}
+                aria-expanded={hasPlotTypes ? isOpen : undefined}
+                aria-controls={hasPlotTypes ? submenuId : undefined}
                 className="custom-button-satellite"
                 style={{ color: textColor, fontStyle }}
                 title={tooltip}
             >
                 {displayName}
             </button>
+
+            {hasPlotTypes && isOpen && (
+                <div id={submenuId} className="ml-4 mt-1 space-y-1">
+                    {plotTypes.map((entry) => {
+                        const plotTypeId = entry.plot_type;
+                        const label = entry.label || entry.plot_type;
+
+                        return (
+                            <button
+                                key={plotTypeId}
+                                onClick={() => navigate(`/${type}/${id}/${plotTypeId}`)}
+                                className="custom-button-satellite"
+                                style={{ color: "black" }}
+                            >
+                                {label}
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
         </div>
     );
 }

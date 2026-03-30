@@ -16,6 +16,7 @@ export default function ConventionalObs({
     const [assimilationStatus, setAssimilationStatus] = useState({});
     const [anomalyStatus, setAnomalyStatus] = useState({});
     const [filter, setFilter] = useState("all");
+    const [openTypeId, setOpenTypeId] = useState(null);
 
     useEffect(() => {
         if (!model || !cycleTime) return;
@@ -59,6 +60,7 @@ export default function ConventionalObs({
                 id,
                 assimilated: assimilationStatus[id] ?? false,
                 anomaly: anomalyStatus[id] ?? "ok",
+                plotTypes: Array.isArray(entry.plot_types) ? entry.plot_types : [],
             };
         });
     }, [typeList, assimilationStatus, anomalyStatus, keyProp]);
@@ -120,7 +122,9 @@ export default function ConventionalObs({
                             assimilated={entry.assimilated}
                             anomaly={entry.anomaly}
                             navigate={navigate}
-                            cycleTime={cycleTime}
+                            plotTypes={entry.plotTypes}
+                            isOpen={openTypeId === entry.id}
+                            onToggle={() => setOpenTypeId((prev) => (prev === entry.id ? null : entry.id))}
                         />
                     ))}
                 </div>
