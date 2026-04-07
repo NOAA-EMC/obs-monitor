@@ -56,7 +56,7 @@ ob_types:
           - name: "byDomains/oman/brightnessTemperature"
             variables: *radiance_stats
           - name: "griddedBins/ombg/brightnessTemperature"
-            variables: *radiance_stats
+            variables: [latitude, longitude]
           - name: "griddedBins/oman/brightnessTemperature"
-            variables: *radiance_stats
+            variables: [latitude, longitude]
         variables: [validTime]
