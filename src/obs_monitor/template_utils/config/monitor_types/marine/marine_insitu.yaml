@@ -1,0 +1,351 @@
+ob_types:
+
+  insitu_temp_profile_argo:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/insitu_temp_profile_argo_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/waterTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/waterTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/waterTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/waterTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  insitu_profile_bathy:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/insitu_profile_bathy_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/waterTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/waterTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/waterTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/waterTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  insitu_profile_glider:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/insitu_profile_glider_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/waterTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/waterTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/waterTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/waterTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  insitu_profile_marinemammal:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/insitu_profile_marinemammal_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/waterTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/waterTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/waterTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/waterTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  insitu_profile_tesac:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/insitu_profile_tesac_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/waterTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/waterTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/waterTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/waterTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  insitu_profile_tropical:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/insitu_profile_tropical_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/waterTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/waterTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/waterTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/waterTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  insitu_profile_xbtctd:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/insitu_profile_xbtctd_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/waterTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/waterTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/waterTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/waterTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  insitu_salt_profile_argo:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/insitu_salt_profile_argo_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/salinity"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/salinity"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/salinity"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/salinity"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  insitu_profile_tesac_salinity:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/insitu_profile_tesac_salinity_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/salinity"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/salinity"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/salinity"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/salinity"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  insitu_surface_altkob:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/insitu_surface_altkob_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/seaSurfaceTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/seaSurfaceTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/seaSurfaceTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/seaSurfaceTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  insitu_surface_dbuoyb_drifter:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/insitu_surface_dbuoyb_drifter_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/seaSurfaceTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/seaSurfaceTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/seaSurfaceTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/seaSurfaceTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  insitu_surface_trkob:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/insitu_surface_trkob_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/seaSurfaceTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/seaSurfaceTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/seaSurfaceTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/seaSurfaceTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  insitu_temp_surface_drifter:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/insitu_temp_surface_drifter_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/seaSurfaceTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/seaSurfaceTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/seaSurfaceTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/seaSurfaceTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  insitu_surface_trkob_salinity:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/insitu_surface_trkob_salinity_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/salinity"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/salinity"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/salinity"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/salinity"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]

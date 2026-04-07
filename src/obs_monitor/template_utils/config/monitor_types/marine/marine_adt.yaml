@@ -1,0 +1,301 @@
+ob_types:
+
+  adt_rads_all:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/adt_rads_all_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  adt_rads_cryosat2:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/adt_rads_cryosat2_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  adt_rads_jason3:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/adt_rads_jason3_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  adt_rads_saral:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/adt_rads_saral_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  adt_rads_sentinel3a:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/adt_rads_sentinel3a_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  adt_rads_sentinel3b:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/adt_rads_sentinel3b_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  adt_rads_sentinel6a:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/adt_rads_sentinel6a_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  adt_rads_swot:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/adt_rads_swot_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  rads_adt_3a:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/rads_adt_3a_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  rads_adt_3b:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/rads_adt_3b_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  rads_adt_6a:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/rads_adt_6a_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  rads_adt_c2:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/rads_adt_c2_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/absoluteDynamicTopography"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
