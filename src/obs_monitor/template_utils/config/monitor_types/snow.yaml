@@ -29,3 +29,94 @@ ob_types:
               series_color: "red"
               series_y: "ObsMonitor::byDomains_oman_totalSnowDepth::mean"
               series_slices: "[:,-1]"
+
+  adpsfc_snow:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/adpsfc_snow_%Y%m%d%H_output_snow.nc"
+        groups:
+          - name: "byDomains/ombg/totalSnowDepth"
+            variables: [mean, count, RMS]
+          - name: "byDomains/oman/totalSnowDepth"
+            variables: [mean, count, RMS]
+          - name: "griddedBins/ombg/totalSnowDepth"
+            variables: [mean, count, RMS]
+        variables: [validTime]
+
+  ghcn_snow:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/ghcn_snow_%Y%m%d%H_output_snow.nc"
+        groups:
+          - name: "byDomains/ombg/totalSnowDepth"
+            variables: [mean, count, RMS]
+          - name: "byDomains/oman/totalSnowDepth"
+            variables: [mean, count, RMS]
+          - name: "griddedBins/ombg/totalSnowDepth"
+            variables: [mean, count, RMS]
+        variables: [validTime]
+
+  ims_snow:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/ims_snow_%Y%m%d%H_output_snow.nc"
+        groups:
+          - name: "byDomains/ombg/totalSnowDepth"
+            variables: [mean, count, RMS]
+          - name: "byDomains/oman/totalSnowDepth"
+            variables: [mean, count, RMS]
+          - name: "griddedBins/ombg/totalSnowDepth"
+            variables: [mean, count, RMS]
+        variables: [validTime]
+
+  madis_snow:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/madis_snow_%Y%m%d%H_output_snow.nc"
+        groups:
+          - name: "byDomains/ombg/totalSnowDepth"
+            variables: [mean, count, RMS]
+          - name: "byDomains/oman/totalSnowDepth"
+            variables: [mean, count, RMS]
+          - name: "griddedBins/ombg/totalSnowDepth"
+            variables: [mean, count, RMS]
+        variables: [validTime]
+
+  sfcsno:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/sfcsno_%Y%m%d%H_output_snow.nc"
+        groups:
+          - name: "byDomains/ombg/totalSnowDepth"
+            variables: [mean, count, RMS]
+          - name: "byDomains/oman/totalSnowDepth"
+            variables: [mean, count, RMS]
+          - name: "griddedBins/ombg/totalSnowDepth"
+            variables: [mean, count, RMS]
+        variables: [validTime]
+
+  snocvr_snomad:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/snocvr_snomad_%Y%m%d%H_output_snow.nc"
+        groups:
+          - name: "byDomains/ombg/totalSnowDepth"
+            variables: [mean, count, RMS]
+          - name: "byDomains/oman/totalSnowDepth"
+            variables: [mean, count, RMS]
+          - name: "griddedBins/ombg/totalSnowDepth"
+            variables: [mean, count, RMS]
+        variables: [validTime]
+
+  snomad:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/snomad_%Y%m%d%H_output_snow.nc"
+        groups:
+          - name: "byDomains/ombg/totalSnowDepth"
+            variables: [mean, count, RMS]
+          - name: "byDomains/oman/totalSnowDepth"
+            variables: [mean, count, RMS]
+          - name: "griddedBins/ombg/totalSnowDepth"
+            variables: [mean, count, RMS]
+        variables: [validTime]
