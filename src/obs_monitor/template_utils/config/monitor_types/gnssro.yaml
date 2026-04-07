@@ -1,0 +1,132 @@
+ob_types:
+  gnssro:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/gnssro_%Y%m%d%H_output_atmos.nc"
+        groups:
+          - name: "byDomains/ombg/bendingAngle"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/oman/bendingAngle"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+        variables: [validTime]
+
+  gnssro_cosmic2:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/gnssro_cosmic2_%Y%m%d%H_output_atmos.nc"
+        groups:
+          - name: "byDomains/ombg/bendingAngle"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/oman/bendingAngle"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+        variables: [validTime]
+
+  gnssro_geooptics:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/gnssro_geooptics_%Y%m%d%H_output_atmos.nc"
+        groups:
+          - name: "byDomains/ombg/bendingAngle"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/oman/bendingAngle"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+        variables: [validTime]
+
+  gnssro_grace:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/gnssro_grace_%Y%m%d%H_output_atmos.nc"
+        groups:
+          - name: "byDomains/ombg/bendingAngle"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/oman/bendingAngle"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+        variables: [validTime]
+
+  gnssro_kompsat5:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/gnssro_kompsat5_%Y%m%d%H_output_atmos.nc"
+        groups:
+          - name: "byDomains/ombg/bendingAngle"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/oman/bendingAngle"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+        variables: [validTime]
+
+  gnssro_metop:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/gnssro_metop_%Y%m%d%H_output_atmos.nc"
+        groups:
+          - name: "byDomains/ombg/bendingAngle"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/oman/bendingAngle"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+        variables: [validTime]
+
+  gnssro_paz:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/gnssro_paz_%Y%m%d%H_output_atmos.nc"
+        groups:
+          - name: "byDomains/ombg/bendingAngle"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/oman/bendingAngle"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+        variables: [validTime]
+
+  gnssro_planetiq:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/gnssro_planetiq_%Y%m%d%H_output_atmos.nc"
+        groups:
+          - name: "byDomains/ombg/bendingAngle"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/oman/bendingAngle"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+        variables: [validTime]
+
+  gnssro_sentinel6:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/gnssro_sentinel6_%Y%m%d%H_output_atmos.nc"
+        groups:
+          - name: "byDomains/ombg/bendingAngle"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/oman/bendingAngle"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+        variables: [validTime]
+
+  gnssro_spire:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/gnssro_spire_%Y%m%d%H_output_atmos.nc"
+        groups:
+          - name: "byDomains/ombg/bendingAngle"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/oman/bendingAngle"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+        variables: [validTime]
+
+  gnssro_tandemx:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/gnssro_tandemx_%Y%m%d%H_output_atmos.nc"
+        groups:
+          - name: "byDomains/ombg/bendingAngle"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/oman/bendingAngle"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+        variables: [validTime]
+
+  gnssro_terrasarx:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/gnssro_terrasarx_%Y%m%d%H_output_atmos.nc"
+        groups:
+          - name: "byDomains/ombg/bendingAngle"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/oman/bendingAngle"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+        variables: [validTime]
