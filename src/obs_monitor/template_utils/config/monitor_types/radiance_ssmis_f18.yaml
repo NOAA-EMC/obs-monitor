@@ -1,0 +1,25 @@
+ob_types:
+  radiance_ssmis_f18:
+    channels: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/radiance_ssmis_f18_%Y%m%d%H_output_atmos.nc"
+        groups:
+          - name: "byDomains/ombg/brightnessTemperature"
+            variables: &radiance_stats
+              - assimilated_count
+              - assimilated_mean
+              - assimilated_RMS
+              - monitored_count
+              - monitored_mean
+              - monitored_RMS
+              - rejected_count
+              - rejected_mean
+              - rejected_RMS
+          - name: "byDomains/oman/brightnessTemperature"
+            variables: *radiance_stats
+          - name: "griddedBins/ombg/brightnessTemperature"
+            variables: *radiance_stats
+          - name: "griddedBins/oman/brightnessTemperature"
+            variables: *radiance_stats
+        variables: [validTime]
