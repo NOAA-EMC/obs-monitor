@@ -43,3 +43,12 @@ ob_types:
               series_color: "black"
               series_y: "ObsMonitor::oman_aerosolOpticalDepth::mean"
               series_slices: "[:,0]"
+
+  viirs_n21:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/viirs_n21_%Y%m%d%H_output_aod.nc"
+        groups:
+          - name: "oman/aerosolOpticalDepth"
+            variables: [mean, count, RMS]
+        variables: [validTime]
