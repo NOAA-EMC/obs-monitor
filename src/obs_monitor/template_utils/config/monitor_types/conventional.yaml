@@ -189,3 +189,113 @@ ob_types:
               series_color: "black"
               series_y: "ObsMonitor::byDomains_ombg_stationPressure::assimilated_mean"
               series_slices: "[:,0]"
+
+  aircraft:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/aircraft_%Y%m%d%H_output_atmos.nc"
+        groups:
+          - name: "byDomains/ombg/specificHumidity"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/oman/specificHumidity"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/ombg/windEastward"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/oman/windEastward"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/ombg/windNorthward"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/oman/windNorthward"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/ombg/airTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/oman/airTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+        variables: [validTime]
+
+  conventional_ps:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/conventional_ps_%Y%m%d%H_output_atmos.nc"
+        groups:
+          - name: "byDomains/ombg/stationPressure"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/oman/stationPressure"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+        variables: [validTime]
+
+  satwind:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/satwind_%Y%m%d%H_output_atmos.nc"
+        groups:
+          - name: "byDomains/ombg/windEastward"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/oman/windEastward"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/ombg/windNorthward"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/oman/windNorthward"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+        variables: [validTime]
+
+  sfc:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/sfc_%Y%m%d%H_output_atmos.nc"
+        groups:
+          - name: "byDomains/ombg/stationPressure"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/oman/stationPressure"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+        variables: [validTime]
+
+  sondes:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/sondes_%Y%m%d%H_output_atmos.nc"
+        groups:
+          - name: "byDomains/ombg/stationPressure"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/oman/stationPressure"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/ombg/airTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/oman/airTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/ombg/virtualTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/oman/virtualTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/ombg/windEastward"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/oman/windEastward"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/ombg/windNorthward"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/oman/windNorthward"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/ombg/specificHumidity"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/oman/specificHumidity"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+        variables: [validTime]
+
+  sfcship:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/sfcship_%Y%m%d%H_output_atmos.nc"
+        groups:
+          - name: "byDomains/ombg/stationPressure"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/oman/stationPressure"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/ombg/airTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/oman/airTemperature"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/ombg/specificHumidity"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+          - name: "byDomains/oman/specificHumidity"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS]
+        variables: [validTime]
