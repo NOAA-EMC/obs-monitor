@@ -1,0 +1,19 @@
+#!/bin/bash
+PSLOT={{ PSLOT }}
+
+EXP_DIR={{ EXPDIR }}
+WORKFLOW_XML="${EXP_DIR}/${PSLOT}_obsmon_rocoto.xml"
+DB_FILE="${EXP_DIR}/${PSLOT}_obsmon_rocoto.db"
+
+CRON_ENTRY="*/5 * * * * $(which rocotorun) -w $WORKFLOW_XML -d $DB_FILE"
+
+case $1 in
+   add)
+      (crontab -l | grep -v "$WORKFLOW_XML"; echo "$CRON_ENTRY") | crontab -
+      echo "Cron added for $EXP_DIR"
+      ;;
+   remove)
+      crontab -l | grep -v "$WORKFLOW_XML" | crontab -
+      echo "Cron removed for $EXP_DIR"
+      ;;
+esac
