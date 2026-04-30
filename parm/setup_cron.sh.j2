@@ -1,0 +1,58 @@
+#!/bin/bash
+PSLOT="{{ PSLOT }}"
+
+EXP_DIR="{{ EXPDIR }} "
+WORKFLOW_XML="${EXP_DIR}/${PSLOT}_obsmon_rocoto.xml"
+DB_FILE="${EXP_DIR}/${PSLOT}_obsmon_rocoto.db"
+
+ROCOTO_BIN=$(which rocotorun)
+if [ -z "$ROCOTO_BIN" ]; then
+    echo "Error: rocotorun not found in PATH."
+    exit 1
+fi
+
+CRON_ENTRY="*/5 * * * * $ROCOTO_BIN -w $WORKFLOW_XML -d $DB_FILE"
+TMP_CRON="/tmp/cron_backup_$(date +%s)"
+
+# Function to clean up temp file on exit
+cleanup() {
+    rm -f "$TMP_CRON"
+}
+trap cleanup EXIT
+
+case $1 in
+    add|remove)
+        # 1. Attempt to list current crontab. 
+        # Note: 'crontab -l' returns error code 1 if the crontab is empty.
+        # We redirect stderr to dev null to ignore the "no crontab for user" message.
+        if ! crontab -l > "$TMP_CRON" 2>/dev/null; then
+            # If it failed and the file is NOT empty, a real error occurred.
+            if [ -s "$TMP_CRON" ]; then
+                echo "Error: Failed to access crontab safely. Exiting without changes."
+                exit 1
+            fi
+            # Otherwise, the crontab is just empty (new user), which is fine.
+            touch "$TMP_CRON"
+        fi
+
+        # 2. Modify the temporary file
+        if [ "$1" == "add" ]; then
+            (grep -v "$WORKFLOW_XML" "$TMP_CRON"; echo "$CRON_ENTRY") > "${TMP_CRON}.new"
+        else
+            grep -v "$WORKFLOW_XML" "$TMP_CRON" > "${TMP_CRON}.new"
+        fi
+
+        # 3. Load the new crontab back in
+        if crontab "${TMP_CRON}.new"; then
+            echo "Cron $1 successfully for $EXP_DIR"
+            rm -f "${TMP_CRON}.new"
+        else
+            echo "Error: Failed to update crontab. No changes were made."
+            exit 1
+        fi
+        ;;
+    *)
+        echo "Usage: $0 {add|remove}"
+        exit 1
+        ;;
+esac

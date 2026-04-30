@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import argparse
 import sys
+import os
+import stat
 from pathlib import Path
 from typing import Any, Dict
 from datetime import datetime
@@ -262,6 +264,18 @@ def main() -> None:
 
     print(f"Rocoto workflow written to {output_path}")
 
+    # Customize and output setup_cron.sh
+    setup_output_path = expdir / f"setup_cron.sh"
+
+    setup_template = env.get_template("parm/setup_cron.sh.j2")
+    setup_output = setup_template.render(**render_kwargs)
+
+    setup_output_path.parent.mkdir(parents=True, exist_ok=True)
+    with setup_output_path.open("w") as f:
+        f.write(setup_output)
+        os.chmod(setup_output_path, os.stat(setup_output_path).st_mode | stat.S_IXUSR)
+
+    print(f"Setup_cron.sh script written to {setup_output_path}")
 
 if __name__ == "__main__":
     try:
