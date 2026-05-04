@@ -1,0 +1,35 @@
+ob_types:
+  radiance_iasi_metop-a:
+    channels: [
+      16, 104, 154, 254, 410, 1585, 1702, 1784, 1800, 1804, 1858, 1870,
+      1927, 1983, 1984, 2019, 2050, 2057, 2116, 2134, 2135, 2140, 2158, 2165,
+      2166, 2167, 2175, 2176, 2183, 2192, 2204, 2211, 2217, 2220, 2231, 2240,
+      2253, 2260, 2312, 2315, 2322, 2324, 2330, 2331, 2337, 2354, 2364, 2377,
+      2385, 2412, 2415, 2416, 2417, 2422, 2425, 2426, 2432, 2439, 2440, 2449,
+      2451, 2458, 2460, 2461, 2468, 2475, 2479, 2487, 2505, 2518, 2544, 2554,
+      2578, 2582, 2627, 2659, 2661, 2662, 2681, 2684, 2688, 2694, 2700, 2701,
+      2705, 2706, 2710, 2713, 2724, 2727, 2731, 2732, 2734, 2735, 2736, 2739,
+      2740, 2750, 2752, 2759, 2760, 2762, 2763
+    ]
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/radiance_iasi_metop-a_%Y%m%d%H_output_atmos.nc"
+        groups:
+          - name: "byDomains/ombg/brightnessTemperature"
+            variables: &radiance_stats
+              - assimilated_count
+              - assimilated_mean
+              - assimilated_RMS
+              - monitored_count
+              - monitored_mean
+              - monitored_RMS
+              - rejected_count
+              - rejected_mean
+              - rejected_RMS
+          - name: "byDomains/oman/brightnessTemperature"
+            variables: *radiance_stats
+          - name: "griddedBins/ombg/brightnessTemperature"
+            variables: [latitude, longitude]
+          - name: "griddedBins/oman/brightnessTemperature"
+            variables: [latitude, longitude]
+        variables: [validTime]

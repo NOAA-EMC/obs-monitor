@@ -1,0 +1,26 @@
+ob_types:
+
+  smap_soil:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/smap_soil_%Y%m%d%H_output_soil.nc"
+        groups:
+          - name: "byDomains/ombg/soilMoistureVolumetric"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/soilMoistureVolumetric"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/soilMoistureVolumetric"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/soilMoistureVolumetric"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]

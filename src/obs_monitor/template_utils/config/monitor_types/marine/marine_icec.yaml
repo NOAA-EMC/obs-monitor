@@ -1,0 +1,401 @@
+ob_types:
+
+  icec_generic_passive:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/icec_generic_passive_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  icec_abi_g16_l2:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/icec_abi_g16_l2_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  icec_amsr2_north:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/icec_amsr2_north_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  icec_amsr2_south:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/icec_amsr2_south_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  icec_amsu_ma1_l2:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/icec_amsu_ma1_l2_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  icec_amsu_mb_l2:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/icec_amsu_mb_l2_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  icec_atms_n20_l2:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/icec_atms_n20_l2_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  icec_atms_n21_l2:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/icec_atms_n21_l2_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  icec_atms_npp_l2:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/icec_atms_npp_l2_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  icec_gmi_gpm_l2:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/icec_gmi_gpm_l2_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  icec_ssmis_f17_l2:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/icec_ssmis_f17_l2_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  icec_viirs_j01_l2:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/icec_viirs_j01_l2_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  icec_viirs_n20_l2_north:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/icec_viirs_n20_l2_north_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  icec_viirs_n20_l2_south:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/icec_viirs_n20_l2_south_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  icec_viirs_n21_l2:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/icec_viirs_n21_l2_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
+
+  icec_viirs_npp_l2:
+    datasets:
+      - filenames_template:
+          template: "{{ runtime_dir }}/icec_viirs_npp_l2_%Y%m%d%H_output_marine.nc"
+        groups:
+          - name: "byDomains/ombg/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "byDomains/oman/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/ombg/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins/oman/seaIceFraction"
+            variables: [assimilated_mean, assimilated_count, assimilated_RMS,
+                        monitored_mean, monitored_count, monitored_RMS,
+                        rejected_mean, rejected_count, rejected_RMS]
+          - name: "griddedBins"
+            variables: [latitude, longitude]
+        variables: [validTime]
