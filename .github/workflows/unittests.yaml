@@ -8,12 +8,6 @@ jobs:
 
     steps:
 
-    # Setup Python
-    #- name: Set up Python 3.10
-    #  uses: actions/setup-python@v2
-    #  with:
-    #    python-version: 3.10.10
-
     # Update conda
     - name: Update conda
       run: conda update -n base -c defaults conda
@@ -43,39 +37,39 @@ jobs:
         cd wxflow
         $CONDA/bin/pip3 install .
 
-    # Install cartopy
+    # Install cartopy (required by EMCPy)
     - name: Install cartopy
       run: conda install -c conda-forge cartopy
 
-    # Clone the eva code
-    - name: Clone eva repo
+    # Install EMCPy (replaces EVA)
+    - name: Clone EMCPy
       uses: actions/checkout@v2
       with:
-        repository: JCSDA-internal/eva
+        repository: NOAA-EMC/emcpy
         ref: develop
-        path: eva
-        lfs: true
+        path: emcpy
 
-    # Install eva
-    #- name: Upgrade pip
-    #  run: $CONDA/bin/pip3 install --upgrade pip
-    #- name: Install eva and dependencies
-    #  run: $CONDA/bin/pip3 install -r obs-monitor/requirements.txt --user
-    # - name: Install eva and dependencies
-    #   run: $CONDA/bin/pip3 install --use-deprecated=legacy-resolver -r requirements-github.txt --user .
-    #- name: Put eva in the path
-    #  run: echo "$HOME/.local/bin" >> $GITHUB_PATH
+    - name: Install EMCPy
+      run: |
+        cd emcpy
+        $CONDA/bin/pip3 install .
 
-    #- name: Checkout
-    #  uses: actions/checkout@v2
-    #  with:
-    #    path: obs-monitor
+    # Install pytest
+    - name: Install pytest
+      run: $CONDA/bin/pip3 install pytest pytest-cov
 
-#    - name: Test running plotObsMon
-#      run: |
-#        cd $GITHUB_WORKSPACE/obs-monitor/ush
-#        $CONDA/bin/python3 plotObsMon -i $GITHUB_WORKSPACE/obs-monitor/parm/gfs/gfs_plots.yaml -p 2023110300
+    # Install obs-monitor itself so plotting subpackage is importable
+    - name: Install obs-monitor
+      run: |
+        cd obs-monitor
+        $CONDA/bin/pip3 install -e .
 
-#    - name: Display YAML files
-#      run: |
-#        ls $GITHUB_WORKSPACE/obs-monitor/ush
+    # Run unit tests
+    - name: Run unit tests
+      env:
+        MPLBACKEND: Agg  # non-interactive matplotlib backend; required in CI
+      run: |
+        cd obs-monitor
+        $CONDA/bin/pytest tests/plotting/ -v --tb=short \
+          --cov=obs_monitor.plotting \
+          --cov-report=term-missing
