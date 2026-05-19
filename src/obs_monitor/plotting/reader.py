@@ -353,13 +353,27 @@ def read_group(
                 cycle_arrays[var] = np.full(fill_shape, np.nan, dtype=float)
 
     # ------------------------------------------------------------------
+    # Squeeze the in-file analysisCycle=1 leading dimension before stacking
+    # ------------------------------------------------------------------
+    # Each file stores variables with an in-file analysisCycle dim of size 1
+    # (e.g. shape (1, 7) for byDomains, (1, 1, 72, 144) for griddedBins).
+    # We squeeze that axis out here so that np.stack produces the clean shape
+    # (N_cycles, 7) or (N_cycles, 1, 72, 144) rather than adding a redundant
+    # extra leading dimension.
+    for cycle_arrays in per_cycle:
+        for var in variables:
+            arr = cycle_arrays[var]
+            if arr.ndim >= 1 and arr.shape[0] == 1:
+                cycle_arrays[var] = arr.squeeze(axis=0)
+
+    # ------------------------------------------------------------------
     # Stack along analysisCycle
     # ------------------------------------------------------------------
     cycle_coord = xr.Variable("analysisCycle", np.array(cycle_times, dtype="datetime64[ns]"))
 
     data_vars: dict[str, xr.Variable] = {}
     for var in variables:
-        stacked = np.stack([c[var] for c in per_cycle], axis=0)  # (cycles, ...)
+        stacked = np.stack([c[var] for c in per_cycle], axis=0)  # (N_cycles, ...)
         dims = ("analysisCycle",) + tuple(f"dim_{i}" for i in range(stacked.ndim - 1))
         data_vars[var] = xr.Variable(dims, stacked, attrs=collected_attrs[var])
 
