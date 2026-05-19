@@ -89,7 +89,7 @@ def cycle_mean(ds: xr.Dataset, variables: Sequence[str] | None = None) -> xr.Dat
     if missing:
         raise ValueError(f"Variables not found in Dataset: {missing}")
 
-    n_cycles = ds.dims["analysisCycle"]
+    n_cycles = ds.sizes["analysisCycle"]
     reduced: dict[str, xr.DataArray] = {}
 
     for vname in target_vars:
@@ -115,7 +115,7 @@ def cycle_mean(ds: xr.Dataset, variables: Sequence[str] | None = None) -> xr.Dat
     return result
 
 
-def squeeze_gridded(ds: xr.Dataset, zdim: str = "dim_1") -> xr.Dataset:
+def squeeze_gridded(ds: xr.Dataset, zdim: str = "dim_0") -> xr.Dataset:
     """
     Drop the degenerate vertical dimension (``binsZDim=1``) from gridded variables.
 
@@ -179,8 +179,8 @@ def attach_coords(
     ds: xr.Dataset,
     lat: np.ndarray,
     lon: np.ndarray,
-    lat_dim: str = "dim_2",
-    lon_dim: str = "dim_3",
+    lat_dim: str = "dim_1",
+    lon_dim: str = "dim_2",
 ) -> xr.Dataset:
     """
     Attach 2-D latitude and longitude arrays as Dataset coordinates.
@@ -243,9 +243,9 @@ def prepare_gridded(
     lat: np.ndarray,
     lon: np.ndarray,
     variables: Sequence[str] | None = None,
-    zdim: str = "dim_1",
-    lat_dim: str = "dim_2",
-    lon_dim: str = "dim_3",
+    zdim: str = "dim_0",
+    lat_dim: str = "dim_1",
+    lon_dim: str = "dim_2",
 ) -> xr.Dataset:
     """
     Full transform pipeline for a gridded group: mean → squeeze → attach coords.
@@ -337,7 +337,7 @@ def prepare_time_series(
 
     logger.info(
         "prepare_time_series: %d cycle(s), variables=%s",
-        ds.dims["analysisCycle"],
+        ds.sizes["analysisCycle"],
         list(ds.data_vars),
     )
     return ds
