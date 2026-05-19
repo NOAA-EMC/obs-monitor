@@ -38,6 +38,7 @@ from multiprocessing import Pool, cpu_count
 from wxflow import Logger
 from wxflow.configuration import cast_as_dtype
 
+from obs_monitor import build_template_for_ob_type
 from obs_monitor.plotting import dispatch_plots
 
 from .stubs import (
