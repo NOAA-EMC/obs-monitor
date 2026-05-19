@@ -70,7 +70,7 @@ class TestReadGroupShape:
             group_path=f"byDomains/{stat_group}",
             variables=["assimilated_mean"],
         )
-        assert ds.dims["analysisCycle"] == 1
+        assert ds.sizes["analysisCycle"] == 1
 
     def test_multi_file_stack_size(self, multi_nc_files, stat_group):
         ds = read_group(
@@ -78,7 +78,7 @@ class TestReadGroupShape:
             group_path=f"byDomains/{stat_group}",
             variables=["assimilated_mean"],
         )
-        assert ds.dims["analysisCycle"] == len(multi_nc_files)
+        assert ds.sizes["analysisCycle"] == len(multi_nc_files)
 
     def test_domain_dim_size(self, multi_nc_files, stat_group):
         """byDomains variables should have a second dim of size 7 (Domain)."""
@@ -165,7 +165,7 @@ class TestReadGroupFaultTolerance:
             variables=["assimilated_mean"],
         )
         # Only one file was readable → one cycle
-        assert ds.dims["analysisCycle"] == 1
+        assert ds.sizes["analysisCycle"] == 1
 
     def test_missing_group_skipped_not_raised(
         self, single_nc_file
@@ -176,7 +176,7 @@ class TestReadGroupFaultTolerance:
             group_path="byDomains/nonexistent/group",
             variables=["assimilated_mean"],
         )
-        assert ds == xr.Dataset() or ds.dims.get("analysisCycle", 0) == 0
+        assert ds == xr.Dataset() or ds.sizes.get("analysisCycle", 0) == 0
 
     def test_all_files_missing_returns_empty_dataset(
         self, tmp_path, stat_group
@@ -200,7 +200,7 @@ class TestReadGroupFaultTolerance:
             group_path=f"byDomains/{stat_group}",
             variables=["assimilated_mean"],
         )
-        assert ds.dims["analysisCycle"] == 3
+        assert ds.sizes["analysisCycle"] == 3
 
     def test_raises_on_empty_nc_files(self, stat_group):
         with pytest.raises(ValueError, match="nc_files must not be empty"):

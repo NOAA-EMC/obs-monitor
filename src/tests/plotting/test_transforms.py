@@ -312,7 +312,7 @@ class TestPrepareTimeSeries:
         ds = _make_domain_ds(n_cycles=4)
         result = prepare_time_series(ds)
         assert "analysisCycle" in result.dims
-        assert result.dims["analysisCycle"] == 4
+        assert result.sizes["analysisCycle"] == 4
 
     def test_values_unchanged(self):
         ds = _make_domain_ds(n_cycles=4)
@@ -367,7 +367,7 @@ class TestReaderTransformsIntegration:
             dim_labels={"statisticDomain": DOMAINS},
         )
         result = prepare_time_series(ds, variables=["assimilated_mean"])
-        assert result.dims["analysisCycle"] == len(multi_nc_files)
+        assert result.sizes["analysisCycle"] == len(multi_nc_files)
         assert result["assimilated_mean"].shape[1] == N_DOMAINS
 
     def test_full_gridded_pipeline(self, multi_nc_files, stat_group):
