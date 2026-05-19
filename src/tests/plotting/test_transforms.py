@@ -297,7 +297,7 @@ class TestPrepareGridded:
     def test_variable_subset(self):
         ds = _make_gridded_ds(n_cycles=4)
         ds["extra"] = xr.Variable(
-            ("analysisCycle", "dim_1", "dim_2", "dim_3"),
+            ("analysisCycle", "dim_0", "dim_1", "dim_2"),
             np.zeros_like(ds["assimilated_mean"].values),
         )
         lat, lon = _make_lat_lon()
