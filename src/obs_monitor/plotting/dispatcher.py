@@ -362,6 +362,20 @@ def dispatch_plots(
             summary["errors"].append(msg)
             continue
 
+        # Guard: requested stat must actually be present in the Dataset.
+        # read_group only reads variables that exist in the file; if the stat
+        # name was wrong or absent in every cycle, data_vars will exist but
+        # won't contain the requested key.
+        if stat not in ds_raw.data_vars:
+            msg = (
+                f"Spec #{spec_idx} ({fig_type}): stat '{stat}' not found in "
+                f"Dataset after read (available: {list(ds_raw.data_vars)}). "
+                "Check the 'stat' key in the figure spec."
+            )
+            logger.error("[%s] %s", ob_type, msg)
+            summary["errors"].append(msg)
+            continue
+
         # ---- Transform ----
         try:
             if fig_type == "time_series":
