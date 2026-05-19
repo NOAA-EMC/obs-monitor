@@ -17,7 +17,7 @@ two plot types used by obs-monitor:
 Both classes share a common interface::
 
     fig = TimeSeriesFigure(ds, spec, ob_type, variable, stat)
-    fig.save()          # writes a PNG; returns the Path
+    fig.save(output_path)          # writes a PNG; returns the Path
 
 Neither class mutates the Dataset it receives.  All domain filtering,
 title formatting, and output path construction happen here; the dispatcher
@@ -34,15 +34,18 @@ import re
 from abc import ABC, abstractmethod
 from datetime import datetime
 from pathlib import Path
+from typing import Sequence
 
 import matplotlib
 matplotlib.use("Agg")  # non-interactive backend; safe for operational/HPC use
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
+import numpy as np
+import xarray as xr
 
 # Hard EMCPy requirement — fail loudly at import time if missing.
 try:
-    from emcpy.plots.plots import LinePlot, HorizontalLine
+    from emcpy.plots.plots import LinePlot
     from emcpy.plots.create_plots import CreatePlot, CreateFigure
     from emcpy.plots.map_plots import MapGridded
 except ImportError as _emcpy_err:
@@ -91,9 +94,20 @@ def build_timeseries_filename(ob_type: str, variable: str, stat: str, domain: st
     Construct the output PNG filename for a time-series plot.
 
     Convention: ``{ob_type}_{variable}_{stat}_{domain}_timeseries.png``
+
+    Parameters
+    ----------
+    ob_type:
+        Observation type string, e.g. ``"prepbufr_adpsfc"``.
+    variable:
+        Variable name, e.g. ``"stationPressure"``.
+    stat:
+        Statistic name, e.g. ``"assimilated_mean"``.
+    domain:
+        Domain label, e.g. ``"Global"`` or ``"CONUS"``.
     """
     parts = [ob_type, variable, stat, domain, "timeseries"]
-    return "_".join(_safe_stem(p) for p in parts) + ".png"
+    return _safe_stem("_".join(parts)) + ".png"
 
 
 def build_map_filename(ob_type: str, variable: str, stat: str) -> str:
@@ -103,7 +117,7 @@ def build_map_filename(ob_type: str, variable: str, stat: str) -> str:
     Convention: ``{ob_type}_{variable}_{stat}_map.png``
     """
     parts = [ob_type, variable, stat, "map"]
-    return "_".join(_safe_stem(p) for p in parts) + ".png"
+    return _safe_stem("_".join(parts)) + ".png"
 
 
 # ---------------------------------------------------------------------------
@@ -178,7 +192,7 @@ class TimeSeriesFigure(FigureBase):
     """
     Multi-domain time-series line plot of a single statistic over cycles.
 
-    One PNG is produced per domain so that file names are unambiguous in
+    One PNG is produced **per domain** so that file names are unambiguous in
     COM and individual domain plots can be linked independently on web pages.
 
     The ``analysisCycle`` coordinate (``datetime64``) from the Dataset is
@@ -202,11 +216,22 @@ class TimeSeriesFigure(FigureBase):
         Used for title formatting and filename construction.
     output_dir:
         Directory where PNGs are written.
+
+    Examples
+    --------
+    >>> fig = TimeSeriesFigure(ds_ts, spec, "prepbufr_adpsfc",
+    ...                        "stationPressure", "assimilated_mean",
+    ...                        output_dir=window_dir / "plots")
+    >>> paths = fig.save()
     """
 
     def _resolve_domains(self) -> list[tuple[int, str]]:
         """
         Return ``[(dim_0_index, domain_label), ...]`` for the domains to plot.
+
+        If ``statisticDomain`` is a coordinate on the Dataset, domain names
+        from the spec are matched by string.  Otherwise we fall back to
+        integer indices with auto-generated labels.
         """
         requested: list[str] | None = self.spec.get("domains")
 
@@ -254,11 +279,9 @@ class TimeSeriesFigure(FigureBase):
         da = self.ds[self.stat]  # shape (analysisCycle, dim_0)
         cycles = self.ds.coords["analysisCycle"].values  # datetime64 array
 
-        # Convert datetime64 → timezone-aware UTC datetimes for matplotlib
-        from datetime import timezone as _tz
+        # Convert datetime64 → Python datetimes for matplotlib
         x_times = [
-            datetime.fromtimestamp(int(t) / 1e9, tz=_tz.utc).replace(tzinfo=None)
-            for t in cycles.astype("int64")
+            datetime.utcfromtimestamp(int(t) / 1e9) for t in cycles.astype("int64")
         ]
 
         domains = self._resolve_domains()
@@ -274,6 +297,7 @@ class TimeSeriesFigure(FigureBase):
             if da.ndim == 2:
                 y_vals = da.values[:, dom_idx].astype(float)
             else:
+                # Scalar per cycle — no domain axis
                 y_vals = da.values.astype(float)
 
             title = title_template.format(
@@ -290,36 +314,24 @@ class TimeSeriesFigure(FigureBase):
             lp.linewidth = 1.5
             lp.markersize = 4
 
-            # Zero reference line — uses EMCPy HorizontalLine so it renders
-            # as a proper plot layer rather than a post-hoc matplotlib patch.
-            zero_line = HorizontalLine(0)
-            zero_line.color = "black"
-            zero_line.linewidth = 0.8
-            zero_line.linestyle = "--"
-
             plot1 = CreatePlot()
-            plot1.plot_layers = [lp, zero_line]
-            plot1.add_title(label=title, loc="center", fontsize=12)
-            plot1.add_xlabel(xlabel="Analysis Cycle (UTC)", fontsize=10)
-            plot1.add_ylabel(ylabel=y_label, fontsize=10)
+            plot1.plot_layers = [lp]
+            plot1.add_title(label=title, loc="center", fontsize=11)
+            plot1.add_xlabel(xlabel="Analysis Cycle (UTC)")
+            plot1.add_ylabel(ylabel=y_label)
             plot1.add_legend(loc="best", fontsize=9)
-            # Grid via EMCPy's add_grid — routes to ax.gridlines() on map axes
-            # and ax.grid() on regular axes (see CreateFigure._plot_grid).
-            plot1.add_grid(linestyle=":", linewidth=0.6, color="gray", alpha=0.7)
 
             fig_obj = CreateFigure(figsize=(10, 4))
             fig_obj.plot_list = [plot1]
             fig_obj.create_figure()
 
             # Rotate x-tick labels for readability; EMCPy exposes the
-            # underlying axes via fig_obj.fig.
+            # underlying axes via fig_obj.fig
             mpl_fig: plt.Figure = fig_obj.fig
             for ax in mpl_fig.axes:
                 ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y%m%d\n%Hz"))
                 ax.xaxis.set_major_locator(mdates.AutoDateLocator())
                 plt.setp(ax.get_xticklabels(), rotation=30, ha="right", fontsize=8)
-                # Draw grid lines behind data
-                ax.set_axisbelow(True)
 
             out_name = build_timeseries_filename(
                 self.ob_type, self.variable, self.stat, dom_label
@@ -358,14 +370,17 @@ class MapGriddedFigure(FigureBase):
           Defaults to ``"global"``.
         * ``cmap`` (str | None) — matplotlib colormap name.
           Defaults to ``"coolwarm"``.
-        * ``vmin`` (float | None) — lower bound for the colorbar.
-          When omitted the full data range is used.
-        * ``vmax`` (float | None) — upper bound for the colorbar.
-          When omitted the full data range is used.
     ob_type, variable, stat:
         Used for title formatting and filename construction.
     output_dir:
         Directory where PNGs are written.
+
+    Examples
+    --------
+    >>> fig = MapGriddedFigure(ds_map, spec, "prepbufr_adpsfc",
+    ...                        "stationPressure", "assimilated_mean",
+    ...                        output_dir=window_dir / "plots")
+    >>> paths = fig.save()
     """
 
     def _render(self) -> list[tuple["plt.Figure", Path]]:
@@ -393,8 +408,6 @@ class MapGriddedFigure(FigureBase):
         domain     = self.spec.get("domain", "global")
         cmap       = self.spec.get("cmap") or "coolwarm"
         cb_label   = self.spec.get("colorbar_label", f"{self.variable} ({self.stat})")
-        vmin       = self.spec.get("vmin")   # None → EMCPy uses full data range
-        vmax       = self.spec.get("vmax")
         title_template = self.spec.get(
             "title", "{ob_type} {variable} {stat} — Cycle Mean"
         )
@@ -405,21 +418,18 @@ class MapGriddedFigure(FigureBase):
         )
 
         # ---- EMCPy MapGridded ----
-        # vmin/vmax are first-class attributes on MapGridded; _apply_norm_from_layer
-        # in CreateFigure reads them and builds a Normalize before calling pcolormesh.
+        # MapGridded(lat2d, lon2d, data2d)
         gridded = MapGridded(lat, lon, data)
         gridded.cmap = cmap
-        gridded.vmin = vmin
-        gridded.vmax = vmax
 
         plot1 = CreatePlot()
         plot1.plot_layers = [gridded]
         plot1.projection = projection
         plot1.domain = domain
         plot1.add_map_features(["coastline", "borders"])
-        plot1.add_xlabel(xlabel="Longitude", fontsize=10)
-        plot1.add_ylabel(ylabel="Latitude", fontsize=10)
-        plot1.add_title(label=title, loc="center", fontsize=12)
+        plot1.add_xlabel(xlabel="Longitude")
+        plot1.add_ylabel(ylabel="Latitude")
+        plot1.add_title(label=title, loc="center", fontsize=11)
         plot1.add_grid()
         plot1.add_colorbar(label=cb_label, fontsize=10, extend="both")
 
@@ -484,6 +494,13 @@ def build_figure(
     ------
     ValueError
         If *figure_type* is not in the registry.
+
+    Examples
+    --------
+    >>> fig = build_figure("time_series", ds_ts, spec,
+    ...                    "prepbufr_adpsfc", "stationPressure",
+    ...                    "assimilated_mean", output_dir)
+    >>> paths = fig.save()
     """
     if figure_type not in FIGURE_REGISTRY:
         raise ValueError(
