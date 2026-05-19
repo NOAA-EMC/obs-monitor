@@ -95,6 +95,10 @@ def build_timeseries_filename(ob_type: str, variable: str, stat: str, domain: st
 
     Convention: ``{ob_type}_{variable}_{stat}_{domain}_timeseries.png``
 
+    Each component is sanitised individually before joining so that special
+    characters (spaces, slashes, dots) in any one component don't bleed into
+    the separating underscores or the ``.png`` extension.
+
     Parameters
     ----------
     ob_type:
@@ -107,7 +111,7 @@ def build_timeseries_filename(ob_type: str, variable: str, stat: str, domain: st
         Domain label, e.g. ``"Global"`` or ``"CONUS"``.
     """
     parts = [ob_type, variable, stat, domain, "timeseries"]
-    return _safe_stem("_".join(parts)) + ".png"
+    return "_".join(_safe_stem(p) for p in parts) + ".png"
 
 
 def build_map_filename(ob_type: str, variable: str, stat: str) -> str:
@@ -117,7 +121,7 @@ def build_map_filename(ob_type: str, variable: str, stat: str) -> str:
     Convention: ``{ob_type}_{variable}_{stat}_map.png``
     """
     parts = [ob_type, variable, stat, "map"]
-    return _safe_stem("_".join(parts)) + ".png"
+    return "_".join(_safe_stem(p) for p in parts) + ".png"
 
 
 # ---------------------------------------------------------------------------
@@ -279,9 +283,11 @@ class TimeSeriesFigure(FigureBase):
         da = self.ds[self.stat]  # shape (analysisCycle, dim_0)
         cycles = self.ds.coords["analysisCycle"].values  # datetime64 array
 
-        # Convert datetime64 → Python datetimes for matplotlib
+        # Convert datetime64 → timezone-aware UTC datetimes for matplotlib
+        from datetime import timezone as _tz
         x_times = [
-            datetime.utcfromtimestamp(int(t) / 1e9) for t in cycles.astype("int64")
+            datetime.fromtimestamp(int(t) / 1e9, tz=_tz.utc).replace(tzinfo=None)
+            for t in cycles.astype("int64")
         ]
 
         domains = self._resolve_domains()
