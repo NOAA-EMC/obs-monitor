@@ -119,11 +119,16 @@ class TestFilenameHelpers:
         assert name == "prepbufr_adpsfc_stationPressure_assimilated_mean_map.png"
 
     def test_timeseries_filename_safe_chars(self):
-        """Special characters in inputs must be replaced with underscores."""
+        """Special characters in stem components must be replaced with underscores.
+        The .png extension is appended after sanitisation and is not subject to it.
+        Hyphens are preserved (they are safe in filenames and common in domain names).
+        """
         name = build_timeseries_filename("ob/type", "var name", "stat.val", "dom-ain")
-        assert "/" not in name
-        assert " " not in name
-        assert "." not in name
+        stem = name[:-4]  # strip .png before checking
+        assert name.endswith(".png")
+        assert "/" not in stem
+        assert " " not in stem
+        assert "." not in stem  # dot in "stat.val" should have been replaced
 
     def test_map_filename_ends_with_png(self):
         name = build_map_filename("prepbufr_adpsfc", "stationPressure", "assimilated_mean")

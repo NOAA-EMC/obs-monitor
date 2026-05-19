@@ -74,9 +74,13 @@ def _make_domain_ds(n_cycles: int = 4, n_domains: int = N_DOMAINS) -> xr.Dataset
 
 def _make_gridded_ds(n_cycles: int = 4) -> xr.Dataset:
     """
-    Synthetic griddedBins Dataset:
-    shape (analysisCycle=n_cycles, dim_1=1, dim_2=BINS_Y, dim_3=BINS_X).
-    Values are 1.0 throughout for easy mean verification.
+    Synthetic griddedBins Dataset matching the post-reader-squeeze dim layout:
+    shape (analysisCycle=n_cycles, dim_0=1, dim_1=BINS_Y, dim_2=BINS_X).
+
+    The reader squeezes the in-file analysisCycle=1 leading axis before
+    stacking, so dims are numbered from 0 starting at binsZDim.  This
+    synthetic helper mirrors that layout so prepare_gridded defaults work
+    identically against real and synthetic data.
     """
     times = np.array(
         [np.datetime64(f"2025-11-13T{h:02d}:00:00", "ns") for h in range(n_cycles)]
@@ -85,7 +89,7 @@ def _make_gridded_ds(n_cycles: int = 4) -> xr.Dataset:
     return xr.Dataset(
         {
             "assimilated_mean": xr.Variable(
-                ("analysisCycle", "dim_1", "dim_2", "dim_3"), data
+                ("analysisCycle", "dim_0", "dim_1", "dim_2"), data
             )
         },
         coords={"analysisCycle": times},
@@ -191,14 +195,14 @@ class TestSqueezeGridded:
 
     def test_removes_zdim(self):
         ds = cycle_mean(_make_gridded_ds())
-        # Before squeeze: (1, 72, 144) with dims (dim_1, dim_2, dim_3)
-        assert "dim_1" in ds["assimilated_mean"].dims
-        result = squeeze_gridded(ds, zdim="dim_1")
-        assert "dim_1" not in result["assimilated_mean"].dims
+        # Before squeeze: (1, 72, 144) with dims (dim_0, dim_1, dim_2)
+        assert "dim_0" in ds["assimilated_mean"].dims
+        result = squeeze_gridded(ds, zdim="dim_0")
+        assert "dim_0" not in result["assimilated_mean"].dims
 
     def test_output_shape_after_squeeze(self):
         ds = cycle_mean(_make_gridded_ds())
-        result = squeeze_gridded(ds, zdim="dim_1")
+        result = squeeze_gridded(ds, zdim="dim_0")
         assert result["assimilated_mean"].shape == (BINS_Y, BINS_X)
 
     def test_variables_without_zdim_unchanged(self):
@@ -231,28 +235,28 @@ class TestSqueezeGridded:
 class TestAttachCoords:
 
     def test_latitude_coordinate_present(self):
-        ds = squeeze_gridded(cycle_mean(_make_gridded_ds()), zdim="dim_1")
+        ds = squeeze_gridded(cycle_mean(_make_gridded_ds()), zdim="dim_0")
         lat, lon = _make_lat_lon()
-        result = attach_coords(ds, lat, lon, lat_dim="dim_2", lon_dim="dim_3")
+        result = attach_coords(ds, lat, lon, lat_dim="dim_1", lon_dim="dim_2")
         assert "latitude" in result.coords
 
     def test_longitude_coordinate_present(self):
-        ds = squeeze_gridded(cycle_mean(_make_gridded_ds()), zdim="dim_1")
+        ds = squeeze_gridded(cycle_mean(_make_gridded_ds()), zdim="dim_0")
         lat, lon = _make_lat_lon()
-        result = attach_coords(ds, lat, lon, lat_dim="dim_2", lon_dim="dim_3")
+        result = attach_coords(ds, lat, lon, lat_dim="dim_1", lon_dim="dim_2")
         assert "longitude" in result.coords
 
     def test_coord_shapes(self):
-        ds = squeeze_gridded(cycle_mean(_make_gridded_ds()), zdim="dim_1")
+        ds = squeeze_gridded(cycle_mean(_make_gridded_ds()), zdim="dim_0")
         lat, lon = _make_lat_lon()
-        result = attach_coords(ds, lat, lon, lat_dim="dim_2", lon_dim="dim_3")
+        result = attach_coords(ds, lat, lon, lat_dim="dim_1", lon_dim="dim_2")
         assert result.coords["latitude"].shape  == (BINS_Y, BINS_X)
         assert result.coords["longitude"].shape == (BINS_Y, BINS_X)
 
     def test_existing_coords_preserved(self):
-        ds = squeeze_gridded(cycle_mean(_make_gridded_ds()), zdim="dim_1")
+        ds = squeeze_gridded(cycle_mean(_make_gridded_ds()), zdim="dim_0")
         lat, lon = _make_lat_lon()
-        result = attach_coords(ds, lat, lon, lat_dim="dim_2", lon_dim="dim_3")
+        result = attach_coords(ds, lat, lon, lat_dim="dim_1", lon_dim="dim_2")
         # n_cycles from cycle_mean should still be present
         assert "n_cycles" in result.coords
 
