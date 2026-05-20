@@ -181,7 +181,7 @@ class TimeSeriesFigure(FigureBase):
     """
     Multi-domain time-series line plot of a single statistic over cycles.
 
-    One PNG is produced **per domain** so that file names are unambiguous in
+    One PNG is produced per domain so that file names are unambiguous in
     COM and individual domain plots can be linked independently on web pages.
 
     The ``analysisCycle`` coordinate (``datetime64``) from the Dataset is

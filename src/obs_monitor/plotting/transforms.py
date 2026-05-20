@@ -47,7 +47,7 @@ def cycle_mean(ds: xr.Dataset, variables: Sequence[str] | None = None) -> xr.Dat
     Average across the ``analysisCycle`` dimension using :func:`numpy.nanmean`.
 
     Missing values (NaN) are ignored, matching the sentinel-scrubbing done in
-    the reader.  If *every* cycle is NaN for a given grid cell, the result is
+    the reader.  If every cycle is NaN for a given grid cell, the result is
     NaN for that cell (not zero).
 
     Parameters

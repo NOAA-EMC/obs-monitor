@@ -252,7 +252,7 @@ def read_group(
     Raises
     ------
     ValueError
-        If *nc_files* is empty or *variables* is empty.
+        If nc_files is empty or variables is empty.
 
     Examples
     --------
