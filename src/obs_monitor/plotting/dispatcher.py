@@ -17,12 +17,11 @@ config the dispatcher:
       ``.save()``.
 4. Returns a summary dict the driver can log or inspect.
 
-The dispatcher is the **only** module that knows about the job config
+The dispatcher is the only module that knows about the job config
 structure.  Reader, transforms, and figures are all config-agnostic.
 
 Typical call from ``driver.py``
 --------------------------------
-Replace the ``generate_eva_config`` + ``run_eva`` block with::
 
     from obs_monitor.plotting.dispatcher import dispatch_plots
 
@@ -61,6 +60,7 @@ Config format expected
           projection: plcarr
           domain: global
           cmap: coolwarm
+          ...
 """
 
 from __future__ import annotations
@@ -92,7 +92,7 @@ _FIGURE_TYPE_TO_GROUP_KEY: dict[str, str] = {
 
 def _discover_nc_files(runtime_dir: Path, ob_type: str) -> list[Path]:
     """
-    Return a time-sorted list of NetCDF files for *ob_type* in *runtime_dir*.
+    Return a time-sorted list of NetCDF files for ob_type in runtime_dir.
 
     Files are matched by the ``{ob_type}_*.nc`` glob and sorted
     lexicographically on their names, which is equivalent to chronological
@@ -246,25 +246,6 @@ def dispatch_plots(
         * ``figures_written`` (int)
         * ``paths`` (list[str]): absolute paths of PNGs written
         * ``errors`` (list[str]): error messages for any failed specs
-
-    Examples
-    --------
-    Replacing the EVA block in ``driver.py``::
-
-        from obs_monitor.plotting.dispatcher import dispatch_plots
-
-        result = dispatch_plots(
-            ob_type=cfg.ob_type,
-            runtime_dir=window_dir,
-            plot_config=ob_plot_config,
-            output_dir=window_dir / "plots",
-        )
-        logger.info(
-            "[%s] Plots: %d/%d written",
-            cfg.ob_type,
-            result["figures_written"],
-            result["figures_requested"],
-        )
     """
     summary: dict[str, Any] = {
         "ob_type": ob_type,
