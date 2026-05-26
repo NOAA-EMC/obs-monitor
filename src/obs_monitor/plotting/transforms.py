@@ -74,9 +74,13 @@ def cycle_mean(ds: xr.Dataset, variables: Sequence[str] | None = None) -> xr.Dat
 
     Examples
     --------
-    >>> ds_mean = cycle_mean(ds)
+    >>> ds_mean = cycle_mean(ds_by_domains)
     >>> ds_mean["assimilated_mean"].dims
-    ('dim_0', 'dim_1')          # (binsZDim, binsYDim, binsXDim) or (Domain,) etc.
+    ('dim_0',)                  # byDomains: analysisCycle removed, leaving Domain
+
+    >>> ds_mean = cycle_mean(ds_gridded)
+    >>> ds_mean["assimilated_mean"].dims
+    ('dim_0', 'dim_1', 'dim_2') # griddedBins before squeeze_gridded(): binsZDim × binsYDim × binsXDim
     """
     if "analysisCycle" not in ds.dims:
         raise ValueError(
@@ -149,7 +153,7 @@ def squeeze_gridded(ds: xr.Dataset, zdim: str = "dim_0") -> xr.Dataset:
     --------
     >>> ds_squeezed = squeeze_gridded(cycle_mean(ds_gridded))
     >>> ds_squeezed["assimilated_mean"].dims
-    ('dim_2', 'dim_3')   # → (binsYDim=72, binsXDim=144)
+    ('dim_1', 'dim_2')          # binsZDim (dim_0) squeezed out; remaining: binsYDim × binsXDim
     """
     out: dict[str, xr.DataArray] = {}
     for vname, da in ds.data_vars.items():
