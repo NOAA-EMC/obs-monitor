@@ -241,10 +241,10 @@ def dispatch_plots(
         Summary with keys:
 
         * ``ob_type`` (str)
-        * ``status`` (str): ``"ok"`` | ``"skipped"`` | ``"partial"``
+        * ``status`` (str): ``"ok"`` | ``"skipped"`` | ``"partial"`` | ``"failed"``
         * ``figures_requested`` (int)
         * ``figures_written`` (int)
-        * ``paths`` (list[str]): absolute paths of PNGs written
+        * ``paths`` (list[str]): paths of PNGs written, as returned by ``str(Path)``
         * ``errors`` (list[str]): error messages for any failed specs
     """
     summary: dict[str, Any] = {

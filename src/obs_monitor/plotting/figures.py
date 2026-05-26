@@ -17,7 +17,7 @@ two plot types used by obs-monitor:
 Both classes share a common interface::
 
     fig = TimeSeriesFigure(ds, spec, ob_type, variable, stat)
-    fig.save(output_path)          # writes a PNG; returns the Path
+    fig.save()          # writes a PNG; returns the Path
 
 Neither class mutates the Dataset it receives.  All domain filtering,
 title formatting, and output path construction happen here; the dispatcher
@@ -34,14 +34,11 @@ import re
 from abc import ABC, abstractmethod
 from datetime import datetime
 from pathlib import Path
-from typing import Sequence
 
 import matplotlib
 matplotlib.use("Agg")  # non-interactive backend; safe for operational/HPC use
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
-import numpy as np
-import xarray as xr
 
 # Hard EMCPy requirement — fail loudly at import time if missing.
 try:
