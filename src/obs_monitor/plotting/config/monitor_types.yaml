@@ -14,24 +14,24 @@ ob_type_index:
 
   viirs_npp:
     monitor_type: aerosol
-    path: config/monitor_types/aerosol.yaml
+    path: monitor_types/aerosol.yaml
 
   viirs_n20:
     monitor_type: aerosol
-    path: config/monitor_types/aerosol.yaml
+    path: monitor_types/aerosol.yaml
 
   snocvr:
     monitor_type: snow
-    path: config/monitor_types/snow.yaml
+    path: monitor_types/snow.yaml
 
   prepbufr_adpsfc:
     monitor_type: conventional
-    path: config/monitor_types/conventional.yaml
+    path: monitor_types/conventional.yaml
 
   prepbufr_adpupa:
     monitor_type: conventional
-    path: config/monitor_types/conventional.yaml
+    path: monitor_types/conventional.yaml
 
   prepbufr_sfcshp:
     monitor_type: conventional
-    path: config/monitor_types/conventional.yaml
+    path: monitor_types/conventional.yaml

@@ -86,23 +86,29 @@ def _safe_stem(text: str) -> str:
     return re.sub(r"[^\w\-]", "_", text)
 
 
-def build_timeseries_filename(ob_type: str, variable: str, stat: str, domain: str) -> str:
+def build_timeseries_filename(ob_type: str, variable: str, stat: str, domain: str, label: str | None = None) -> str:
     """
     Construct the output PNG filename for a time-series plot.
 
-    Convention: ``{ob_type}_{variable}_{stat}_{domain}_timeseries.png``
+    Convention: ``{ob_type}_{variable}_{stat}_{label}_{domain}_timeseries.png``
     """
-    parts = [ob_type, variable, stat, domain, "timeseries"]
+    parts = [ob_type, variable, stat]
+    if label:
+        parts.append(label)
+    parts += [domain, "timeseries"]
     return "_".join(_safe_stem(p) for p in parts) + ".png"
 
 
-def build_map_filename(ob_type: str, variable: str, stat: str) -> str:
+def build_map_filename(ob_type: str, variable: str, stat: str, label: str | None = None) -> str:
     """
     Construct the output PNG filename for a gridded map plot.
 
-    Convention: ``{ob_type}_{variable}_{stat}_map.png``
+    Convention: ``{ob_type}_{variable}_{stat_{label}_map.png``
     """
-    parts = [ob_type, variable, stat, "map"]
+    parts = [ob_type, variable, stat]
+    if label:
+        parts.append(label)
+    parts.append("map")
     return "_".join(_safe_stem(p) for p in parts) + ".png"
 
 
@@ -322,7 +328,8 @@ class TimeSeriesFigure(FigureBase):
                 ax.set_axisbelow(True)
 
             out_name = build_timeseries_filename(
-                self.ob_type, self.variable, self.stat, dom_label
+                self.ob_type, self.variable, self.stat, dom_label,
+                label=self.spec.get("label"),
             )
             out_path = self.output_dir / out_name
             results.append((mpl_fig, out_path))
@@ -429,7 +436,10 @@ class MapGriddedFigure(FigureBase):
 
         mpl_fig: plt.Figure = fig_obj.fig
 
-        out_name = build_map_filename(self.ob_type, self.variable, self.stat)
+        out_name = build_map_filename(
+            self.ob_type, self.variable, self.stat,
+            label=self.spec.get("label"),
+        )
         out_path = self.output_dir / out_name
 
         return [(mpl_fig, out_path)]

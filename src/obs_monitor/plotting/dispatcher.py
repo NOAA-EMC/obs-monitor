@@ -142,7 +142,9 @@ def _load_ob_type_config(ob_type: str) -> dict[str, Any] | None:
         )
         return None
 
-    # Resolve the monitor-type file path relative to the index file's directory
+    # Resolve the monitor-type file path relative to the index file's directory.
+    # Paths in monitor_types.yaml are relative to config/ (the index file's
+    # parent), e.g. "monitor_types/conventional.yaml".
     mt_file = index_path.parent / entry["path"]
     if not mt_file.exists():
         logger.error(
