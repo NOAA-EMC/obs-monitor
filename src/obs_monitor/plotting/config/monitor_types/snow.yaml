@@ -1,0 +1,46 @@
+# monitor_types/snow.yaml
+#
+# Plot configuration for snow ob_types.
+# Consumed by obs_monitor.plotting.dispatcher.dispatch_plots().
+
+ob_types:
+
+  snocvr:
+    variable: totalSnowDepth
+    unit: m
+    nc_groups:
+      coords: griddedBins
+    figures:
+      # --- Time Series ---
+      - type: time_series
+        group_path: byDomains/ombg/totalSnowDepth
+        stat: assimilated_mean
+        title: "snocvr Time Series — Assimilated Mean O-F"
+        y_label: "totalSnowDepth (m)"
+        domains: [Global]
+
+      - type: time_series
+        group_path: byDomains/oman/totalSnowDepth
+        stat: assimilated_mean
+        title: "snocvr Time Series — Assimilated Mean O-A"
+        y_label: "totalSnowDepth (m)"
+        domains: [Global]
+
+      # --- Gridded Maps ---
+      - type: map_gridded
+        group_path: griddedBins/ombg/totalSnowDepth
+        stat: assimilated_mean
+        title: "snocvr O-F — Assimilated Mean Cycle Avg"
+        colorbar_label: "totalSnowDepth (m)"
+        projection: plcarr
+        domain: global
+        cmap: Blues
+
+      - type: map_gridded
+        group_path: griddedBins/oman/totalSnowDepth
+        stat: assimilated_mean
+        title: "snocvr O-A — Assimilated Mean Cycle Avg"
+        colorbar_label: "totalSnowDepth (m)"
+        projection: plcarr
+        domain: global
+        cmap: Blues

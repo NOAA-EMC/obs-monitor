@@ -1,0 +1,126 @@
+# monitor_types/conventional.yaml
+#
+# Plot configuration for conventional ob_types.
+# Consumed by obs_monitor.plotting.dispatcher.dispatch_plots().
+
+ob_types:
+
+  prepbufr_adpsfc:
+    variable: stationPressure
+    unit: Pa
+    nc_groups:
+      coords: griddedBins
+    figures:
+      # --- Time Series ---
+      - type: time_series
+        group_path: byDomains/ombg/stationPressure
+        stat: assimilated_mean
+        title: "prepbufr_adpsfc Time Series — Assimilated Mean O-F"
+        y_label: "stationPressure (Pa)"
+        domains: [Global, NH, SH, CONUS]
+
+      - type: time_series
+        group_path: byDomains/oman/stationPressure
+        stat: assimilated_mean
+        title: "prepbufr_adpsfc Time Series — Assimilated Mean O-A"
+        y_label: "stationPressure (Pa)"
+        domains: [Global, NH, SH, CONUS]
+
+      # --- Gridded Maps ---
+      - type: map_gridded
+        group_path: griddedBins/ombg/stationPressure
+        stat: assimilated_mean
+        title: "prepbufr_adpsfc O-F — Assimilated Mean Cycle Avg"
+        colorbar_label: "stationPressure (Pa)"
+        projection: plcarr
+        domain: global
+        cmap: coolwarm
+
+      - type: map_gridded
+        group_path: griddedBins/oman/stationPressure
+        stat: assimilated_mean
+        title: "prepbufr_adpsfc O-A — Assimilated Mean Cycle Avg"
+        colorbar_label: "stationPressure (Pa)"
+        projection: plcarr
+        domain: global
+        cmap: coolwarm
+
+  prepbufr_adpupa:
+    variable: stationPressure
+    unit: Pa
+    nc_groups:
+      coords: griddedBins
+    figures:
+      # --- Time Series ---
+      - type: time_series
+        group_path: byDomains/ombg/stationPressure
+        stat: assimilated_mean
+        title: "prepbufr_adpupa Time Series — Assimilated Mean O-F"
+        y_label: "stationPressure (Pa)"
+        domains: [Global, NH, SH, CONUS]
+
+      - type: time_series
+        group_path: byDomains/oman/stationPressure
+        stat: assimilated_mean
+        title: "prepbufr_adpupa Time Series — Assimilated Mean O-A"
+        y_label: "stationPressure (Pa)"
+        domains: [Global, NH, SH, CONUS]
+
+      # --- Gridded Maps ---
+      - type: map_gridded
+        group_path: griddedBins/ombg/stationPressure
+        stat: assimilated_mean
+        title: "prepbufr_adpupa O-F — Assimilated Mean Cycle Avg"
+        colorbar_label: "stationPressure (Pa)"
+        projection: plcarr
+        domain: global
+        cmap: coolwarm
+
+      - type: map_gridded
+        group_path: griddedBins/oman/stationPressure
+        stat: assimilated_mean
+        title: "prepbufr_adpupa O-A — Assimilated Mean Cycle Avg"
+        colorbar_label: "stationPressure (Pa)"
+        projection: plcarr
+        domain: global
+        cmap: coolwarm
+
+  prepbufr_sfcshp:
+    variable: stationPressure
+    unit: Pa
+    nc_groups:
+      coords: griddedBins
+    figures:
+      # --- Time Series ---
+      - type: time_series
+        group_path: byDomains/ombg/stationPressure
+        stat: assimilated_mean
+        title: "prepbufr_sfcshp Time Series — Assimilated Mean O-F"
+        y_label: "stationPressure (Pa)"
+        domains: [Global, NH, SH, CONUS]
+
+      - type: time_series
+        group_path: byDomains/oman/stationPressure
+        stat: assimilated_mean
+        title: "prepbufr_sfcshp Time Series — Assimilated Mean O-A"
+        y_label: "stationPressure (Pa)"
+        domains: [Global, NH, SH, CONUS]
+
+      # --- Gridded Maps ---
+      - type: map_gridded
+        group_path: griddedBins/ombg/stationPressure
+        stat: assimilated_mean
+        title: "prepbufr_sfcshp O-F — Assimilated Mean Cycle Avg"
+        colorbar_label: "stationPressure (Pa)"
+        projection: plcarr
+        domain: global
+        cmap: coolwarm
+
+      - type: map_gridded
+        group_path: griddedBins/oman/stationPressure
+        stat: assimilated_mean
+        title: "prepbufr_sfcshp O-A — Assimilated Mean Cycle Avg"
+        colorbar_label: "stationPressure (Pa)"
+        projection: plcarr
+        domain: global
+        cmap: coolwarm
