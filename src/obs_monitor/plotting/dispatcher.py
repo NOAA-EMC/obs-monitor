@@ -5,70 +5,81 @@ obs_monitor.plotting.dispatcher
 Ties the plotting sub-package together.  For each ob-type entry in the job
 config the dispatcher:
 
-1. Discovers and sorts the staged NetCDF files in the runtime directory.
-2. Reads dimension labels (``statisticDomain``) once, shared across all reads.
-3. For each figure spec in the config:
-   a. Reads the appropriate group via :func:`~obs_monitor.plotting.reader.read_group`.
+1. Loads the plot config for the ob_type by:
+   a. Reading ``monitor_types.yaml`` (pointed to by ``PLOT_CONFIG_YAML``) to
+      find the monitor-type file for this ob_type.
+   b. Loading that file and extracting the ob_type's config block.
+2. Discovers and sorts the staged NetCDF files in the runtime directory.
+3. Reads dimension labels (``statisticDomain``) once, shared across all reads.
+4. For each figure spec in the config:
+   a. Reads the appropriate group via the ``group_path`` key in the spec,
+      using :func:`~obs_monitor.plotting.reader.read_group`.
    b. Applies the correct transform pipeline
       (:func:`~obs_monitor.plotting.transforms.prepare_time_series` or
       :func:`~obs_monitor.plotting.transforms.prepare_gridded`).
    c. Instantiates the correct figure class via
       :func:`~obs_monitor.plotting.figures.build_figure` and calls
       ``.save()``.
-4. Returns a summary dict the driver can log or inspect.
+5. Returns a summary dict the driver can log or inspect.
 
-The dispatcher is the only module that knows about the job config
-structure.  Reader, transforms, and figures are all config-agnostic.
+Config layout (rooted at PLOT_CONFIG_YAML)
+------------------------------------------
+``PLOT_CONFIG_YAML`` points to ``monitor_types.yaml``:
+
+.. code-block:: yaml
+
+    ob_type_index:
+      prepbufr_adpsfc:
+        monitor_type: conventional
+        path: config/monitor_types/conventional.yaml
+
+Each monitor-type file contains an ``ob_types`` block:
+
+.. code-block:: yaml
+
+    ob_types:
+      prepbufr_adpsfc:
+        variable: stationPressure
+        unit: Pa
+        nc_groups:
+          coords: griddedBins
+        figures:
+          - type: time_series
+            group_path: byDomains/ombg/stationPressure
+            stat: assimilated_mean
+            title: "prepbufr_adpsfc Time Series — Assimilated Mean O-F"
+            y_label: "stationPressure (Pa)"
+            domains: [Global, NH, SH, CONUS]
+          - type: map_gridded
+            group_path: griddedBins/ombg/stationPressure
+            stat: assimilated_mean
+            title: "prepbufr_adpsfc O-F — Assimilated Mean Cycle Avg"
+            colorbar_label: "stationPressure (Pa)"
+            projection: plcarr
+            domain: global
+            cmap: coolwarm
 
 Typical call from ``driver.py``
 --------------------------------
+::
 
     from obs_monitor.plotting.dispatcher import dispatch_plots
 
     results = dispatch_plots(
         ob_type=cfg.ob_type,
         runtime_dir=window_dir,
-        plot_config=ob_plot_config,   # the per-ob-type dict from the new YAML
         output_dir=window_dir / "plots",
     )
-
-Config format expected
------------------------
-.. code-block:: yaml
-
-    prepbufr_adpsfc:
-      variable: stationPressure
-      unit: Pa
-      nc_groups:
-        time_series: byDomains/ombg/stationPressure
-        gridded:     griddedBins/ombg/stationPressure
-        coords:      griddedBins
-
-      figures:
-        - type: time_series
-          stat: assimilated_mean
-          title: "{ob_type} Time Series — Assimilated Mean O-F"
-          y_label: "stationPressure (Pa)"
-          domains:
-            - Global
-            - CONUS
-
-        - type: map_gridded
-          stat: assimilated_mean
-          title: "{ob_type} O-F — Mean Cycle Avg (gridded)"
-          colorbar_label: "stationPressure (Pa)"
-          projection: plcarr
-          domain: global
-          cmap: coolwarm
-          ...
 """
 
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
 from typing import Any
 
+import yaml
 import xarray as xr
 
 from .reader import read_group, read_coords, read_dim_labels
@@ -77,56 +88,98 @@ from .figures import build_figure, FIGURE_REGISTRY
 
 logger = logging.getLogger(__name__)
 
+
 # ---------------------------------------------------------------------------
-# Internal helpers
+# Config loading
 # ---------------------------------------------------------------------------
 
-# Maps figure spec ``type`` to the nc_groups key that holds its group path.
-# Extend alongside FIGURE_REGISTRY when adding new figure types that need a
-# different group.
-_FIGURE_TYPE_TO_GROUP_KEY: dict[str, str] = {
-    "time_series": "time_series",
-    "map_gridded":  "gridded",
-}
-
-
-def _discover_nc_files(runtime_dir: Path, ob_type: str) -> list[Path]:
+def _load_ob_type_config(ob_type: str) -> dict[str, Any] | None:
     """
-    Return a time-sorted list of NetCDF files for ob_type in runtime_dir.
+    Load the plot config for *ob_type* by:
 
-    Files are matched by the ``{ob_type}_*.nc`` glob and sorted
-    lexicographically on their names, which is equivalent to chronological
-    order given the ``YYYYMMDDHH`` timestamp embedded in each filename.
+    1. Reading ``PLOT_CONFIG_YAML`` as the ``monitor_types.yaml`` index.
+    2. Looking up the ob_type entry to find its monitor-type file path.
+    3. Loading that file and returning the ob_type's config block.
 
     Parameters
     ----------
-    runtime_dir:
-        The per-window runtime directory populated by the driver.
     ob_type:
         Observation type string, e.g. ``"prepbufr_adpsfc"``.
 
     Returns
     -------
-    list[Path]
-        Sorted list of matching paths.  Empty list if none are found (the
-        caller is responsible for deciding whether to skip or raise).
+    dict | None
+        The per-ob-type config dict, or ``None`` if anything goes wrong
+        (missing env var, missing ob_type, missing file).  Errors are logged
+        so the caller can skip gracefully.
     """
-    pattern = f"{ob_type}_*.nc"
-    files = sorted(runtime_dir.glob(pattern))
-    logger.info(
-        "[%s] Discovered %d NetCDF file(s) in %s",
-        ob_type,
-        len(files),
-        runtime_dir,
-    )
-    return files
+    plot_config_yaml = os.getenv("PLOT_CONFIG_YAML")
+    if not plot_config_yaml:
+        logger.error("PLOT_CONFIG_YAML environment variable is not set.")
+        return None
 
+    index_path = Path(plot_config_yaml)
+    if not index_path.exists():
+        logger.error("PLOT_CONFIG_YAML '%s' does not exist.", index_path)
+        return None
+
+    with open(index_path, "r") as f:
+        index = yaml.safe_load(f)
+
+    if not isinstance(index, dict) or "ob_type_index" not in index:
+        logger.error(
+            "PLOT_CONFIG_YAML '%s' must define an 'ob_type_index' mapping.",
+            index_path,
+        )
+        return None
+
+    entry = index["ob_type_index"].get(ob_type)
+    if entry is None:
+        logger.warning(
+            "ob_type '%s' not found in PLOT_CONFIG_YAML '%s'; "
+            "no plots will be generated for this type.",
+            ob_type, index_path,
+        )
+        return None
+
+    # Resolve the monitor-type file path relative to the index file's directory
+    mt_file = index_path.parent / entry["path"]
+    if not mt_file.exists():
+        logger.error(
+            "Monitor-type config file '%s' (for ob_type '%s') does not exist.",
+            mt_file, ob_type,
+        )
+        return None
+
+    with open(mt_file, "r") as f:
+        mt_doc = yaml.safe_load(f)
+
+    if not isinstance(mt_doc, dict) or "ob_types" not in mt_doc:
+        logger.error(
+            "Monitor-type file '%s' must define an 'ob_types' mapping.",
+            mt_file,
+        )
+        return None
+
+    ob_config = mt_doc["ob_types"].get(ob_type)
+    if ob_config is None:
+        logger.error(
+            "ob_type '%s' not found under 'ob_types' in '%s'.",
+            ob_type, mt_file,
+        )
+        return None
+
+    return ob_config
+
+
+# ---------------------------------------------------------------------------
+# Config validation
+# ---------------------------------------------------------------------------
 
 def _validate_config(plot_config: dict, ob_type: str) -> bool:
     """
     Check that the per-ob-type config dict has the minimum required keys.
-    Logs descriptive errors and returns False on any problem so the caller
-    can skip gracefully rather than raise.
+    Logs descriptive errors and returns False on any problem.
     """
     required_top = {"variable", "nc_groups", "figures"}
     missing = required_top - set(plot_config)
@@ -136,11 +189,9 @@ def _validate_config(plot_config: dict, ob_type: str) -> bool:
         )
         return False
 
-    required_groups = {"time_series", "gridded", "coords"}
-    missing_groups = required_groups - set(plot_config["nc_groups"])
-    if missing_groups:
+    if "coords" not in plot_config["nc_groups"]:
         logger.error(
-            "[%s] nc_groups is missing required key(s): %s", ob_type, missing_groups
+            "[%s] nc_groups is missing required key 'coords'.", ob_type
         )
         return False
 
@@ -165,12 +216,39 @@ def _validate_config(plot_config: dict, ob_type: str) -> bool:
                 ob_type, i, spec["type"],
             )
             return False
+        if "group_path" not in spec:
+            logger.error(
+                "[%s] Figure spec #%d (type='%s') is missing 'group_path' key.",
+                ob_type, i, spec["type"],
+            )
+            return False
 
     return True
 
 
 # ---------------------------------------------------------------------------
-# Dataset cache — avoid re-reading the same group twice within one dispatch
+# File discovery
+# ---------------------------------------------------------------------------
+
+def _discover_nc_files(runtime_dir: Path, ob_type: str) -> list[Path]:
+    """
+    Return a time-sorted list of NetCDF files for *ob_type* in *runtime_dir*.
+
+    Files are matched by the ``{ob_type}_*.nc`` glob and sorted
+    lexicographically on their names, which is equivalent to chronological
+    order given the ``YYYYMMDDHH`` timestamp embedded in each filename.
+    """
+    pattern = f"{ob_type}_*.nc"
+    files = sorted(runtime_dir.glob(pattern))
+    logger.info(
+        "[%s] Discovered %d NetCDF file(s) in %s",
+        ob_type, len(files), runtime_dir,
+    )
+    return files
+
+
+# ---------------------------------------------------------------------------
+# Dataset cache
 # ---------------------------------------------------------------------------
 
 class _DatasetCache:
@@ -178,8 +256,7 @@ class _DatasetCache:
     Simple in-memory cache keyed by ``(group_path, tuple(variables))``.
 
     Within a single :func:`dispatch_plots` call, multiple figure specs may
-    request the same group and variables (e.g. two time-series specs for
-    the same group but different domains).  The cache ensures each group is
+    request the same group and variables.  The cache ensures each group is
     opened and stacked only once.
     """
 
@@ -211,12 +288,12 @@ class _DatasetCache:
 def dispatch_plots(
     ob_type: str,
     runtime_dir: Path,
-    plot_config: dict[str, Any],
     output_dir: Path,
+    plot_config: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     """
-    Main entry point.  Read, transform, and render all figures specified for
-    one observation type.
+    Main entry point.  Load config, read, transform, and render all figures
+    specified for one observation type.
 
     Parameters
     ----------
@@ -226,14 +303,13 @@ def dispatch_plots(
         titles and filenames.
     runtime_dir:
         Per-window runtime directory containing the staged ``*.nc`` files.
-    plot_config:
-        The per-ob-type section of the new plotting YAML.  Must contain
-        ``variable``, ``nc_groups``, and ``figures`` keys (see module
-        docstring for the full schema).
     output_dir:
-        Root directory for PNG output.  Created if absent.  A ``plots/``
-        subdirectory is **not** added here — pass ``window_dir / "plots"``
-        from the driver to match the existing COM copy logic.
+        Root directory for PNG output.  Created if absent.
+    plot_config:
+        Optional pre-loaded per-ob-type config dict.  If ``None`` (default),
+        the config is loaded from ``PLOT_CONFIG_YAML`` via the
+        ``monitor_types.yaml`` index.  Passing a dict directly is useful for
+        testing without touching the filesystem.
 
     Returns
     -------
@@ -244,7 +320,7 @@ def dispatch_plots(
         * ``status`` (str): ``"ok"`` | ``"skipped"`` | ``"partial"`` | ``"failed"``
         * ``figures_requested`` (int)
         * ``figures_written`` (int)
-        * ``paths`` (list[str]): paths of PNGs written, as returned by ``str(Path)``
+        * ``paths`` (list[str]): absolute paths of PNGs written
         * ``errors`` (list[str]): error messages for any failed specs
     """
     summary: dict[str, Any] = {
@@ -257,68 +333,72 @@ def dispatch_plots(
     }
 
     # ------------------------------------------------------------------
-    # 0. Validate config
+    # 0. Load config if not supplied directly
+    # ------------------------------------------------------------------
+    if plot_config is None:
+        plot_config = _load_ob_type_config(ob_type)
+        if plot_config is None:
+            summary["status"] = "skipped"
+            summary["errors"].append(
+                f"Could not load plot config for '{ob_type}' — see logs for details."
+            )
+            return summary
+
+    # ------------------------------------------------------------------
+    # 1. Validate config
     # ------------------------------------------------------------------
     if not _validate_config(plot_config, ob_type):
         summary["status"] = "skipped"
         summary["errors"].append("Invalid plot config — see logs for details.")
         return summary
 
-    variable   = plot_config["variable"]
-    nc_groups  = plot_config["nc_groups"]
-    fig_specs  = plot_config["figures"]
+    variable  = plot_config["variable"]
+    nc_groups = plot_config["nc_groups"]
+    fig_specs = plot_config["figures"]
 
     # ------------------------------------------------------------------
-    # 1. Discover staged NetCDF files
+    # 2. Discover staged NetCDF files
     # ------------------------------------------------------------------
     nc_files = _discover_nc_files(Path(runtime_dir), ob_type)
     if not nc_files:
         logger.warning("[%s] No NetCDF files found in %s; skipping.", ob_type, runtime_dir)
         summary["status"] = "skipped"
-        summary["errors"].append(f"No NetCDF files matching '{ob_type}_*.nc' in {runtime_dir}")
+        summary["errors"].append(
+            f"No NetCDF files matching '{ob_type}_*.nc' in {runtime_dir}"
+        )
         return summary
 
     # ------------------------------------------------------------------
-    # 2. Read dimension labels once — shared across all figure specs
+    # 3. Read dimension labels once — shared across all time_series specs
     # ------------------------------------------------------------------
     domain_labels = read_dim_labels(nc_files, var_name="statisticDomain")
     dim_labels_for_ts = {"statisticDomain": domain_labels} if domain_labels else None
 
     # ------------------------------------------------------------------
-    # 3. Read lat/lon coords once — shared across all gridded specs
+    # 4. Read lat/lon coords once — shared across all map_gridded specs
     # ------------------------------------------------------------------
-    lat = lon = None  # loaded lazily on first gridded spec
+    lat = lon = None  # loaded lazily on first map_gridded spec
 
     # ------------------------------------------------------------------
-    # 4. Dataset cache — one open-and-stack per unique (group, variables)
+    # 5. Dataset cache — one open-and-stack per unique (group_path, variables)
     # ------------------------------------------------------------------
     cache = _DatasetCache()
 
     # ------------------------------------------------------------------
-    # 5. Iterate figure specs
+    # 6. Iterate figure specs
     # ------------------------------------------------------------------
     summary["figures_requested"] = len(fig_specs)
     output_dir = Path(output_dir)
 
     for spec_idx, spec in enumerate(fig_specs):
-        fig_type = spec["type"]
-        stat     = spec["stat"]
+        fig_type   = spec["type"]
+        stat       = spec["stat"]
+        group_path = spec["group_path"]
 
         logger.info(
-            "[%s] Processing figure spec #%d: type='%s', stat='%s'",
-            ob_type, spec_idx, fig_type, stat,
+            "[%s] Processing figure spec #%d: type='%s', stat='%s', group_path='%s'",
+            ob_type, spec_idx, fig_type, stat, group_path,
         )
-
-        # Determine which nc_groups key to use for this figure type
-        group_key = _FIGURE_TYPE_TO_GROUP_KEY.get(fig_type)
-        if group_key is None:
-            # Shouldn't happen after _validate_config, but guard anyway
-            msg = f"No group key mapping for figure type '{fig_type}'."
-            logger.error("[%s] %s", ob_type, msg)
-            summary["errors"].append(msg)
-            continue
-
-        group_path = nc_groups[group_key]
 
         # ---- Read ----
         try:
@@ -328,7 +408,7 @@ def dispatch_plots(
                     dim_labels=dim_labels_for_ts,
                 )
             else:
-                # Gridded — no domain labels needed
+                # map_gridded — no domain labels needed
                 ds_raw = cache.get_or_read(nc_files, group_path, [stat])
 
         except Exception as exc:
@@ -343,10 +423,6 @@ def dispatch_plots(
             summary["errors"].append(msg)
             continue
 
-        # Guard: requested stat must actually be present in the Dataset.
-        # read_group only reads variables that exist in the file; if the stat
-        # name was wrong or absent in every cycle, data_vars will exist but
-        # won't contain the requested key.
         if stat not in ds_raw.data_vars:
             msg = (
                 f"Spec #{spec_idx} ({fig_type}): stat '{stat}' not found in "
@@ -363,9 +439,13 @@ def dispatch_plots(
                 ds_plot = prepare_time_series(ds_raw, variables=[stat])
 
             else:  # map_gridded
-                # Load lat/lon on first gridded spec, then reuse
+                # Load lat/lon on first gridded spec, then reuse.
+                # Coords group path comes from nc_groups["coords"].
                 if lat is None:
-                    lat, lon = read_coords(nc_files, coords_group_path=nc_groups["coords"])
+                    lat, lon = read_coords(
+                        nc_files,
+                        coords_group_path=nc_groups["coords"],
+                    )
                 ds_plot = prepare_gridded(ds_raw, lat, lon, variables=[stat])
 
         except Exception as exc:
@@ -396,7 +476,7 @@ def dispatch_plots(
             continue
 
     # ------------------------------------------------------------------
-    # 6. Final status
+    # 7. Final status
     # ------------------------------------------------------------------
     n_req = summary["figures_requested"]
     n_ok  = summary["figures_written"]
