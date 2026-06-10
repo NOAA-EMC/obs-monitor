@@ -88,9 +88,13 @@ def valid_nc(tmp_path, ob_type, cycle_times, write_nc_file):
 
 
 @pytest.fixture
-def corrupt_nc(tmp_path, ob_type, cycle_times):
-    """Raw garbage bytes — netCDF4 cannot open this file."""
-    path = tmp_path / nc_filename(ob_type, cycle_times[1])
+@pytest.fixture
+def corrupt_nc(tmp_path, ob_type):
+    """
+    Use a hardcoded timestamp not used by any other fixture (cycle_times uses
+    # 00/06/12/18Z on 2025-11-13; use a different date entirely to avoid collisions)
+    """
+    path = tmp_path / nc_filename(ob_type, datetime(2025, 11, 14, 0, tzinfo=timezone.utc))
     path.write_bytes(b"\x00\x01\x02\x03 not a netcdf file")
     return path
 
@@ -338,7 +342,11 @@ class TestValidateAndQuarantineNcFiles:
         logger = self._logger()
         self._quarantine(
             [corrupt_nc, nc_missing_coords_group, nc_missing_variable],
-            [cycle_times[1], cycle_times[2], cycle_times[0]],
+            [
+                datetime(2025, 11, 14, 0, tzinfo=timezone.utc),  # matches corrupt_nc
+                cycle_times[2],
+                cycle_times[0],
+            ],
             logger=logger,
         )
         all_errors = " ".join(str(c) for c in logger.error.call_args_list)
