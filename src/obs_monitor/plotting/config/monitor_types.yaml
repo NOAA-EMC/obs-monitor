@@ -1,0 +1,37 @@
+# monitor_types.yaml
+#
+# Index that maps every ob_type to its monitor-type and plot config file.
+# This is the file pointed to by PLOT_CONFIG_YAML.
+# The dispatcher loads this first, looks up the ob_type, then loads the
+# corresponding file to get its plot configuration.
+#
+# To add a new ob_type:
+#   1. Add an entry here with its monitor_type and path.
+#   2. Add the ob_type block to the corresponding monitor-type yaml.
+#      If it is a new monitor_type, create a new yaml and add it here.
+
+ob_type_index:
+
+  viirs_npp:
+    monitor_type: aerosol
+    path: monitor_types/aerosol.yaml
+
+  viirs_n20:
+    monitor_type: aerosol
+    path: monitor_types/aerosol.yaml
+
+  snocvr:
+    monitor_type: snow
+    path: monitor_types/snow.yaml
+
+  prepbufr_adpsfc:
+    monitor_type: conventional
+    path: monitor_types/conventional.yaml
+
+  prepbufr_adpupa:
+    monitor_type: conventional
+    path: monitor_types/conventional.yaml
+
+  prepbufr_sfcshp:
+    monitor_type: conventional
+    path: monitor_types/conventional.yaml

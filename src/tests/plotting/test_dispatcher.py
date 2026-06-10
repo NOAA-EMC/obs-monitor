@@ -16,11 +16,13 @@ The dispatcher is tested at two levels:
 Coverage targets
 ----------------
 _validate_config:
-  - Accepts a well-formed config
+  - Accepts a well-formed config (new schema: group_path in spec, coords-only nc_groups)
   - Rejects configs missing required top-level keys
-  - Rejects configs missing required nc_groups keys
+  - Rejects configs missing nc_groups['coords']
   - Rejects unknown figure types
   - Rejects specs missing the 'stat' key
+  - Rejects specs missing the 'group_path' key
+  - Rejects old schema (time_series/gridded keys in nc_groups, no group_path in spec)
 
 _discover_nc_files:
   - Finds files matching ob_type glob
@@ -35,9 +37,10 @@ dispatch_plots:
   - Returns 'ok' status for a well-formed config + valid files
   - Writes the expected number of PNG files
   - Returns 'skipped' when no NetCDF files found
-  - Returns 'skipped' with empty data_vars Dataset
-  - 'partial' status when some specs fail
+  - Returns 'skipped' with invalid config
   - Summary dict has required keys
+  - 'errors' list is empty on full success
+  - Bad stat name does not crash the pipeline
 """
 
 from __future__ import annotations
@@ -60,28 +63,33 @@ from conftest import DOMAINS, N_DOMAINS, BINS_Y, BINS_X, nc_filename
 
 
 # ---------------------------------------------------------------------------
-# Minimal valid config
+# Minimal valid config — new schema
 # ---------------------------------------------------------------------------
 
 def _valid_config(stat: str = "assimilated_mean") -> dict:
+    """
+    Minimal well-formed config matching the new dispatcher schema:
+      - group_path in each figure spec
+      - nc_groups contains coords only
+    """
     return {
         "variable": "stationPressure",
         "unit":     "Pa",
         "nc_groups": {
-            "time_series": "byDomains/ombg/stationPressure",
-            "gridded":     "griddedBins/ombg/stationPressure",
-            "coords":      "griddedBins",
+            "coords": "griddedBins",
         },
         "figures": [
             {
-                "type":    "time_series",
-                "stat":    stat,
-                "title":   "{ob_type} {stat} — {domain}",
-                "y_label": "stationPressure (Pa)",
-                "domains": ["Global", "CONUS"],
+                "type":       "time_series",
+                "group_path": "byDomains/ombg/stationPressure",
+                "stat":       stat,
+                "title":      "{ob_type} {stat} — {domain}",
+                "y_label":    "stationPressure (Pa)",
+                "domains":    ["Global", "CONUS"],
             },
             {
                 "type":           "map_gridded",
+                "group_path":     "griddedBins/ombg/stationPressure",
                 "stat":           stat,
                 "title":          "{ob_type} {variable} {stat}",
                 "colorbar_label": "stationPressure (Pa)",
@@ -118,8 +126,9 @@ class TestValidateConfig:
         assert _validate_config(cfg, "prepbufr_adpsfc") is False
 
     def test_missing_nc_groups_subkey(self):
+        """nc_groups must contain 'coords' — deleting it should fail validation."""
         cfg = _valid_config()
-        del cfg["nc_groups"]["gridded"]
+        del cfg["nc_groups"]["coords"]
         assert _validate_config(cfg, "prepbufr_adpsfc") is False
 
     def test_unknown_figure_type(self):
@@ -132,10 +141,41 @@ class TestValidateConfig:
         del cfg["figures"][0]["stat"]
         assert _validate_config(cfg, "prepbufr_adpsfc") is False
 
+    def test_missing_group_path_in_spec(self):
+        """Every figure spec must have a group_path key."""
+        cfg = _valid_config()
+        del cfg["figures"][0]["group_path"]
+        assert _validate_config(cfg, "prepbufr_adpsfc") is False
+
     def test_empty_figures_list(self):
         cfg = _valid_config()
         cfg["figures"] = []
         assert _validate_config(cfg, "prepbufr_adpsfc") is False
+
+    def test_old_schema_without_group_path_fails(self):
+        """
+        Old schema had time_series/gridded keys in nc_groups and no group_path
+        in figure specs.  This should fail validation since group_path is now
+        required in each spec.
+        """
+        old_cfg = {
+            "variable": "stationPressure",
+            "unit":     "Pa",
+            "nc_groups": {
+                "time_series": "byDomains/ombg/stationPressure",
+                "gridded":     "griddedBins/ombg/stationPressure",
+                "coords":      "griddedBins",
+            },
+            "figures": [
+                {
+                    "type":    "time_series",
+                    "stat":    "assimilated_mean",
+                    "domains": ["Global"],
+                    # group_path intentionally absent — old schema
+                },
+            ],
+        }
+        assert _validate_config(old_cfg, "prepbufr_adpsfc") is False
 
 
 # ---------------------------------------------------------------------------
@@ -181,7 +221,7 @@ class TestDatasetCache:
 
     def test_different_groups_produce_different_entries(self, multi_nc_files, stat_group):
         cache = _DatasetCache()
-        ds_ts  = cache.get_or_read(multi_nc_files, f"byDomains/{stat_group}",  ["assimilated_mean"])
+        ds_ts  = cache.get_or_read(multi_nc_files, f"byDomains/{stat_group}",   ["assimilated_mean"])
         ds_grd = cache.get_or_read(multi_nc_files, f"griddedBins/{stat_group}", ["assimilated_mean"])
         assert ds_ts is not ds_grd
 
@@ -219,9 +259,9 @@ def _patch_figures():
         def fake_savefig(path, **kwargs):
             Path(path).touch()
 
-        mock_mpl_fig.fig          = MagicMock()
-        mock_mpl_fig.fig.axes     = [MagicMock()]
-        mock_mpl_fig.fig.savefig  = fake_savefig
+        mock_mpl_fig.fig         = MagicMock()
+        mock_mpl_fig.fig.axes    = [MagicMock()]
+        mock_mpl_fig.fig.savefig = fake_savefig
 
         mock_cf = MagicMock(return_value=mock_mpl_fig)
         mock_cp = MagicMock()
@@ -243,7 +283,7 @@ class TestDispatchPlots:
     def test_returns_dict_with_required_keys(self, multi_nc_files, tmp_path, ob_type):
         runtime_dir = multi_nc_files[0].parent
         with _patch_figures():
-            result = dispatch_plots(ob_type, runtime_dir, _valid_config(), tmp_path)
+            result = dispatch_plots(ob_type, runtime_dir, tmp_path, _valid_config())
 
         required = {
             "ob_type", "status", "figures_requested",
@@ -254,76 +294,115 @@ class TestDispatchPlots:
     def test_ob_type_in_result(self, multi_nc_files, tmp_path, ob_type):
         runtime_dir = multi_nc_files[0].parent
         with _patch_figures():
-            result = dispatch_plots(ob_type, runtime_dir, _valid_config(), tmp_path)
+            result = dispatch_plots(ob_type, runtime_dir, tmp_path, _valid_config())
         assert result["ob_type"] == ob_type
 
     def test_figures_requested_matches_config(self, multi_nc_files, tmp_path, ob_type):
         runtime_dir = multi_nc_files[0].parent
         cfg = _valid_config()
         with _patch_figures():
-            result = dispatch_plots(ob_type, runtime_dir, cfg, tmp_path)
+            result = dispatch_plots(ob_type, runtime_dir, tmp_path, cfg)
         assert result["figures_requested"] == len(cfg["figures"])
 
     def test_ok_status_on_success(self, multi_nc_files, tmp_path, ob_type):
         runtime_dir = multi_nc_files[0].parent
         with _patch_figures():
-            result = dispatch_plots(ob_type, runtime_dir, _valid_config(), tmp_path)
+            result = dispatch_plots(ob_type, runtime_dir, tmp_path, _valid_config())
         assert result["status"] == "ok"
 
     def test_skipped_when_no_nc_files(self, tmp_path, ob_type):
         empty_dir = tmp_path / "empty"
         empty_dir.mkdir()
-        result = dispatch_plots(ob_type, empty_dir, _valid_config(), tmp_path / "out")
+        result = dispatch_plots(ob_type, empty_dir, tmp_path / "out", _valid_config())
         assert result["status"] == "skipped"
 
     def test_skipped_on_invalid_config(self, multi_nc_files, tmp_path, ob_type):
         runtime_dir = multi_nc_files[0].parent
         bad_cfg = _valid_config()
         del bad_cfg["variable"]
-        result = dispatch_plots(ob_type, runtime_dir, bad_cfg, tmp_path)
+        result = dispatch_plots(ob_type, runtime_dir, tmp_path, bad_cfg)
         assert result["status"] == "skipped"
 
     def test_figures_written_count(self, multi_nc_files, tmp_path, ob_type):
         """
         Config has: 1 map_gridded spec + 1 time_series spec with 2 domains.
-        Expected: 3 PNGs (1 map + 2 domain lines).
+        Expected: 3 PNGs (1 map + 2 domain time series).
         """
         runtime_dir = multi_nc_files[0].parent
         with _patch_figures():
-            result = dispatch_plots(ob_type, runtime_dir, _valid_config(), tmp_path)
+            result = dispatch_plots(ob_type, runtime_dir, tmp_path, _valid_config())
         assert result["figures_written"] == 3
 
     def test_paths_are_strings(self, multi_nc_files, tmp_path, ob_type):
         runtime_dir = multi_nc_files[0].parent
         with _patch_figures():
-            result = dispatch_plots(ob_type, runtime_dir, _valid_config(), tmp_path)
+            result = dispatch_plots(ob_type, runtime_dir, tmp_path, _valid_config())
         assert all(isinstance(p, str) for p in result["paths"])
 
     def test_output_dir_created(self, multi_nc_files, tmp_path, ob_type):
         runtime_dir = multi_nc_files[0].parent
         out_dir     = tmp_path / "new_plots_dir"
         with _patch_figures():
-            dispatch_plots(ob_type, runtime_dir, _valid_config(), out_dir)
+            dispatch_plots(ob_type, runtime_dir, out_dir, _valid_config())
         assert out_dir.exists()
 
     def test_errors_list_empty_on_full_success(self, multi_nc_files, tmp_path, ob_type):
         runtime_dir = multi_nc_files[0].parent
         with _patch_figures():
-            result = dispatch_plots(ob_type, runtime_dir, _valid_config(), tmp_path)
+            result = dispatch_plots(ob_type, runtime_dir, tmp_path, _valid_config())
         assert result["errors"] == []
 
     def test_bad_stat_does_not_crash(self, multi_nc_files, tmp_path, ob_type):
         """
         A stat name that doesn't exist in the NetCDF files should not crash
-        the pipeline.  read_group returns a NaN-filled placeholder for missing
-        variables, so the dispatcher completes and writes blank (all-NaN) plots
-        rather than raising an exception.  The important guarantee is fault
-        tolerance — status must not be an unhandled exception.
+        the pipeline — the dispatcher must complete and return a terminal status
+        without raising an exception.
         """
         runtime_dir = multi_nc_files[0].parent
         cfg = _valid_config(stat="nonexistent_stat")
         with _patch_figures():
-            result = dispatch_plots(ob_type, runtime_dir, cfg, tmp_path)
-        # Pipeline must complete without raising — any terminal status is acceptable
+            result = dispatch_plots(ob_type, runtime_dir, tmp_path, cfg)
         assert result["status"] in ("ok", "partial", "failed", "skipped")
         assert "ob_type" in result
+
+    def test_ombg_and_oman_specs_produce_distinct_filenames(
+        self, multi_nc_files, tmp_path, ob_type
+    ):
+        """
+        Two time_series specs with different group_path and label values
+        must produce distinct output filenames (no overwrites).
+        """
+        runtime_dir = multi_nc_files[0].parent
+        cfg = {
+            "variable": "stationPressure",
+            "unit":     "Pa",
+            "nc_groups": {"coords": "griddedBins"},
+            "figures": [
+                {
+                    "type":       "time_series",
+                    "group_path": "byDomains/ombg/stationPressure",
+                    "stat":       "assimilated_mean",
+                    "label":      "ombg",
+                    "title":      "prepbufr_adpsfc Time Series — O-F",
+                    "y_label":    "stationPressure (Pa)",
+                    "domains":    ["Global"],
+                },
+                {
+                    "type":       "time_series",
+                    "group_path": "byDomains/oman/stationPressure",
+                    "stat":       "assimilated_mean",
+                    "label":      "oman",
+                    "title":      "prepbufr_adpsfc Time Series — O-A",
+                    "y_label":    "stationPressure (Pa)",
+                    "domains":    ["Global"],
+                },
+            ],
+        }
+        with _patch_figures():
+            result = dispatch_plots(ob_type, runtime_dir, tmp_path, cfg)
+
+        assert len(result["paths"]) == len(set(result["paths"])), (
+            "Duplicate output paths detected — ombg and oman specs overwrote each other"
+        )
+        assert any("ombg" in p for p in result["paths"])
+        assert any("oman" in p for p in result["paths"])

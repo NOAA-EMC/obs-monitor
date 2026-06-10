@@ -1,0 +1,56 @@
+# monitor_types/aerosol.yaml
+#
+# Plot configuration for aerosol ob_types.
+# Consumed by obs_monitor.plotting.dispatcher.dispatch_plots().
+#
+# AOD is monitored as O-A (oman) only.
+
+ob_types:
+ 
+  viirs_npp:
+    variable: aerosolOpticalDepth
+    unit: "1"
+    nc_groups:
+      coords: griddedBins
+    figures:
+      - type: time_series
+        group_path: oman/aerosolOpticalDepth
+        stat: assimilated_mean
+        label: oman
+        title: "viirs_npp Time Series — Assimilated Mean O-A"
+        y_label: "aerosolOpticalDepth (Mean)"
+        domains: [Global]
+ 
+      - type: map_gridded
+        group_path: griddedBins/oman/aerosolOpticalDepth
+        stat: assimilated_mean
+        label: oman
+        title: "viirs_npp O-A — Assimilated Mean Cycle Avg"
+        colorbar_label: "aerosolOpticalDepth"
+        projection: plcarr
+        domain: global
+        cmap: viridis
+ 
+  viirs_n20:
+    variable: aerosolOpticalDepth
+    unit: "1"
+    nc_groups:
+      coords: griddedBins
+    figures:
+      - type: time_series
+        group_path: oman/aerosolOpticalDepth
+        stat: assimilated_mean
+        label: oman
+        title: "viirs_n20 Time Series — Assimilated Mean O-A"
+        y_label: "aerosolOpticalDepth (Mean)"
+        domains: [Global]
+ 
+      - type: map_gridded
+        group_path: griddedBins/oman/aerosolOpticalDepth
+        stat: assimilated_mean
+        label: oman
+        title: "viirs_n20 O-A — Assimilated Mean Cycle Avg"
+        colorbar_label: "aerosolOpticalDepth"
+        projection: plcarr
+        domain: global
+        cmap: viridis
