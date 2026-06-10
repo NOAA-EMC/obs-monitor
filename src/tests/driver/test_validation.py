@@ -88,7 +88,6 @@ def valid_nc(tmp_path, ob_type, cycle_times, write_nc_file):
 
 
 @pytest.fixture
-@pytest.fixture
 def corrupt_nc(tmp_path, ob_type):
     """
     Use a hardcoded timestamp not used by any other fixture (cycle_times uses
