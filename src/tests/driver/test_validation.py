@@ -133,7 +133,7 @@ def nc_missing_variable(tmp_path, ob_type, cycle_times):
     All group paths present but assimilated_mean variable absent — replaced
     with wrong_variable so the group structure passes but variable check fails.
     """
-    path = tmp_path / nc_filename(ob_type, cycle_times[0])
+    path = tmp_path / nc_filename(ob_type, cycle_times[1])
     with nc4.Dataset(path, "w", format="NETCDF4") as ds:
         ds.createDimension("analysisCycle", 1)
         ds.createDimension("Domain", N_DOMAINS)
@@ -302,7 +302,7 @@ class TestValidateAndQuarantineNcFiles:
     ):
         valid_files, valid_times = self._quarantine(
             [nc_missing_variable, valid_nc],
-            [cycle_times[0], cycle_times[1]],
+            [cycle_times[1], cycle_times[0]],  # nc_missing_variable is now cycle 1
         )
         assert valid_nc in valid_files
         assert nc_missing_variable not in valid_files

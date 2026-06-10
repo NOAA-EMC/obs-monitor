@@ -395,19 +395,18 @@ def _run_job(
         else MagicMock(return_value=dispatch_return)
     )
 
-    with patch("obs_monitor.driver.find_matching_inputs_for_times",
+    with patch("obs_monitor.driver.driver.find_matching_inputs_for_times",
                side_effect=fake_find), \
-         patch("obs_monitor.driver.extract_tarballs_and_find_nc_for_times",
+         patch("obs_monitor.driver.driver.extract_tarballs_and_find_nc_for_times",
                side_effect=fake_extract), \
-         patch("obs_monitor.driver.validate_and_quarantine_nc_files",
+         patch("obs_monitor.driver.driver.validate_and_quarantine_nc_files",
                side_effect=lambda nc_files, found_times, **kw: (nc_files, found_times)), \
-         patch("obs_monitor.driver.dispatch_plots", dispatch_mock), \
-         patch("obs_monitor.driver.copy_plots_to_com"), \
-         patch("obs_monitor.driver.copy_plots_to_public"), \
-         patch("obs_monitor.driver.write_coverage_report",
+         patch("obs_monitor.driver.driver.dispatch_plots", dispatch_mock), \
+         patch("obs_monitor.driver.driver.copy_plots_to_com"), \
+         patch("obs_monitor.driver.driver.copy_plots_to_public"), \
+         patch("obs_monitor.driver.driver.write_coverage_report",
                return_value="4/4 (100%)"):
         return run_monitoring_job(args)
-
 
 class TestRunMonitoringJob:
 
