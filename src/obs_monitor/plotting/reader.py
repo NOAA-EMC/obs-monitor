@@ -587,3 +587,139 @@ def read_dim_labels(
         len(nc_files),
     )
     return []
+
+# ---------------------------------------------------------------------------
+# Typed validation exceptions
+# ---------------------------------------------------------------------------
+# These are defined here so that driver.py can catch them specifically and
+# route each failure mode to an appropriate log message. All three are
+# subclasses of ValueError so callers that don't need the distinction can
+# catch the base class.
+ 
+class CorruptFileError(ValueError):
+    """
+    Raised when a NetCDF file exists on disk but cannot be opened by
+    netCDF4 (e.g. truncated, not a valid NetCDF file, I/O error).
+    """
+ 
+class MissingGroupError(ValueError):
+    """
+    Raised when a NetCDF file opens successfully but a required group path
+    is absent from its hierarchy.
+ 
+    Attributes
+    ----------
+    group_path : str
+        The slash-separated group path that was expected but not found.
+    """
+    def __init__(self, group_path: str, filename: str) -> None:
+        self.group_path = group_path
+        super().__init__(
+            f"Group '{group_path}' not found in '{filename}'."
+        )
+ 
+class MissingVariableError(ValueError):
+    """
+    Raised when a required group exists but a specific variable is absent
+    from it.
+ 
+    Attributes
+    ----------
+    group_path : str
+        The group in which the variable was expected.
+    variable : str
+        The variable name that was expected but not found.
+    """
+    def __init__(self, variable: str, group_path: str, filename: str) -> None:
+        self.group_path = group_path
+        self.variable = variable
+        super().__init__(
+            f"Variable '{variable}' not found in group '{group_path}' "
+            f"of '{filename}'."
+        )
+ 
+ 
+# ---------------------------------------------------------------------------
+# Pre-flight validation
+# ---------------------------------------------------------------------------
+ 
+def validate_nc_file(
+    path: "Path",
+    coords_group: str,
+    figure_specs: list[dict],
+) -> None:
+    """
+    Validate that a staged NetCDF file satisfies all structural requirements
+    for the given figure specs before it is handed to the plotting pipeline.
+ 
+    Checks performed (in order):
+    1. File is non-zero bytes and opens without error       → CorruptFileError
+    2. The coords group (e.g. ``griddedBins``) exists      → MissingGroupError
+    3. Each unique ``group_path`` in figure_specs exists    → MissingGroupError
+    4. Each ``stat`` variable exists within its group_path  → MissingVariableError
+ 
+    Steps 3 and 4 deduplicate across figure specs so each unique
+    ``(group_path, stat)`` pair is checked exactly once, regardless of how
+    many specs share it.
+ 
+    Parameters
+    ----------
+    path:
+        Path to the staged ``.nc`` file.
+    coords_group:
+        Top-level group containing lat/lon coordinates, taken from
+        ``nc_groups.coords`` in the plot config (e.g. ``"griddedBins"``).
+    figure_specs:
+        List of figure spec dicts from the plot config.  Each must have
+        ``group_path`` and ``stat`` keys (already validated by the
+        dispatcher's ``_validate_config`` before this is called).
+ 
+    Raises
+    ------
+    CorruptFileError
+        If the file cannot be opened by netCDF4.
+    MissingGroupError
+        If any required group is absent from the file hierarchy.
+    MissingVariableError
+        If any required stat variable is absent from its group.
+ 
+    Notes
+    -----
+    This function intentionally performs *only* structural checks — it does
+    not read any data values. It is designed to be fast (one open per file,
+    no array reads) and to be called in the driver before the plotting
+    pipeline so that bad files can be quarantined and replaced with stubs
+    rather than silently producing incomplete figures.
+    """
+    path = Path(path)
+    fname = path.name
+ 
+    # 1. File must be openable
+    try:
+        root = nc4.Dataset(path, "r")
+    except Exception as exc:
+        raise CorruptFileError(
+            f"'{fname}' could not be opened by netCDF4: {exc}"
+        ) from exc
+ 
+    with root:
+        # 2. Coords group must exist
+        if _navigate_to_group(root, coords_group) is None:
+            raise MissingGroupError(coords_group, fname)
+ 
+        # 3 & 4. Check each unique (group_path, stat) pair once
+        seen: set[tuple[str, str]] = set()
+        for spec in figure_specs:
+            group_path = spec["group_path"]
+            stat       = spec["stat"]
+            key        = (group_path, stat)
+            if key in seen:
+                continue
+            seen.add(key)
+ 
+            group = _navigate_to_group(root, group_path)
+            if group is None:
+                raise MissingGroupError(group_path, fname)
+ 
+            if stat not in group.variables:
+                raise MissingVariableError(stat, group_path, fname)
