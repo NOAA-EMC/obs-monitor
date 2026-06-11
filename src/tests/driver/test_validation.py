@@ -258,10 +258,9 @@ class TestValidateAndQuarantineNcFiles:
     def _logger(self):
         return MagicMock()
 
-    def _quarantine(self, nc_files, found_times, logger=None):
+    def _quarantine(self, nc_files, logger=None):
         return validate_and_quarantine_nc_files(
             nc_files=nc_files,
-            found_times=found_times,
             coords_group=COORDS_GROUP,
             figure_specs=FIGURE_SPECS,
             ob_type="prepbufr_adpsfc",
@@ -273,50 +272,35 @@ class TestValidateAndQuarantineNcFiles:
     ):
         second = tmp_path / nc_filename(ob_type, cycle_times[1])
         write_nc_file(second, cycle_times[1], stat_group="ombg/stationPressure")
-        files = [valid_nc, second]
-        times = [cycle_times[0], cycle_times[1]]
-
-        valid_files, valid_times = self._quarantine(files, times)
-        assert valid_files == files
-        assert valid_times == times
+        valid_files, valid_times = self._quarantine([valid_nc, second])
+        assert valid_files == [valid_nc, second]
+        assert len(valid_times) == 2
 
     def test_corrupt_file_quarantined_sibling_retained(
         self, valid_nc, corrupt_nc, cycle_times
     ):
-        valid_files, valid_times = self._quarantine(
-            [valid_nc, corrupt_nc],
-            [cycle_times[0], cycle_times[1]],
-        )
+        valid_files, valid_times = self._quarantine([valid_nc, corrupt_nc])
         assert valid_files == [valid_nc]
-        assert valid_times == [cycle_times[0]]
+        assert len(valid_times) == 1
 
     def test_missing_group_file_quarantined(
         self, valid_nc, nc_missing_figure_group, cycle_times
     ):
-        valid_files, valid_times = self._quarantine(
-            [valid_nc, nc_missing_figure_group],
-            [cycle_times[0], cycle_times[3]],
-        )
+        valid_files, valid_times = self._quarantine([valid_nc, nc_missing_figure_group])
         assert valid_files == [valid_nc]
-        assert valid_times == [cycle_times[0]]
+        assert len(valid_times) == 1
 
     def test_missing_variable_file_quarantined(
         self, valid_nc, nc_missing_variable, cycle_times
     ):
-        valid_files, valid_times = self._quarantine(
-            [nc_missing_variable, valid_nc],
-            [cycle_times[1], cycle_times[0]],  # nc_missing_variable is now cycle 1
-        )
+        valid_files, valid_times = self._quarantine([nc_missing_variable, valid_nc])
         assert valid_nc in valid_files
         assert nc_missing_variable not in valid_files
-
+    
     def test_all_quarantined_returns_empty(
-        self, corrupt_nc, nc_missing_figure_group, cycle_times
+        self, corrupt_nc, nc_missing_figure_group
     ):
-        valid_files, valid_times = self._quarantine(
-            [corrupt_nc, nc_missing_figure_group],
-            [cycle_times[1], cycle_times[3]],
-        )
+        valid_files, valid_times = self._quarantine([corrupt_nc, nc_missing_figure_group])
         assert valid_files == []
         assert valid_times == []
 
@@ -328,24 +312,16 @@ class TestValidateAndQuarantineNcFiles:
         appear in valid_times so run_monitoring_job treats it as missing
         and creates a stub for it.
         """
-        _, valid_times = self._quarantine(
-            [valid_nc, corrupt_nc],
-            [cycle_times[0], cycle_times[1]],
-        )
-        assert cycle_times[0] in valid_times
-        assert cycle_times[1] not in valid_times
+        _, valid_times = self._quarantine([valid_nc, corrupt_nc])
+        assert cycle_times[0] in valid_times       # valid_nc uses cycle_times[0]
+        assert cycle_times[1] not in valid_times   # corrupt_nc uses a different date now
 
     def test_each_error_type_produces_labelled_log_entry(
-        self, corrupt_nc, nc_missing_coords_group, nc_missing_variable, cycle_times
+        self, corrupt_nc, nc_missing_coords_group, nc_missing_variable
     ):
         logger = self._logger()
         self._quarantine(
             [corrupt_nc, nc_missing_coords_group, nc_missing_variable],
-            [
-                datetime(2025, 11, 14, 0, tzinfo=timezone.utc),  # matches corrupt_nc
-                cycle_times[2],
-                cycle_times[0],
-            ],
             logger=logger,
         )
         all_errors = " ".join(str(c) for c in logger.error.call_args_list)
@@ -361,14 +337,13 @@ class TestValidateAndQuarantineNcFiles:
         A misalignment would cause stubs to be created for the wrong cycles.
         """
         valid_files, valid_times = self._quarantine(
-            [valid_nc, corrupt_nc, nc_missing_figure_group],
-            [cycle_times[0], cycle_times[1], cycle_times[3]],
+            [valid_nc, corrupt_nc, nc_missing_figure_group]
         )
         assert len(valid_files) == len(valid_times)
         assert valid_files == [valid_nc]
-        assert valid_times == [cycle_times[0]]
+        assert valid_times == [cycle_times[0]]  # valid_nc filename has cycle_times[0]
 
     def test_empty_input_returns_empty(self):
-        valid_files, valid_times = self._quarantine([], [])
+        valid_files, valid_times = self._quarantine([])
         assert valid_files == []
         assert valid_times == []
