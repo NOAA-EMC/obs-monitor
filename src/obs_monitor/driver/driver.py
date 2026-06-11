@@ -467,40 +467,47 @@ def extract_tarballs_and_find_nc_for_times(
 
 def validate_and_quarantine_nc_files(
     nc_files: list[Path],
-    found_times: list[datetime],
     coords_group: str,
     figure_specs: list[dict],
     ob_type: str,
     logger,
 ) -> tuple[list[Path], list[datetime]]:
     """
-    Run pre-flight structural validation on each discovered ``.nc`` file.
+    Run pre-flight structural validation on each discovered ``.nc`` file,
+    removing files that fail from both the return set and from disk.
 
     For each file, calls :func:`~obs_monitor.plotting.reader.validate_nc_file`
     which checks that the file opens, the coords group exists, and every
-    required (group_path, stat) pair is present.
+    required (group_path, stat) pair is present.  Files that fail validation
+    are:
 
-    Files that fail validation are:
-    - Removed from the returned ``nc_files`` list
-    - Removed from the returned ``found_times`` list
-    - Logged with a specific error message indicating the failure mode
+    - Logged with a specific error message identifying the failure mode
+      (``CORRUPT FILE``, ``MISSING GROUP``, or ``MISSING VARIABLE``)
+    - Deleted from disk so that ``dispatch_plots`` cannot rediscover them
+      via glob and attempt to read them, which would defeat quarantine
+    - Excluded from the returned file and time lists
 
-    The caller (``run_monitoring_job``) then treats the quarantined cycles as
-    missing, feeding them into the existing stub-creation path so the plotting
-    pipeline always receives a complete set of input files.
+    Cycle timestamps are derived from each filename using
+    :func:`extract_timestamp` rather than from a caller-supplied list,
+    avoiding the ``zip()`` truncation bug that arises when a single cycle
+    has more than one ``.nc`` file.
+
+    The caller (``run_monitoring_job``) treats quarantined cycles as missing,
+    feeding them into the existing stub-creation path so the plotting pipeline
+    always receives a complete set of input files and the frontend always
+    receives output plots.
 
     Parameters
     ----------
     nc_files:
-        List of ``.nc`` Paths found by ``extract_tarballs_and_find_nc_for_times``.
-    found_times:
-        Corresponding list of cycle datetimes for each file in ``nc_files``.
-        Must be the same length and order as ``nc_files``.
+        List of ``.nc`` Paths found by
+        ``extract_tarballs_and_find_nc_for_times``.
     coords_group:
         Top-level coords group name from ``nc_groups.coords`` in the plot
         config (e.g. ``"griddedBins"``).
     figure_specs:
-        List of figure spec dicts from the plot config.
+        List of figure spec dicts from the plot config.  Each must have
+        ``group_path`` and ``stat`` keys.
     ob_type:
         Used for log message prefixes only.
     logger:
@@ -508,40 +515,61 @@ def validate_and_quarantine_nc_files(
 
     Returns
     -------
-    (valid_nc_files, valid_found_times)
-        Subsets of the inputs containing only files that passed validation.
-        Quarantined files and their cycle times are excluded so the stub
-        path in ``run_monitoring_job`` can fill the gaps.
+    (valid_files, valid_times)
+        * ``valid_files`` — subset of ``nc_files`` that passed validation.
+        * ``valid_times`` — corresponding cycle datetimes parsed from the
+          filenames of the valid files.  Quarantined files and their cycle
+          times are excluded so the stub path in ``run_monitoring_job`` can
+          fill the gaps.
+
+    Notes
+    -----
+    If a filename does not contain a parseable 10-digit timestamp, its cycle
+    datetime is recorded as ``None`` and excluded from ``valid_times``.  This
+    is logged at WARNING level but does not prevent the file from being
+    validated and included in ``valid_files`` if it passes structural checks.
     """
     valid_files: list[Path] = []
     valid_times: list[datetime] = []
     quarantined = 0
 
-    for path, cycle_dt in zip(nc_files, found_times):
+    for path in nc_files:
+        # Derive cycle_dt from the filename rather than relying on zip alignment
+        cycle_dt = None
+        ts = extract_timestamp(path)
+        if ts:
+            try:
+                cycle_dt = datetime.strptime(ts[:10], "%Y%m%d%H").replace(
+                    tzinfo=timezone.utc
+                )
+            except ValueError:
+                pass
+
         try:
             validate_nc_file(path, coords_group, figure_specs)
             valid_files.append(path)
-            valid_times.append(cycle_dt)
+            if cycle_dt is not None:
+                valid_times.append(cycle_dt)
 
-        except CorruptFileError as exc:
+        except (CorruptFileError, MissingGroupError, MissingVariableError) as exc:
+            label = {
+                CorruptFileError:    "CORRUPT FILE",
+                MissingGroupError:   "MISSING GROUP",
+                MissingVariableError: "MISSING VARIABLE",
+            }[type(exc)]
+            cycle_str = cycle_dt.strftime("%Y%m%d%H") if cycle_dt else "unknown"
             logger.error(
-                f"[{ob_type}] CORRUPT FILE — quarantining "
-                f"{path.name} (cycle {cycle_dt.strftime('%Y%m%d%H')}): {exc}"
+                f"[{ob_type}] {label} — quarantining "
+                f"{path.name} (cycle {cycle_str}): {exc}"
             )
-            quarantined += 1
-
-        except MissingGroupError as exc:
-            logger.error(
-                f"[{ob_type}] MISSING GROUP — quarantining "
-                f"{path.name} (cycle {cycle_dt.strftime('%Y%m%d%H')}): {exc}"
-            )
-            quarantined += 1
-
-        except MissingVariableError as exc:
-            logger.error(
-                f"[{ob_type}] MISSING VARIABLE — quarantining "
-                f"{path.name} (cycle {cycle_dt.strftime('%Y%m%d%H')}): {exc}"
-            )
+            # Delete from disk so dispatch_plots cannot rediscover it via glob
+            try:
+                path.unlink()
+            except Exception as unlink_exc:
+                logger.warning(
+                    f"[{ob_type}] Failed to remove quarantined file "
+                    f"{path.name}: {unlink_exc}"
+                )
             quarantined += 1
 
     if quarantined:
@@ -710,17 +738,22 @@ def run_monitoring_job(args):
     exception that would silently drop the job from the summary in main().
     """
     monitor_dict, timestamp, all_plot_configs = args
-    logger = Logger(f"Obs Monitor - {monitor_dict.get('monitor_type', 'unknown')}")
 
+    job_ob_type = monitor_dict.get("variable") or (
+        f"{monitor_dict.get('sensor')}_{monitor_dict.get('satellite')}"
+        if monitor_dict.get("sensor") and monitor_dict.get("satellite")
+        else "unknown"
+    )
+    logger = Logger(f"Obs Monitor - {job_ob_type}")
+    
     # --- Stage 0: Config & runtime dir setup ---
     try:
         cfg = MonitoringConfig(monitor_dict, timestamp)
         cfg.setup_runtime_dir()
     except Exception as e:
         logger.error(f"Config/setup failed: {e}")
-        return {"ob_type": monitor_dict.get("ob_type", "unknown"),
-                "status": "failed", "error": f"setup: {e}"}
-
+        return {"ob_type": job_ob_type, "status": "failed", "error": f"setup: {e}"}
+    
     logger.info(f"Starting job for {cfg.ob_type}")
 
     try:
