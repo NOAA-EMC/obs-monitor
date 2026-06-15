@@ -542,8 +542,10 @@ def validate_and_quarantine_nc_files(
                 cycle_dt = datetime.strptime(ts[:10], "%Y%m%d%H").replace(
                     tzinfo=timezone.utc
                 )
-            except ValueError:
-                pass
+            except ValueError as exc:
+                logger.warning(
+                    f"[{ob_type}] Could not parse cycle timestamp from '{path.name}' (ts={ts!r}): {exc}"
+                )
 
         try:
             validate_nc_file(path, coords_group, figure_specs)
@@ -803,7 +805,6 @@ def run_monitoring_job(args):
                 try:
                     nc_files, found_times = validate_and_quarantine_nc_files(
                         nc_files=nc_files,
-                        found_times=found_times,
                         coords_group=coords_group,
                         figure_specs=figure_specs,
                         ob_type=cfg.ob_type,

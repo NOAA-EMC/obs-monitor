@@ -653,10 +653,10 @@ def validate_nc_file(
     for the given figure specs before it is handed to the plotting pipeline.
  
     Checks performed (in order):
-    1. File is non-zero bytes and opens without error       → CorruptFileError
-    2. The coords group (e.g. ``griddedBins``) exists      → MissingGroupError
-    3. Each unique ``group_path`` in figure_specs exists    → MissingGroupError
-    4. Each ``stat`` variable exists within its group_path  → MissingVariableError
+    1. File opens without error                              → CorruptFileError
+    2. The coords group (e.g. ``griddedBins``) exists        → MissingGroupError
+    3. Each unique ``group_path`` in figure_specs exists     → MissingGroupError
+    4. Each ``stat`` variable exists within its group_path   → MissingVariableError
  
     Steps 3 and 4 deduplicate across figure specs so each unique
     ``(group_path, stat)`` pair is checked exactly once, regardless of how
