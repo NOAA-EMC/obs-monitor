@@ -49,7 +49,6 @@ from obs_monitor.plotting.reader import (
 from .stubs import (
     clone_schema_stub,
     write_generic_stub,
-    guess_domain_size,
 )
 
 # -----------------------------------------------------------------------------
@@ -159,45 +158,6 @@ def extract_timestamp(file: Path) -> str | None:
     return match.group(0) if match else None
 
 
-def infer_schema_from_template(cfg: MonitoringConfig) -> tuple[str, bool]:
-    """
-    Inspect the Jinja YAML template to infer (product_group, include_gridded_bins).
-
-    NOTE: cfg.template_path is not currently set by MonitoringConfig.__init__.
-    When this is called for a job that has no template_path attribute, the
-    open() call will raise AttributeError and fall through to the heuristic
-    fallback. This is a known issue to be addressed in a follow-up PR that
-    aligns stubs.py with the new YAML config schema.
-    """
-    pg = None
-    include_gridded = False
-    try:
-        with open(cfg.template_path, "r") as tf:
-            for line in tf:
-                m = re.search(r"name:\s*([A-Za-z0-9_\/]+)", line)
-                if not m:
-                    continue
-                path  = m.group(1).strip()
-                parts = path.split("/")
-                if parts and parts[0] == "griddedBins":
-                    include_gridded = True
-                if len(parts) >= 1:
-                    pg = parts[-1]
-    except Exception:
-        pass
-
-    if not pg:
-        ob = cfg.ob_type.lower()
-        if "snow" in ob or "snocvr" in ob:
-            pg = "totalSnowDepth"
-        elif "aod" in ob or "viirs" in ob:
-            pg = "aerosolOpticalDepth"
-        else:
-            pg = "value"
-
-    return pg, include_gridded
-
-
 def expected_stub_filename(
     cfg: MonitoringConfig,
     dt: datetime,
@@ -220,23 +180,49 @@ def create_stub_for_missing_cycle(
     cfg: MonitoringConfig,
     dt: datetime,
     logger,
+    plot_config: dict | None = None,
     reference_path: str | Path | None = None,
     output_dir: Path | None = None,
 ):
     """
     Create a stub .nc for a missing cycle into `output_dir`
     (defaults to cfg.runtime_dir).
+ 
+    Strategy:
+    1. If a reference_path is available, clone its schema (preserves the
+       exact group hierarchy and dimension sizes of a real file).
+    2. Otherwise fall back to write_generic_stub, which derives the schema
+       from the plot_config.  plot_config must be provided for the fallback
+       to succeed.
+ 
+    Parameters
+    ----------
+    cfg:
+        MonitoringConfig for this job.
+    dt:
+        The missing cycle datetime.
+    logger:
+        wxflow Logger instance.
+    plot_config:
+        Per-ob-type plot config dict from the monitor type YAML.  Required
+        for the generic stub fallback; ignored when cloning from a reference.
+    reference_path:
+        Path to a real .nc file to clone the schema from.  When provided,
+        clone_schema_stub is attempted first.
+    output_dir:
+        Directory to write the stub into.  Defaults to cfg.runtime_dir.
     """
     out_dir = output_dir or cfg.runtime_dir
     out_dir.mkdir(parents=True, exist_ok=True)
     fname = expected_stub_filename(cfg, dt, reference_path)
     out   = out_dir / fname
-
+ 
+    # --- Strategy 1: clone from a real reference file ---
     if reference_path:
         try:
             clone_schema_stub(reference_path, out, dt)
             logger.info(
-                f"[{cfg.ob_type}] Stub cloned from real: "
+                f"[{cfg.ob_type}] Stub cloned from real file: "
                 f"{Path(reference_path).name} -> {out.name}"
             )
             return True
@@ -244,23 +230,31 @@ def create_stub_for_missing_cycle(
             logger.warning(
                 f"[{cfg.ob_type}] Clone failed; falling back to generic stub: {e}"
             )
-
-    product_group, include_gridded = infer_schema_from_template(cfg)
+ 
+    # --- Strategy 2: derive schema from plot config ---
+    if not plot_config:
+        logger.error(
+            f"[{cfg.ob_type}] Cannot write generic stub for "
+            f"{dt.strftime('%Y%m%d%H')}: no plot_config provided and "
+            f"no reference file available."
+        )
+        return False
+ 
     try:
         write_generic_stub(
             out_path=out,
             dt=dt,
             ob_type=cfg.ob_type,
-            product_group=product_group,
-            include_gridded_bins=include_gridded,
+            plot_config=plot_config,
         )
         logger.info(
-            f"[{cfg.ob_type}] Generic stub written: {out.name} "
-            f"(pg={product_group}, gridded={include_gridded})"
+            f"[{cfg.ob_type}] Generic stub written: {out.name}"
         )
         return True
     except Exception as e:
-        logger.error(f"[{cfg.ob_type}] Failed to write generic stub {out.name}: {e}")
+        logger.error(
+            f"[{cfg.ob_type}] Failed to write generic stub {out.name}: {e}"
+        )
         return False
 
 
@@ -848,12 +842,11 @@ def run_monitoring_job(args):
                     try:
                         create_stub_for_missing_cycle(
                             cfg, dt, logger,
+                            plot_config=ob_plot_config,
                             reference_path=ref_path,
                             output_dir=window_dir,
                         )
                     except Exception as e:
-                        # Non-fatal: log and continue — partial stubs are
-                        # better than no stubs for downstream plotting.
                         logger.warning(
                             f"[{cfg.ob_type}] Stub creation failed for "
                             f"{dt.strftime('%Y%m%d%H')} (non-fatal): {e}"

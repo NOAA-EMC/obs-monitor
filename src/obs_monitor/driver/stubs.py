@@ -3,30 +3,22 @@ from __future__ import annotations
 
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
-from typing import Tuple, Optional
-import os
+from typing import Optional
 import re
 
 # ------------------------
 # Constants
 # ------------------------
 
-# Fill value consistent with your real files
-DEFAULT_FLOAT_FILL = -3.368795e38
+# Fill value consistent with real obs-monitor NetCDF files
+DEFAULT_FLOAT_FILL = -3.368795e+38
 
-# Always write ISO UTC: e.g., 2025-01-31T18:00:00Z
+# Always write ISO UTC timestamps: e.g. 2025-01-31T18:00:00Z
 VALIDTIME_STRFTIME = "%Y-%m-%dT%H:00:00Z"
 
-# When no reference file exists, use this hour offset between cycle time and validTime.
-# If your product is always +3h (like many snow stats), set this to 3.
+# Hour offset applied between cycle time and validTime when no reference
+# file is available to derive it from.
 DEFAULT_VALIDTIME_OFFSET_HOURS = 3
-
-# If you want per-ob_type defaults, you can uncomment and use this mapping:
-# DEFAULT_OFFSET_BY_OBTYPE = {
-#     "snocvr": 3,
-#     "viirs_n20": 0,
-#     "viirs_npp": 0,
-# }
 
 
 # ------------------------
@@ -36,57 +28,58 @@ DEFAULT_VALIDTIME_OFFSET_HOURS = 3
 def _utc(dt: datetime) -> datetime:
     return dt.astimezone(timezone.utc)
 
+
 def _format_valid_iso(dt: datetime) -> str:
     return _utc(dt).strftime(VALIDTIME_STRFTIME)
 
+
 def _extract_cycle_from_filename(name: str) -> Optional[datetime]:
     """
-    Extract cycle timestamp from a filename by finding the first 10-14 digit run.
-    Returns UTC datetime or None.
+    Extract cycle timestamp from a filename by finding the first 10–14 digit run.
+    Returns a UTC datetime or None.
     """
     m = re.search(r"(\d{10,14})", name)
     if not m:
         return None
     ts = m.group(1)
     try:
-        if len(ts) == 10:   # YYYYMMDDHH
+        if len(ts) == 10:
             return datetime.strptime(ts, "%Y%m%d%H").replace(tzinfo=timezone.utc)
-        if len(ts) == 12:   # YYYYMMDDHHMM
+        if len(ts) == 12:
             return datetime.strptime(ts, "%Y%m%d%H%M").replace(tzinfo=timezone.utc)
-        if len(ts) == 14:   # YYYYMMDDHHMMSS
+        if len(ts) == 14:
             return datetime.strptime(ts, "%Y%m%d%H%M%S").replace(tzinfo=timezone.utc)
     except Exception:
         return None
     return None
 
+
 def _parse_valid_string(s: str) -> Optional[datetime]:
-    """Parse several common validTime string styles -> UTC datetime."""
+    """Parse several common validTime string styles to a UTC datetime."""
     if not s:
         return None
     s = s.strip()
     try:
         if s.endswith("Z") and "T" in s:
-            # 2025-01-31T15:00:00Z
             return datetime.strptime(s, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
         if s.endswith("z") and " " in s:
-            # 2025 01 31 18z
             y, m, d, hh = s[:-1].split()
             return datetime(int(y), int(m), int(d), int(hh), tzinfo=timezone.utc)
         if "-" in s and ":" in s and "T" not in s:
-            # 2025-01-31 18:00:00
             return datetime.strptime(s, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
         if s.isdigit() and len(s) == 10:
-            # 2025013118
             return datetime.strptime(s, "%Y%m%d%H").replace(tzinfo=timezone.utc)
     except Exception:
         return None
     return None
 
+
 def _valid_offset_hours_from_reference(ref_valid: Optional[str], ref_fname: str) -> int:
     """
     Compute (validTime - cycleTime) in whole hours from a reference file,
-    based on the validTime string inside the file and the timestamp in the filename.
-    Falls back to DEFAULT_VALIDTIME_OFFSET_HOURS if either cannot be parsed.
+    based on the validTime string inside the file and the timestamp in the
+    filename. Falls back to DEFAULT_VALIDTIME_OFFSET_HOURS if either cannot
+    be parsed.
     """
     vdt = _parse_valid_string(ref_valid) if ref_valid else None
     fdt = _extract_cycle_from_filename(ref_fname)
@@ -97,14 +90,63 @@ def _valid_offset_hours_from_reference(ref_valid: Optional[str], ref_fname: str)
 
 
 # ------------------------
+# Internal schema helpers
+# ------------------------
+
+def _collect_group_specs(figure_specs: list[dict]) -> dict[str, set[str]]:
+    """
+    Walk figure specs and collect the unique stat variables required under
+    each group_path.
+
+    Returns a dict mapping group_path -> set of stat variable names, e.g.::
+
+        {
+            "byDomains/ombg/stationPressure": {"assimilated_mean"},
+            "byDomains/oman/stationPressure": {"assimilated_mean"},
+            "griddedBins/ombg/stationPressure": {"assimilated_mean"},
+            "griddedBins/oman/stationPressure": {"assimilated_mean"},
+        }
+
+    This is the minimal set that validate_nc_file will check, so it is
+    exactly what write_generic_stub needs to create.
+    """
+    groups: dict[str, set[str]] = {}
+    for spec in figure_specs:
+        gp   = spec.get("group_path", "")
+        stat = spec.get("stat", "")
+        if not gp or not stat:
+            continue
+        groups.setdefault(gp, set()).add(stat)
+    return groups
+
+
+def _ensure_group_path(root, group_path: str):
+    """
+    Walk or create every segment of a slash-separated group path under root,
+    returning the deepest group.
+    """
+    current = root
+    for segment in group_path.strip("/").split("/"):
+        if segment in current.groups:
+            current = current.groups[segment]
+        else:
+            current = current.createGroup(segment)
+    return current
+
+
+# ------------------------
 # Public API
 # ------------------------
 
 def clone_schema_stub(ref_path: str | Path, out_path: str | Path, dt: datetime) -> str:
     """
-    Clone dims/groups/vars/attrs from ref_path and write an 'empty' stub at out_path for cycle dt.
+    Clone dims/groups/vars/attrs from ref_path and write an empty stub at
+    out_path for cycle dt.
+
     - validTime is always written in ISO UTC (YYYY-MM-DDTHH:00:00Z)
-    - The hour offset between filename cycle and validTime is preserved from the reference
+    - The hour offset between filename cycle and validTime is preserved from
+      the reference file
+
     Requires: netCDF4, numpy
     """
     import numpy as np
@@ -113,10 +155,7 @@ def clone_schema_stub(ref_path: str | Path, out_path: str | Path, dt: datetime) 
     ref_path, out_path = Path(ref_path), Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # We'll detect offset once at the root and reuse for all groups
-    detected_offset = 0
-
-    def copy_root_dims(src_root: Dataset, dst_root: Dataset) -> Tuple[dict, set]:
+    def copy_root_dims(src_root, dst_root):
         sizes = {}
         unlimited = set()
         for name, d in src_root.dimensions.items():
@@ -147,22 +186,25 @@ def clone_schema_stub(ref_path: str | Path, out_path: str | Path, dt: datetime) 
         except Exception:
             fv = None
 
-        # Check if the dtype is the Python string class or the string 'str'
-        if src_var.dtype == str or str(src_var.dtype) == 'str':
+        if src_var.dtype == str or str(src_var.dtype) == "str":
             kind = "S"
         else:
             kind = src_var.dtype.kind
 
         if fv is not None and kind in ("f", "i", "u"):
-            dst_var = dst_grp.createVariable(src_var.name, src_var.dtype, src_var.dimensions, fill_value=fv, **kwargs)
+            dst_var = dst_grp.createVariable(
+                src_var.name, src_var.dtype, src_var.dimensions,
+                fill_value=fv, **kwargs,
+            )
         else:
             vtype = "str" if kind in ("S", "U", "O") else src_var.dtype
-            dst_var = dst_grp.createVariable(src_var.name, vtype, src_var.dimensions, **kwargs)
+            dst_var = dst_grp.createVariable(
+                src_var.name, vtype, src_var.dimensions, **kwargs,
+            )
         copy_attrs(src_var, dst_var)
         return dst_var
 
     def write_empty(var, root_dim_sizes: dict, unlimited_names: set):
-        import numpy as np
         shape = []
         for dname in var.dimensions:
             if dname in unlimited_names:
@@ -173,21 +215,18 @@ def clone_schema_stub(ref_path: str | Path, out_path: str | Path, dt: datetime) 
                     size = 1
                 shape.append(size)
 
-        # Check if the dtype is the Python string class or the string 'str'
-        if var.dtype == str or str(var.dtype) == 'str':
+        if var.dtype == str or str(var.dtype) == "str":
             kind = "S"
         else:
             kind = var.dtype.kind
 
         if kind == "f":
-            # Write real NaNs for floats so plotting breaks the line at missing points
             var[:] = np.nan
         elif kind in ("i", "u"):
-            # Integers (e.g., count) → zero
             var[:] = 0
         else:
-            # Strings
-            arr = np.empty(shape, dtype=object); arr.fill("NA")
+            arr = np.empty(shape, dtype=object)
+            arr.fill("NA")
             var[:] = arr
 
     def read_ref_validtime_str(grp) -> Optional[str]:
@@ -206,129 +245,193 @@ def clone_schema_stub(ref_path: str | Path, out_path: str | Path, dt: datetime) 
 
     def specialize_valid_time(dst_grp, cycle_dt: datetime, offset_hours: int):
         for name, v in dst_grp.variables.items():
-            if name.lower() == "validtime" and v.ndim == 1 and v.dimensions[0].lower() == "analysiscycle":
+            if (
+                name.lower() == "validtime"
+                and v.ndim == 1
+                and v.dimensions[0].lower() == "analysiscycle"
+            ):
                 target = _utc(cycle_dt) + timedelta(hours=offset_hours)
                 v[0] = _format_valid_iso(target)
 
-    def walk(src_grp, dst_grp, root_dim_sizes: dict, unlimited_names: set, offset_hours: int):
+    def walk(src_grp, dst_grp, root_dim_sizes, unlimited_names, offset_hours):
         for _, src_var in src_grp.variables.items():
             dst_var = create_var(src_var, dst_grp)
             write_empty(dst_var, root_dim_sizes, unlimited_names)
-
         specialize_valid_time(dst_grp, dt, offset_hours)
         copy_attrs(src_grp, dst_grp)
-
         for gname, src_sub in src_grp.groups.items():
             walk(src_sub, dst_grp.createGroup(gname), root_dim_sizes, unlimited_names, offset_hours)
 
-    from netCDF4 import Dataset  # local import already done
     with Dataset(ref_path, "r") as src, Dataset(out_path, "w", format="NETCDF4") as dst:
-        # Detect offset at root using the source file
-        ref_vstr = read_ref_validtime_str(src)
-        detected_offset = _valid_offset_hours_from_reference(ref_vstr, ref_path.name)
-
+        ref_vstr      = read_ref_validtime_str(src)
+        offset_hours  = _valid_offset_hours_from_reference(ref_vstr, ref_path.name)
         root_sizes, unlimited = copy_root_dims(src, dst)
         copy_attrs(src, dst)
-        walk(src, dst, root_sizes, unlimited, detected_offset)
+        walk(src, dst, root_sizes, unlimited, offset_hours)
 
     return str(out_path)
-
-
-def guess_domain_size(ob_type: str) -> int:
-    """
-    Heuristic for Domain dimension (used only for generic stubs).
-    You can override with env DEFAULT_DOMAIN_SIZE if desired.
-    """
-    env = os.getenv("DEFAULT_DOMAIN_SIZE")
-    if env:
-        try:
-            return int(env)
-        except ValueError:
-            pass
-    ob = (ob_type or "").lower()
-    if "aod" in ob or "viirs" in ob:
-        return 7
-    if "snow" in ob or "snocvr" in ob:
-        return 10
-    return 10
 
 
 def write_generic_stub(
     out_path: str | Path,
     dt: datetime,
     ob_type: str,
-    product_group: str,
-    include_gridded_bins: bool = False,
+    plot_config: dict,
 ) -> str:
     """
-    Minimal EVA-friendly schema (strings + byDomains; optional griddedBins).
-    - validTime always ISO (YYYY-MM-DDTHH:00:00Z)
-    - Uses DEFAULT_VALIDTIME_OFFSET_HOURS when no reference exists
+    Write a minimal stub NetCDF file whose structure satisfies
+    ``validate_nc_file`` for the given plot config.
+
+    This is a last-resort fallback used only when no real reference file
+    exists to clone from (i.e. the entire window has no data). The stub
+    contains the correct group hierarchy and variable names with NaN/zero
+    fill values so that the plotting pipeline can run and produce figures
+    that show gaps at missing cycles rather than crashing.
+
+    The group hierarchy, variable names, and dimension sizes are all derived
+    from the plot config rather than hardcoded, so the stub schema
+    automatically stays in sync with the YAML as new ob_types are onboarded.
+
+    Parameters
+    ----------
+    out_path:
+        Destination path for the stub file.
+    dt:
+        Cycle datetime (UTC). Used to set validTime and name the file.
+    ob_type:
+        Observation type string (used for the statisticDomain placeholder
+        values and log context only — not for schema decisions).
+    plot_config:
+        The per-ob-type plot config dict loaded from the monitor type YAML.
+        Must contain:
+          - ``figures``: list of figure spec dicts, each with ``group_path``
+            and ``stat`` keys
+          - ``domain_count``: int, size of the Domain dimension
+          - ``nc_groups.coords``: top-level coords group name (e.g.
+            ``"griddedBins"``)
+          - ``nc_groups.bins`` (optional): [binsZDim, binsYDim, binsXDim]
+            for ob_types that have a griddedBins group; omit or null if not
+            applicable
+
+    Returns
+    -------
+    str
+        Absolute path of the written stub file.
+
+    Raises
+    ------
+    ValueError
+        If ``plot_config`` is missing required keys (``figures``,
+        ``domain_count``).
     """
-    from netCDF4 import Dataset
     import numpy as np
+    from netCDF4 import Dataset
 
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
-    FILL = np.float32(DEFAULT_FLOAT_FILL)
+    # --- Validate required config keys ---
+    figure_specs = plot_config.get("figures")
+    if not figure_specs:
+        raise ValueError(
+            f"[{ob_type}] plot_config missing 'figures' key — "
+            "cannot derive stub schema."
+        )
+    domain_count = plot_config.get("domain_count")
+    if not domain_count:
+        raise ValueError(
+            f"[{ob_type}] plot_config missing 'domain_count' key — "
+            "cannot size Domain dimension for stub."
+        )
 
-    # Choose the default offset (constant). If you want per-type, use the commented dict above.
-    offset_h = DEFAULT_VALIDTIME_OFFSET_HOURS
-    # offset_h = DEFAULT_OFFSET_BY_OBTYPE.get((ob_type or "").lower(), DEFAULT_VALIDTIME_OFFSET_HOURS)
+    nc_groups    = plot_config.get("nc_groups", {})
+    coords_group = nc_groups.get("coords", "")
+    bins         = nc_groups.get("bins")          # [binsZDim, binsYDim, binsXDim] or None
 
-    vtime_dt = _utc(dt) + timedelta(hours=offset_h)
-    vtime_str = _format_valid_iso(vtime_dt)
+    # --- Derive the group/variable schema from figure specs ---
+    # Maps group_path -> set of stat variable names that must exist there.
+    # This is exactly what validate_nc_file checks, nothing more.
+    group_specs = _collect_group_specs(figure_specs)
 
-    domain_size = guess_domain_size(ob_type)
+    # --- Compute validTime ---
+    vtime_str = _format_valid_iso(
+        _utc(dt) + timedelta(hours=DEFAULT_VALIDTIME_OFFSET_HOURS)
+    )
 
-    # Default gridded bin sizes (tweak if needed; you can add env overrides later if desired)
-    bz, by, bx = 1, 180, 360
+    FILL_F = np.float32(DEFAULT_FLOAT_FILL)
 
     with Dataset(out_path, "w", format="NETCDF4") as nc:
-        # Core dims
-        nc.createDimension("analysisCycle", None)
-        nc.createDimension("Domain", domain_size)
 
-        # Root vars
-        vt = nc.createVariable("validTime", str, ("analysisCycle",)); vt[0] = vtime_str
-        sd = nc.createVariable("statisticDomain", str, ("Domain",))
-        sd[:] = np.array([f"D{i:02d}" for i in range(1, domain_size + 1)], dtype=object)
-
-        def make_side(parent_grp, side_name: str):
-            g = parent_grp.createGroup(side_name).createGroup(product_group)
-            mean  = g.createVariable("mean",  "f4", ("analysisCycle", "Domain"), zlib=True, complevel=1, fill_value=FILL)
-            count = g.createVariable("count", "i4", ("analysisCycle", "Domain"), zlib=True, complevel=1)
-            rms   = g.createVariable("RMS",   "f4", ("analysisCycle", "Domain"), zlib=True, complevel=1, fill_value=FILL)
-            # Use NaN so line plots show gaps at missing cycles
-            mean[:] = np.nan
-            count[:] = 0
-            rms[:] = np.nan
-
-        # byDomains (always present)
-        byDomains = nc.createGroup("byDomains")
-        make_side(byDomains, "ombg")
-        make_side(byDomains, "oman")
-
-        # Optional gridded bins
-        if include_gridded_bins:
+        # --- Root dimensions ---
+        nc.createDimension("analysisCycle", None)   # unlimited
+        nc.createDimension("Domain", domain_count)
+        if bins:
+            bz, by, bx = bins
             nc.createDimension("binsZDim", bz)
             nc.createDimension("binsYDim", by)
             nc.createDimension("binsXDim", bx)
 
-            def make_grid_side(parent_grp, side_name: str):
-                g = parent_grp.createGroup(side_name).createGroup(product_group)
-                dims = ("analysisCycle", "binsZDim", "binsYDim", "binsXDim")
-                mean  = g.createVariable("mean",  "f4", dims, zlib=True, complevel=1, fill_value=FILL)
-                count = g.createVariable("count", "i4", dims, zlib=True, complevel=1)
-                rms   = g.createVariable("RMS",   "f4", dims, zlib=True, complevel=1, fill_value=FILL)
-                mean[:] = np.nan
-                count[:] = 0
-                rms[:] = np.nan
+        # --- Root variables ---
+        vt = nc.createVariable("validTime", str, ("analysisCycle",))
+        vt[0] = vtime_str
 
-            gridded = nc.createGroup("griddedBins")
-            make_grid_side(gridded, "ombg")
-            make_grid_side(gridded, "oman")
+        sd = nc.createVariable("statisticDomain", str, ("Domain",))
+        sd[:] = np.array(
+            [f"D{i:02d}" for i in range(1, domain_count + 1)], dtype=object
+        )
+
+        if bins:
+            vb = nc.createVariable("verticalBin", str, ("binsZDim",))
+            vb[:] = np.array(["L01"], dtype=object)
+
+        # --- coords group (griddedBins with lat/lon placeholders) ---
+        # validate_nc_file checks that this group exists; read_coords also
+        # expects latitude/longitude variables within it.
+        if coords_group:
+            cg = nc.createGroup(coords_group)
+            if bins:
+                by_size = bins[1]
+                bx_size = bins[2]
+                lat = cg.createVariable(
+                    "latitude", "f4", ("binsYDim", "binsXDim"),
+                    zlib=True, complevel=1,
+                )
+                lat.units     = "degrees_north"
+                lat.long_name = "latitude of bin centers"
+                lat[:] = np.full((by_size, bx_size), np.nan, dtype=np.float32)
+
+                lon = cg.createVariable(
+                    "longitude", "f4", ("binsYDim", "binsXDim"),
+                    zlib=True, complevel=1,
+                )
+                lon.units     = "degrees_east"
+                lon.long_name = "longitude of bin centers"
+                lon[:] = np.full((by_size, bx_size), np.nan, dtype=np.float32)
+
+        # --- Data groups derived from figure specs ---
+        for group_path, stat_vars in group_specs.items():
+            # Determine which root-level group this path falls under so we
+            # know which dimensions to use.
+            top_level = group_path.strip("/").split("/")[0]
+            use_bins  = bins and top_level == coords_group
+
+            grp = _ensure_group_path(nc, group_path)
+
+            for stat in stat_vars:
+                if use_bins:
+                    dims = ("analysisCycle", "binsZDim", "binsYDim", "binsXDim")
+                    var  = grp.createVariable(
+                        stat, "f4", dims,
+                        zlib=True, complevel=1, fill_value=FILL_F,
+                    )
+                    var[:] = np.nan
+                else:
+                    dims = ("analysisCycle", "Domain")
+                    var  = grp.createVariable(
+                        stat, "f4", dims,
+                        zlib=True, complevel=1, fill_value=FILL_F,
+                    )
+                    var[:] = np.nan
 
     return str(out_path)
 
@@ -337,5 +440,4 @@ __all__ = [
     "DEFAULT_FLOAT_FILL",
     "clone_schema_stub",
     "write_generic_stub",
-    "guess_domain_size",
 ]
