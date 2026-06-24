@@ -115,7 +115,7 @@ class MonitoringConfig:
         # created. Call setup_runtime_dir() after construction.
         self.runtime_dir = (
             self.runtime_root
-            / f"runtime_{self.ob_type}_{timestamp}_{uuid.uuid4().hex[:8]}"
+            /f"runtime_{self.ob_type}_{timestamp}_{uuid.uuid4().hex[:8]}"
         )
 
         self.experiment_dir = Path(os.getenv("EXPDIR"))
@@ -330,8 +330,8 @@ def find_matching_inputs_for_times(
         cyc_str = dt.strftime("%H")
         run_dir = (
             cfg.dataroot
-            / f"{cfg.run}.{pdy_str}"
-            / f"{cyc_str}/products/{cfg.component}/anlmon"
+            /f"{cfg.run}.{pdy_str}"
+            /f"{cyc_str}/products/{cfg.component}/anlmon"
         )
 
         if not run_dir.exists():
@@ -556,8 +556,8 @@ def validate_and_quarantine_nc_files(
 
         except (CorruptFileError, MissingGroupError, MissingVariableError) as exc:
             label = {
-                CorruptFileError:    "CORRUPT FILE",
-                MissingGroupError:   "MISSING GROUP",
+                CorruptFileError: "CORRUPT FILE",
+                MissingGroupError: "MISSING GROUP",
                 MissingVariableError: "MISSING VARIABLE",
             }[type(exc)]
             cycle_str = cycle_dt.strftime("%Y%m%d%H") if cycle_dt else "unknown"
