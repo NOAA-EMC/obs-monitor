@@ -397,11 +397,11 @@ class MapGriddedFigure(FigureBase):
         data = self.ds[self.stat].values.astype(float)  # (72, 144)
 
         projection = self.spec.get("projection", "plcarr")
-        domain     = self.spec.get("domain", "global")
-        cmap       = self.spec.get("cmap") or "coolwarm"
-        cb_label   = self.spec.get("colorbar_label", f"{self.variable} ({self.stat})")
-        vmin       = self.spec.get("vmin")   # None → EMCPy uses full data range
-        vmax       = self.spec.get("vmax")
+        domain = self.spec.get("domain", "global")
+        cmap = self.spec.get("cmap") or "coolwarm"
+        cb_label = self.spec.get("colorbar_label", f"{self.variable} ({self.stat})")
+        vmin = self.spec.get("vmin")   # None → EMCPy uses full data range
+        vmax = self.spec.get("vmax")
         title_template = self.spec.get(
             "title", "{ob_type} {variable} {stat} — Cycle Mean"
         )

@@ -56,6 +56,7 @@ from .stubs import (
 # Configuration
 # -----------------------------------------------------------------------------
 
+
 class MonitoringConfig:
     """
     Encapsulates configuration for a single observation monitoring job.
@@ -73,11 +74,11 @@ class MonitoringConfig:
 
         if self.monitor_type == 'radiance':
             self.satellite = monitor_dict["satellite"]
-            self.sensor    = monitor_dict["sensor"]
-            self.ob_type   = f"{self.sensor}_{self.satellite}"
+            self.sensor = monitor_dict["sensor"]
+            self.ob_type = f"{self.sensor}_{self.satellite}"
         elif self.monitor_type == 'conventional':
             self.variable = monitor_dict["variable"]
-            self.ob_type  = f"{self.variable}"
+            self.ob_type = f"{self.variable}"
         else:
             raise ValueError(f"Unknown monitor_type: {self.monitor_type}")
 
@@ -103,11 +104,11 @@ class MonitoringConfig:
         if self.cycles <= 0:
             raise ValueError("CYCLES must be > 0")
 
-        self.end_time   = datetime.strptime(pdy + cyc, "%Y%m%d%H").replace(tzinfo=timezone.utc)
+        self.end_time = datetime.strptime(pdy + cyc, "%Y%m%d%H").replace(tzinfo=timezone.utc)
         self.start_time = self.end_time - (self.cycles - 1) * timedelta(hours=self.interval_hours)
 
         # Paths
-        self.timestamp    = timestamp
+        self.timestamp = timestamp
         self.runtime_root = Path(os.getenv("RUNTIME_DIR"))
 
         # NOTE: runtime_dir path is computed here but the directory is NOT
@@ -118,15 +119,15 @@ class MonitoringConfig:
         )
 
         self.experiment_dir = Path(os.getenv("EXPDIR"))
-        self.dataroot       = Path(os.getenv("DATAROOT"))
-        self.comroot        = Path(os.getenv("COMROOT"))
-        self.run            = Path(os.getenv("RUN"))
-        self.pdy            = Path(pdy)
-        self.cyc            = Path(cyc)
+        self.dataroot = Path(os.getenv("DATAROOT"))
+        self.comroot = Path(os.getenv("COMROOT"))
+        self.run = Path(os.getenv("RUN"))
+        self.pdy = Path(pdy)
+        self.cyc = Path(cyc)
 
         # Flags
-        self.copy_data    = cast_as_dtype(os.getenv("COPY_DATA"))
-        self.keep_data    = cast_as_dtype(os.getenv("KEEP_DATA"))
+        self.copy_data = cast_as_dtype(os.getenv("COPY_DATA"))
+        self.keep_data = cast_as_dtype(os.getenv("KEEP_DATA"))
         self.create_stubs = cast_as_dtype(os.getenv("CREATE_STUBS"))
 
     def setup_runtime_dir(self) -> None:
@@ -177,7 +178,7 @@ def infer_schema_from_template(cfg: MonitoringConfig) -> tuple[str, bool]:
                 m = re.search(r"name:\s*([A-Za-z0-9_\/]+)", line)
                 if not m:
                     continue
-                path  = m.group(1).strip()
+                path = m.group(1).strip()
                 parts = path.split("/")
                 if parts and parts[0] == "griddedBins":
                     include_gridded = True
@@ -230,7 +231,7 @@ def create_stub_for_missing_cycle(
     out_dir = output_dir or cfg.runtime_dir
     out_dir.mkdir(parents=True, exist_ok=True)
     fname = expected_stub_filename(cfg, dt, reference_path)
-    out   = out_dir / fname
+    out = out_dir / fname
 
     if reference_path:
         try:
@@ -300,8 +301,8 @@ def build_expected_times_for_window(
     Build the expected timeline for the single window with exactly `cycles`
     timestamps, ending at `t_end`.
     """
-    interval  = timedelta(hours=interval_hours)
-    t_start   = t_end - (cycles - 1) * interval
+    interval = timedelta(hours=interval_hours)
+    t_start = t_end - (cycles - 1) * interval
     return [t_start + i * interval for i in range(cycles)]
 
 
@@ -316,7 +317,7 @@ def find_matching_inputs_for_times(
     Returns: (tarballs, expected_times, found_times)
     """
     tarballs_in_runtime = []
-    found_times         = []
+    found_times = []
 
     logger.info(
         f"[{cfg.ob_type}] Window search (tarballs) from {expected_times[0]} "
@@ -325,9 +326,9 @@ def find_matching_inputs_for_times(
     window_dir.mkdir(parents=True, exist_ok=True)
 
     for dt in expected_times:
-        pdy_str  = dt.strftime("%Y%m%d")
-        cyc_str  = dt.strftime("%H")
-        run_dir  = (
+        pdy_str = dt.strftime("%Y%m%d")
+        cyc_str = dt.strftime("%H")
+        run_dir = (
             cfg.dataroot
             / f"{cfg.run}.{pdy_str}"
             / f"{cyc_str}/products/{cfg.component}/anlmon"
@@ -348,9 +349,9 @@ def find_matching_inputs_for_times(
                 f"{dt.strftime('%Y%m%d%H')}: {archive_path}"
             )
             try:
-                time_prefix   = dt.strftime("%Y%m%d%H")
+                time_prefix = dt.strftime("%Y%m%d%H")
                 dest_filename = f"{time_prefix}_{archive_path.name}"
-                dest_archive  = window_dir / dest_filename
+                dest_archive = window_dir / dest_filename
                 shutil.copy2(archive_path, dest_archive)
                 logger.info(
                     f"[{cfg.ob_type}] Copied tarball to runtime: "
@@ -428,9 +429,9 @@ def extract_tarballs_and_find_nc_for_times(
         )
 
     # 2) Scan for .nc files per expected cycle
-    nc_files    = []
+    nc_files = []
     found_times = []
-    pattern     = f"{cfg.ob_type}_*.nc"
+    pattern = f"{cfg.ob_type}_*.nc"
 
     logger.info(
         f"[{cfg.ob_type}] Runtime search for .nc files from "
@@ -646,7 +647,7 @@ def copy_plots_to_public(
         return
 
     for plot_file in plots_dir.rglob("*.png"):
-        rel_path    = plot_file.relative_to(plots_dir)
+        rel_path = plot_file.relative_to(plots_dir)
         target_path = public_root / rel_path
         target_path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(plot_file, target_path)
@@ -747,7 +748,7 @@ def run_monitoring_job(args):
         else "unknown"
     )
     logger = Logger(f"Obs Monitor - {job_ob_type}")
-    
+
     # --- Stage 0: Config & runtime dir setup ---
     try:
         cfg = MonitoringConfig(monitor_dict, timestamp)
@@ -755,11 +756,11 @@ def run_monitoring_job(args):
     except Exception as e:
         logger.error(f"Config/setup failed: {e}")
         return {"ob_type": job_ob_type, "status": "failed", "error": f"setup: {e}"}
-    
+
     logger.info(f"Starting job for {cfg.ob_type}")
 
     try:
-        t_end     = cfg.end_time
+        t_end = cfg.end_time
         win_times = build_expected_times_for_window(
             t_end=t_end,
             interval_hours=cfg.interval_hours,
@@ -979,9 +980,9 @@ def main():
     component_filter = os.getenv("COMPONENT")
     if component_filter:
         requested_components = {c.strip() for c in component_filter.split(",")}
-        original_count       = len(job_list)
+        original_count = len(job_list)
         job_list = [job for job in job_list if job.get("component") in requested_components]
-        skipped  = original_count - len(job_list)
+        skipped = original_count - len(job_list)
         main_logger.info(
             f"Filtered jobs: running {len(job_list)} matching components "
             f"({', '.join(requested_components)}), skipped {skipped}."
@@ -1009,15 +1010,15 @@ def main():
     )
 
     job_args = [(job, timestamp, all_plot_configs) for job in job_list]
-    nprocs   = min(cpu_count(), len(job_args))
+    nprocs = min(cpu_count(), len(job_args))
     main_logger.info(f"Starting multiprocessing with {nprocs} processes")
 
     with Pool(processes=nprocs) as pool:
         results = pool.map(run_monitoring_job, job_args)
 
-    ok      = sum(1 for r in results if r.get("status") == "ok")
+    ok = sum(1 for r in results if r.get("status") == "ok")
     skipped = [r for r in results if r.get("status", "").startswith("skipped")]
-    failed  = [r for r in results if r.get("status") == "failed"]
+    failed = [r for r in results if r.get("status") == "failed"]
 
     main_logger.info(
         f"Job summary: {ok} ok, {len(skipped)} skipped, {len(failed)} failed (non-fatal)."

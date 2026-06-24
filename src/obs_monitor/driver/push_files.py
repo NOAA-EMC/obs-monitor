@@ -5,7 +5,7 @@ This script runs an rsync command to push image directories and files
 to a webserver.
 
 Algorithm:
-    - Get the current cycle window endpoint from PDY (YYYYMMDD) 
+    - Get the current cycle window endpoint from PDY (YYYYMMDD)
       and CYC (HH) or CDATE.
     - Create latestCycle.json file for the current cycle.
     - Run rsync command to push image directories and files to server
@@ -26,7 +26,7 @@ from wxflow import Logger
 
 def create_latest_cycle_json(path: Path, cdate, logger):
     output_file = Path(path) / "latestCycle.json"
-    cycle_data = { "cycleTime": str(cdate) }
+    cycle_data = {"cycleTime": str(cdate)}
 
     try:
         with open(output_file, 'w', encoding='utf-8') as f:
@@ -66,9 +66,9 @@ def main():
     server_path = os.getenv("SERVER_PATH")
     server_user = os.getenv("SERVER_USER")
 
-    #--------------------------------------
+    # -------------------------------------
     # Add latestCycle.json file to comroot
-    #--------------------------------------
+    # -------------------------------------
     create_latest_cycle_json(comroot, cdate, main_logger)
 
     command = [
@@ -86,7 +86,7 @@ def main():
     result = subprocess.run(command, shell=False, capture_output=True, text=True)
 
     main_logger.info(f"Output: {result.stdout}")
-    main_logger.info(f"Return Code: {result.returncode}") # 0 means success
+    main_logger.info(f"Return Code: {result.returncode}")  # 0 means success
 
 
 if __name__ == "__main__":

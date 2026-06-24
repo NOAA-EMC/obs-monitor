@@ -1,3 +1,8 @@
+"""
+dev/workflow/generate_workflow_xml.py
+"""
+
+
 from __future__ import annotations
 
 import argparse
@@ -198,7 +203,7 @@ def main() -> None:
     component_str = cfg["component_str"]
     paths = cfg["paths"]
     machine_id = cfg.get("machine_id")
-    
+
     obsmondir = Path(paths["obsmondir"])
     expdir = Path(paths["expdir"])
     runtime_dir = Path(paths["rundir"])
@@ -276,6 +281,7 @@ def main() -> None:
         os.chmod(setup_output_path, os.stat(setup_output_path).st_mode | stat.S_IXUSR)
 
     print(f"Setup_cron.sh script written to {setup_output_path}")
+
 
 if __name__ == "__main__":
     try:

@@ -74,28 +74,28 @@ def _valid_config(stat: str = "assimilated_mean") -> dict:
     """
     return {
         "variable": "stationPressure",
-        "unit":     "Pa",
+        "unit": "Pa",
         "nc_groups": {
             "coords": "griddedBins",
         },
         "figures": [
             {
-                "type":       "time_series",
+                "type": "time_series",
                 "group_path": "byDomains/ombg/stationPressure",
-                "stat":       stat,
-                "title":      "{ob_type} {stat} — {domain}",
-                "y_label":    "stationPressure (Pa)",
-                "domains":    ["Global", "CONUS"],
+                "stat": stat,
+                "title": "{ob_type} {stat} — {domain}",
+                "y_label": "stationPressure (Pa)",
+                "domains": ["Global", "CONUS"],
             },
             {
-                "type":           "map_gridded",
-                "group_path":     "griddedBins/ombg/stationPressure",
-                "stat":           stat,
-                "title":          "{ob_type} {variable} {stat}",
+                "type": "map_gridded",
+                "group_path": "griddedBins/ombg/stationPressure",
+                "stat": stat,
+                "title": "{ob_type} {variable} {stat}",
                 "colorbar_label": "stationPressure (Pa)",
-                "projection":     "plcarr",
-                "domain":         "global",
-                "cmap":           "coolwarm",
+                "projection": "plcarr",
+                "domain": "global",
+                "cmap": "coolwarm",
             },
         ],
     }
@@ -160,16 +160,16 @@ class TestValidateConfig:
         """
         old_cfg = {
             "variable": "stationPressure",
-            "unit":     "Pa",
+            "unit": "Pa",
             "nc_groups": {
                 "time_series": "byDomains/ombg/stationPressure",
-                "gridded":     "griddedBins/ombg/stationPressure",
-                "coords":      "griddedBins",
+                "gridded": "griddedBins/ombg/stationPressure",
+                "coords": "griddedBins",
             },
             "figures": [
                 {
-                    "type":    "time_series",
-                    "stat":    "assimilated_mean",
+                    "type": "time_series",
+                    "stat": "assimilated_mean",
                     "domains": ["Global"],
                     # group_path intentionally absent — old schema
                 },
@@ -213,7 +213,7 @@ class TestDatasetCache:
     def test_cache_hit_returns_same_object(self, multi_nc_files, stat_group):
         cache = _DatasetCache()
         group_path = f"byDomains/{stat_group}"
-        variables  = ["assimilated_mean"]
+        variables = ["assimilated_mean"]
 
         ds1 = cache.get_or_read(multi_nc_files, group_path, variables)
         ds2 = cache.get_or_read(multi_nc_files, group_path, variables)
@@ -221,15 +221,15 @@ class TestDatasetCache:
 
     def test_different_groups_produce_different_entries(self, multi_nc_files, stat_group):
         cache = _DatasetCache()
-        ds_ts  = cache.get_or_read(multi_nc_files, f"byDomains/{stat_group}",   ["assimilated_mean"])
+        ds_ts = cache.get_or_read(multi_nc_files, f"byDomains/{stat_group}", ["assimilated_mean"])
         ds_grd = cache.get_or_read(multi_nc_files, f"griddedBins/{stat_group}", ["assimilated_mean"])
         assert ds_ts is not ds_grd
 
     def test_cache_read_only_once(self, multi_nc_files, stat_group):
         """read_group should be called only on the first request, not the second."""
-        cache      = _DatasetCache()
+        cache = _DatasetCache()
         group_path = f"byDomains/{stat_group}"
-        variables  = ["assimilated_mean"]
+        variables = ["assimilated_mean"]
 
         with patch("obs_monitor.plotting.dispatcher.read_group",
                    wraps=__import__(
@@ -259,8 +259,8 @@ def _patch_figures():
         def fake_savefig(path, **kwargs):
             Path(path).touch()
 
-        mock_mpl_fig.fig         = MagicMock()
-        mock_mpl_fig.fig.axes    = [MagicMock()]
+        mock_mpl_fig.fig = MagicMock()
+        mock_mpl_fig.fig.axes = [MagicMock()]
         mock_mpl_fig.fig.savefig = fake_savefig
 
         mock_cf = MagicMock(return_value=mock_mpl_fig)
@@ -269,9 +269,9 @@ def _patch_figures():
         mock_mg = MagicMock()
 
         with patch("obs_monitor.plotting.figures.CreateFigure", mock_cf), \
-             patch("obs_monitor.plotting.figures.CreatePlot",   mock_cp), \
-             patch("obs_monitor.plotting.figures.LinePlot",     mock_lp), \
-             patch("obs_monitor.plotting.figures.MapGridded",   mock_mg), \
+             patch("obs_monitor.plotting.figures.CreatePlot", mock_cp), \
+             patch("obs_monitor.plotting.figures.LinePlot", mock_lp), \
+             patch("obs_monitor.plotting.figures.MapGridded", mock_mg), \
              patch("obs_monitor.plotting.figures.plt.close"):
             yield
 
@@ -341,7 +341,7 @@ class TestDispatchPlots:
 
     def test_output_dir_created(self, multi_nc_files, tmp_path, ob_type):
         runtime_dir = multi_nc_files[0].parent
-        out_dir     = tmp_path / "new_plots_dir"
+        out_dir = tmp_path / "new_plots_dir"
         with _patch_figures():
             dispatch_plots(ob_type, runtime_dir, out_dir, _valid_config())
         assert out_dir.exists()
