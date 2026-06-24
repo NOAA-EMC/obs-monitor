@@ -303,9 +303,9 @@ def write_generic_stub(
 
         def make_side(parent_grp, side_name: str):
             g = parent_grp.createGroup(side_name).createGroup(product_group)
-            mean = g.createVariable("mean",  "f4", ("analysisCycle", "Domain"), zlib=True, complevel=1, fill_value=FILL)
+            mean = g.createVariable("mean", "f4", ("analysisCycle", "Domain"), zlib=True, complevel=1, fill_value=FILL)
             count = g.createVariable("count", "i4", ("analysisCycle", "Domain"), zlib=True, complevel=1)
-            rms = g.createVariable("RMS",   "f4", ("analysisCycle", "Domain"), zlib=True, complevel=1, fill_value=FILL)
+            rms = g.createVariable("RMS", "f4", ("analysisCycle", "Domain"), zlib=True, complevel=1, fill_value=FILL)
             # Use NaN so line plots show gaps at missing cycles
             mean[:] = np.nan
             count[:] = 0
@@ -325,9 +325,9 @@ def write_generic_stub(
             def make_grid_side(parent_grp, side_name: str):
                 g = parent_grp.createGroup(side_name).createGroup(product_group)
                 dims = ("analysisCycle", "binsZDim", "binsYDim", "binsXDim")
-                mean = g.createVariable("mean",  "f4", dims, zlib=True, complevel=1, fill_value=FILL)
+                mean = g.createVariable("mean", "f4", dims, zlib=True, complevel=1, fill_value=FILL)
                 count = g.createVariable("count", "i4", dims, zlib=True, complevel=1)
-                rms = g.createVariable("RMS",   "f4", dims, zlib=True, complevel=1, fill_value=FILL)
+                rms = g.createVariable("RMS", "f4", dims, zlib=True, complevel=1, fill_value=FILL)
                 mean[:] = np.nan
                 count[:] = 0
                 rms[:] = np.nan

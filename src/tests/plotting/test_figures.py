@@ -63,7 +63,7 @@ def _domain_ds(n_cycles: int = 4, domains: list[str] = DOMAINS) -> xr.Dataset:
 
 def _gridded_ds() -> xr.Dataset:
     """Minimal gridded Dataset as returned by prepare_gridded."""
-    lat_1d = np.linspace(-88.75, 88.75,  BINS_Y)
+    lat_1d = np.linspace(-88.75, 88.75, BINS_Y)
     lon_1d = np.linspace(-178.75, 178.75, BINS_X)
     lon2d, lat2d = np.meshgrid(lon_1d, lat_1d)
     data = np.random.default_rng(1).uniform(-200, 200, (BINS_Y, BINS_X))
@@ -316,8 +316,8 @@ class TestMapGriddedFigureSave:
             mock_map_gridded = MagicMock()
 
             with patch("obs_monitor.plotting.figures.CreateFigure", mock_create_figure), \
-                 patch("obs_monitor.plotting.figures.CreatePlot",   mock_create_plot), \
-                 patch("obs_monitor.plotting.figures.MapGridded",   mock_map_gridded), \
+                 patch("obs_monitor.plotting.figures.CreatePlot", mock_create_plot), \
+                 patch("obs_monitor.plotting.figures.MapGridded", mock_map_gridded), \
                  patch("obs_monitor.plotting.figures.plt.close"):
                 yield mock_fig
 

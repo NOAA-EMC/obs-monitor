@@ -60,13 +60,13 @@ logger = logging.getLogger(__name__)
 # Chosen to be distinguishable on both screen and printed plots and to work
 # for the most common forms of colour-vision deficiency.
 _DOMAIN_COLORS: dict[str, str] = {
-    "Global":  "#000000",  # black   — always draw first / most prominent
-    "NH":      "#0072B2",  # blue
-    "SH":      "#E69F00",  # orange
-    "CONUS":   "#009E73",  # teal
-    "Europe":  "#CC79A7",  # mauve
-    "Asia":    "#D55E00",  # vermilion
-    "Africa":  "#56B4E9",  # sky blue
+    "Global": "#000000",  # black   — always draw first / most prominent
+    "NH": "#0072B2",  # blue
+    "SH": "#E69F00",  # orange
+    "CONUS": "#009E73",  # teal
+    "Europe": "#CC79A7",  # mauve
+    "Asia": "#D55E00",  # vermilion
+    "Africa": "#56B4E9",  # sky blue
 }
 _FALLBACK_COLORS = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 

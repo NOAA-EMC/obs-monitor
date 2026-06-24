@@ -145,7 +145,7 @@ def nc_missing_variable(tmp_path, ob_type, cycle_times):
 
         # griddedBins present with lat/lon (coords check passes)
         grp_grid = ds.createGroup("griddedBins")
-        lat_1d = np.linspace(-88.75,  88.75, BINS_Y, dtype=np.float32)
+        lat_1d = np.linspace(-88.75, 88.75, BINS_Y, dtype=np.float32)
         lon_1d = np.linspace(-178.75, 178.75, BINS_X, dtype=np.float32)
         lon2d, lat2d = np.meshgrid(lon_1d, lat_1d)
         grp_grid.createVariable("latitude", "f4", ("binsYDim", "binsXDim"))[:] = lat2d
