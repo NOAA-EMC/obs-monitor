@@ -114,8 +114,8 @@ class MonitoringConfig:
         # NOTE: runtime_dir path is computed here but the directory is NOT
         # created. Call setup_runtime_dir() after construction.
         self.runtime_dir = (
-            self.runtime_root
-            /f"runtime_{self.ob_type}_{timestamp}_{uuid.uuid4().hex[:8]}"
+            self.runtime_root /
+            f"runtime_{self.ob_type}_{timestamp}_{uuid.uuid4().hex[:8]}"
         )
 
         self.experiment_dir = Path(os.getenv("EXPDIR"))
@@ -329,9 +329,9 @@ def find_matching_inputs_for_times(
         pdy_str = dt.strftime("%Y%m%d")
         cyc_str = dt.strftime("%H")
         run_dir = (
-            cfg.dataroot
-            /f"{cfg.run}.{pdy_str}"
-            /f"{cyc_str}/products/{cfg.component}/anlmon"
+            cfg.dataroot /
+            f"{cfg.run}.{pdy_str}" /
+            f"{cyc_str}/products/{cfg.component}/anlmon"
         )
 
         if not run_dir.exists():
