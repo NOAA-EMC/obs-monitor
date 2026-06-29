@@ -46,12 +46,12 @@ import pytest
 # Constants mirroring the real file schema
 # ---------------------------------------------------------------------------
 
-DOMAINS      = ["SH", "NH", "CONUS", "Europe", "Africa", "Asia", "Global"]
-N_DOMAINS    = len(DOMAINS)          # 7
-BINS_Z       = 1
-BINS_Y       = 72
-BINS_X       = 144
-SENTINEL     = -3.36879526214505e+38  # the fill value used in real files
+DOMAINS = ["SH", "NH", "CONUS", "Europe", "Africa", "Asia", "Global"]
+N_DOMAINS = len(DOMAINS)          # 7
+BINS_Z = 1
+BINS_Y = 72
+BINS_X = 144
+SENTINEL = -3.36879526214505e+38  # the fill value used in real files
 
 # Stat variables present in each byDomains group — mirrors real file
 DOMAIN_VARS = [
@@ -120,10 +120,10 @@ def _write_nc_file(
 
         # ---- Root dimensions ----
         ds.createDimension("analysisCycle", 1)
-        ds.createDimension("Domain",        N_DOMAINS)
-        ds.createDimension("binsZDim",      BINS_Z)
-        ds.createDimension("binsYDim",      BINS_Y)
-        ds.createDimension("binsXDim",      BINS_X)
+        ds.createDimension("Domain", N_DOMAINS)
+        ds.createDimension("binsZDim", BINS_Z)
+        ds.createDimension("binsYDim", BINS_Y)
+        ds.createDimension("binsXDim", BINS_X)
 
         # ---- Root string variables ----
         vt = ds.createVariable("validTime", str, ("analysisCycle",))
@@ -138,7 +138,7 @@ def _write_nc_file(
 
         # ---- byDomains group hierarchy ----
         grp_by = ds.createGroup("byDomains")
-        parts  = stat_group.split("/")
+        parts = stat_group.split("/")
 
         # Navigate / create nested groups
         current = grp_by
@@ -168,11 +168,11 @@ def _write_nc_file(
         grp_grid = ds.createGroup("griddedBins")
 
         # 2-D lat/lon meshgrid matching real file
-        lat_1d = np.linspace(-88.75, 88.75,  BINS_Y, dtype=np.float32)
+        lat_1d = np.linspace(-88.75, 88.75, BINS_Y, dtype=np.float32)
         lon_1d = np.linspace(-178.75, 178.75, BINS_X, dtype=np.float32)
         lon2d, lat2d = np.meshgrid(lon_1d, lat_1d)  # both (72, 144)
 
-        vl = grp_grid.createVariable("latitude",  "f4", ("binsYDim", "binsXDim"))
+        vl = grp_grid.createVariable("latitude", "f4", ("binsYDim", "binsXDim"))
         vl[:] = lat2d
         vo = grp_grid.createVariable("longitude", "f4", ("binsYDim", "binsXDim"))
         vo[:] = lon2d
@@ -195,8 +195,7 @@ def _write_nc_file(
                     )
                 else:
                     rng = np.random.default_rng(seed=abs(hash(vname + "_grid")) % (2**31))
-                    default = rng.uniform(-500, 500,
-                                         (1, BINS_Z, BINS_Y, BINS_X)).astype(np.float32)
+                    default = rng.uniform(-500, 500, (1, BINS_Z, BINS_Y, BINS_X)).astype(np.float32)
 
             v = gridded_leaf.createVariable(
                 vname, dtype,
@@ -237,8 +236,8 @@ def stat_group() -> str:
 def cycle_times() -> list[datetime]:
     """Four consecutive 6-hourly UTC cycle datetimes for a multi-cycle window."""
     return [
-        datetime(2025, 11, 13,  0, tzinfo=timezone.utc),
-        datetime(2025, 11, 13,  6, tzinfo=timezone.utc),
+        datetime(2025, 11, 13, 0, tzinfo=timezone.utc),
+        datetime(2025, 11, 13, 6, tzinfo=timezone.utc),
         datetime(2025, 11, 13, 12, tzinfo=timezone.utc),
         datetime(2025, 11, 13, 18, tzinfo=timezone.utc),
     ]
@@ -247,7 +246,7 @@ def cycle_times() -> list[datetime]:
 @pytest.fixture
 def write_nc_file():
     """
-    Factory fixture.  Returns the ``_write_nc_file`` function so individual
+    Factory fixture. Returns the ``_write_nc_file`` function so individual
     tests can write files with custom parameters while still benefiting from
     pytest's ``tmp_path`` cleanup.
 

@@ -97,7 +97,7 @@ def _make_gridded_ds(n_cycles: int = 4) -> xr.Dataset:
 
 
 def _make_lat_lon() -> tuple[np.ndarray, np.ndarray]:
-    lat_1d = np.linspace(-88.75, 88.75,  BINS_Y)
+    lat_1d = np.linspace(-88.75, 88.75, BINS_Y)
     lon_1d = np.linspace(-178.75, 178.75, BINS_X)
     lon2d, lat2d = np.meshgrid(lon_1d, lat_1d)
     return lat2d.astype(float), lon2d.astype(float)
@@ -250,7 +250,7 @@ class TestAttachCoords:
         ds = squeeze_gridded(cycle_mean(_make_gridded_ds()), zdim="dim_0")
         lat, lon = _make_lat_lon()
         result = attach_coords(ds, lat, lon, lat_dim="dim_1", lon_dim="dim_2")
-        assert result.coords["latitude"].shape  == (BINS_Y, BINS_X)
+        assert result.coords["latitude"].shape == (BINS_Y, BINS_X)
         assert result.coords["longitude"].shape == (BINS_Y, BINS_X)
 
     def test_existing_coords_preserved(self):
@@ -277,7 +277,7 @@ class TestPrepareGridded:
         ds = _make_gridded_ds(n_cycles=4)
         lat, lon = _make_lat_lon()
         result = prepare_gridded(ds, lat, lon)
-        assert "latitude"  in result.coords
+        assert "latitude" in result.coords
         assert "longitude" in result.coords
 
     def test_n_cycles_present(self):
@@ -384,5 +384,5 @@ class TestReaderTransformsIntegration:
         lat, lon = read_coords(multi_nc_files, coords_group_path="griddedBins")
         result = prepare_gridded(ds, lat, lon, variables=["assimilated_mean"])
         assert result["assimilated_mean"].shape == (BINS_Y, BINS_X)
-        assert "latitude"  in result.coords
+        assert "latitude" in result.coords
         assert "longitude" in result.coords

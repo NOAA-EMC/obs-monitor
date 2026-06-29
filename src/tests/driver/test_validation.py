@@ -145,10 +145,10 @@ def nc_missing_variable(tmp_path, ob_type, cycle_times):
 
         # griddedBins present with lat/lon (coords check passes)
         grp_grid = ds.createGroup("griddedBins")
-        lat_1d = np.linspace(-88.75,  88.75,  BINS_Y, dtype=np.float32)
+        lat_1d = np.linspace(-88.75, 88.75, BINS_Y, dtype=np.float32)
         lon_1d = np.linspace(-178.75, 178.75, BINS_X, dtype=np.float32)
         lon2d, lat2d = np.meshgrid(lon_1d, lat_1d)
-        grp_grid.createVariable("latitude",  "f4", ("binsYDim", "binsXDim"))[:] = lat2d
+        grp_grid.createVariable("latitude", "f4", ("binsYDim", "binsXDim"))[:] = lat2d
         grp_grid.createVariable("longitude", "f4", ("binsYDim", "binsXDim"))[:] = lon2d
 
         # byDomains/ombg/stationPressure present but wrong variable name inside
@@ -215,7 +215,7 @@ class TestValidateNcFile:
 
             # griddedBins present at root (coords check passes) but no sub-groups
             grp_grid = ds.createGroup("griddedBins")
-            grp_grid.createVariable("latitude",  "f4", ())
+            grp_grid.createVariable("latitude", "f4", ())
             grp_grid.createVariable("longitude", "f4", ())
 
             # byDomains/ombg/stationPressure present with assimilated_mean
@@ -296,7 +296,7 @@ class TestValidateAndQuarantineNcFiles:
         valid_files, valid_times = self._quarantine([nc_missing_variable, valid_nc])
         assert valid_nc in valid_files
         assert nc_missing_variable not in valid_files
-    
+
     def test_all_quarantined_returns_empty(
         self, corrupt_nc, nc_missing_figure_group
     ):
@@ -325,8 +325,8 @@ class TestValidateAndQuarantineNcFiles:
             logger=logger,
         )
         all_errors = " ".join(str(c) for c in logger.error.call_args_list)
-        assert "CORRUPT FILE"     in all_errors
-        assert "MISSING GROUP"    in all_errors
+        assert "CORRUPT FILE" in all_errors
+        assert "MISSING GROUP" in all_errors
         assert "MISSING VARIABLE" in all_errors
 
     def test_files_and_times_stay_in_sync_after_quarantine(

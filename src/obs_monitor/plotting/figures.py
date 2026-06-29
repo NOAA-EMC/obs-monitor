@@ -60,13 +60,13 @@ logger = logging.getLogger(__name__)
 # Chosen to be distinguishable on both screen and printed plots and to work
 # for the most common forms of colour-vision deficiency.
 _DOMAIN_COLORS: dict[str, str] = {
-    "Global":  "#000000",  # black   — always draw first / most prominent
-    "NH":      "#0072B2",  # blue
-    "SH":      "#E69F00",  # orange
-    "CONUS":   "#009E73",  # teal
-    "Europe":  "#CC79A7",  # mauve
-    "Asia":    "#D55E00",  # vermilion
-    "Africa":  "#56B4E9",  # sky blue
+    "Global": "#000000",  # black   — always draw first / most prominent
+    "NH": "#0072B2",  # blue
+    "SH": "#E69F00",  # orange
+    "CONUS": "#009E73",  # teal
+    "Europe": "#CC79A7",  # mauve
+    "Asia": "#D55E00",  # vermilion
+    "Africa": "#56B4E9",  # sky blue
 }
 _FALLBACK_COLORS = plt.rcParams["axes.prop_cycle"].by_key()["color"]
 
@@ -397,11 +397,11 @@ class MapGriddedFigure(FigureBase):
         data = self.ds[self.stat].values.astype(float)  # (72, 144)
 
         projection = self.spec.get("projection", "plcarr")
-        domain     = self.spec.get("domain", "global")
-        cmap       = self.spec.get("cmap") or "coolwarm"
-        cb_label   = self.spec.get("colorbar_label", f"{self.variable} ({self.stat})")
-        vmin       = self.spec.get("vmin")   # None → EMCPy uses full data range
-        vmax       = self.spec.get("vmax")
+        domain = self.spec.get("domain", "global")
+        cmap = self.spec.get("cmap") or "coolwarm"
+        cb_label = self.spec.get("colorbar_label", f"{self.variable} ({self.stat})")
+        vmin = self.spec.get("vmin")   # None → EMCPy uses full data range
+        vmax = self.spec.get("vmax")
         title_template = self.spec.get(
             "title", "{ob_type} {variable} {stat} — Cycle Mean"
         )

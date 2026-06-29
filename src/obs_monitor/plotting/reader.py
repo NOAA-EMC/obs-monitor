@@ -711,15 +711,15 @@ def validate_nc_file(
         seen: set[tuple[str, str]] = set()
         for spec in figure_specs:
             group_path = spec["group_path"]
-            stat       = spec["stat"]
-            key        = (group_path, stat)
+            stat = spec["stat"]
+            key = (group_path, stat)
             if key in seen:
                 continue
             seen.add(key)
- 
+
             group = _navigate_to_group(root, group_path)
             if group is None:
                 raise MissingGroupError(group_path, fname)
- 
+
             if stat not in group.variables:
                 raise MissingVariableError(stat, group_path, fname)

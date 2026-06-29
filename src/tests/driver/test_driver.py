@@ -72,30 +72,30 @@ from obs_monitor.driver import (
 # ---------------------------------------------------------------------------
 
 BASE_ENV = {
-    "PDY":            "20240101",
-    "CYC":            "06",
+    "PDY": "20240101",
+    "CYC": "06",
     "INTERVAL_HOURS": "6",
-    "CYCLES":         "4",
-    "EXPDIR":         "/tmp/expdir",
-    "DATAROOT":       "/tmp/dataroot",
-    "COMROOT":        "/tmp/comroot",
-    "RUN":            "gdas",
-    "COPY_DATA":      "False",
-    "KEEP_DATA":      "False",
-    "CREATE_STUBS":   "False",
+    "CYCLES": "4",
+    "EXPDIR": "/tmp/expdir",
+    "DATAROOT": "/tmp/dataroot",
+    "COMROOT": "/tmp/comroot",
+    "RUN": "gdas",
+    "COPY_DATA": "False",
+    "KEEP_DATA": "False",
+    "CREATE_STUBS": "False",
 }
 
 CONVENTIONAL_JOB = {
     "monitor_type": "conventional",
-    "variable":     "stationPressure",
-    "component":    "atmos",
+    "variable": "stationPressure",
+    "component": "atmos",
 }
 
 RADIANCE_JOB = {
     "monitor_type": "radiance",
-    "satellite":    "aqua",
-    "sensor":       "airs",
-    "component":    "atmos",
+    "satellite": "aqua",
+    "sensor": "airs",
+    "component": "atmos",
 }
 
 
@@ -400,13 +400,14 @@ def _run_job(
          patch("obs_monitor.driver.driver.extract_tarballs_and_find_nc_for_times",
                side_effect=fake_extract), \
          patch("obs_monitor.driver.driver.validate_and_quarantine_nc_files",
-              side_effect=lambda nc_files, **kw: (nc_files, [])), \
+               side_effect=lambda nc_files, **kw: (nc_files, [])), \
          patch("obs_monitor.driver.driver.dispatch_plots", dispatch_mock), \
          patch("obs_monitor.driver.driver.copy_plots_to_com"), \
          patch("obs_monitor.driver.driver.copy_plots_to_public"), \
          patch("obs_monitor.driver.driver.write_coverage_report",
                return_value="4/4 (100%)"):
         return run_monitoring_job(args)
+
 
 class TestRunMonitoringJob:
 

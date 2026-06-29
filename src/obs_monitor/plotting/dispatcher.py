@@ -354,7 +354,7 @@ def dispatch_plots(
         summary["errors"].append("Invalid plot config — see logs for details.")
         return summary
 
-    variable  = plot_config["variable"]
+    variable = plot_config["variable"]
     nc_groups = plot_config["nc_groups"]
     fig_specs = plot_config["figures"]
 
@@ -393,8 +393,8 @@ def dispatch_plots(
     output_dir = Path(output_dir)
 
     for spec_idx, spec in enumerate(fig_specs):
-        fig_type   = spec["type"]
-        stat       = spec["stat"]
+        fig_type = spec["type"]
+        stat = spec["stat"]
         group_path = spec["group_path"]
 
         logger.info(
@@ -481,7 +481,7 @@ def dispatch_plots(
     # 7. Final status
     # ------------------------------------------------------------------
     n_req = summary["figures_requested"]
-    n_ok  = summary["figures_written"]
+    n_ok = summary["figures_written"]
 
     if n_ok == 0 and n_req > 0:
         summary["status"] = "failed"
