@@ -188,14 +188,14 @@ def create_stub_for_missing_cycle(
     """
     Create a stub .nc for a missing cycle into `output_dir`
     (defaults to cfg.runtime_dir).
- 
+
     Strategy:
     1. If a reference_path is available, clone its schema (preserves the
        exact group hierarchy and dimension sizes of a real file).
     2. Otherwise fall back to write_generic_stub, which derives the schema
        from the plot_config.  plot_config must be provided for the fallback
        to succeed.
- 
+
     Parameters
     ----------
     cfg:
@@ -216,8 +216,8 @@ def create_stub_for_missing_cycle(
     out_dir = output_dir or cfg.runtime_dir
     out_dir.mkdir(parents=True, exist_ok=True)
     fname = expected_stub_filename(cfg, dt, reference_path)
-    out   = out_dir / fname
- 
+    out = out_dir / fname
+
     # --- Strategy 1: clone from a real reference file ---
     if reference_path:
         try:
@@ -231,7 +231,7 @@ def create_stub_for_missing_cycle(
             logger.warning(
                 f"[{cfg.ob_type}] Clone failed; falling back to generic stub: {e}"
             )
- 
+
     # --- Strategy 2: derive schema from plot config ---
     if not plot_config:
         logger.error(
@@ -240,7 +240,7 @@ def create_stub_for_missing_cycle(
             f"no reference file available."
         )
         return False
- 
+
     try:
         write_generic_stub(
             out_path=out,

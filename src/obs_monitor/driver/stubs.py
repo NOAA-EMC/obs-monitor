@@ -112,7 +112,7 @@ def _collect_group_specs(figure_specs: list[dict]) -> dict[str, set[str]]:
     """
     groups: dict[str, set[str]] = {}
     for spec in figure_specs:
-        gp   = spec.get("group_path", "")
+        gp = spec.get("group_path", "")
         stat = spec.get("stat", "")
         if not gp or not stat:
             continue
@@ -246,8 +246,8 @@ def clone_schema_stub(ref_path: str | Path, out_path: str | Path, dt: datetime) 
     def specialize_valid_time(dst_grp, cycle_dt: datetime, offset_hours: int):
         for name, v in dst_grp.variables.items():
             if (
-                name.lower() == "validtime"
-                and v.ndim == 1
+                name.lower() == "validtime" \
+                and v.ndim == 1 \
                 and v.dimensions[0].lower() == "analysiscycle"
             ):
                 target = _utc(cycle_dt) + timedelta(hours=offset_hours)
@@ -263,8 +263,8 @@ def clone_schema_stub(ref_path: str | Path, out_path: str | Path, dt: datetime) 
             walk(src_sub, dst_grp.createGroup(gname), root_dim_sizes, unlimited_names, offset_hours)
 
     with Dataset(ref_path, "r") as src, Dataset(out_path, "w", format="NETCDF4") as dst:
-        ref_vstr      = read_ref_validtime_str(src)
-        offset_hours  = _valid_offset_hours_from_reference(ref_vstr, ref_path.name)
+        ref_vstr = read_ref_validtime_str(src)
+        offset_hours = _valid_offset_hours_from_reference(ref_vstr, ref_path.name)
         root_sizes, unlimited = copy_root_dims(src, dst)
         copy_attrs(src, dst)
         walk(src, dst, root_sizes, unlimited, offset_hours)
@@ -344,9 +344,9 @@ def write_generic_stub(
             "cannot size Domain dimension for stub."
         )
 
-    nc_groups    = plot_config.get("nc_groups", {})
+    nc_groups = plot_config.get("nc_groups", {})
     coords_group = nc_groups.get("coords", "")
-    bins         = nc_groups.get("bins")          # [binsZDim, binsYDim, binsXDim] or None
+    bins = nc_groups.get("bins")          # [binsZDim, binsYDim, binsXDim] or None
 
     # --- Derive the group/variable schema from figure specs ---
     # Maps group_path -> set of stat variable names that must exist there.
@@ -396,7 +396,7 @@ def write_generic_stub(
                     "latitude", "f4", ("binsYDim", "binsXDim"),
                     zlib=True, complevel=1,
                 )
-                lat.units     = "degrees_north"
+                lat.units = "degrees_north"
                 lat.long_name = "latitude of bin centers"
                 lat[:] = np.full((by_size, bx_size), np.nan, dtype=np.float32)
 
@@ -404,7 +404,7 @@ def write_generic_stub(
                     "longitude", "f4", ("binsYDim", "binsXDim"),
                     zlib=True, complevel=1,
                 )
-                lon.units     = "degrees_east"
+                lon.units = "degrees_east"
                 lon.long_name = "longitude of bin centers"
                 lon[:] = np.full((by_size, bx_size), np.nan, dtype=np.float32)
 
@@ -413,21 +413,21 @@ def write_generic_stub(
             # Determine which root-level group this path falls under so we
             # know which dimensions to use.
             top_level = group_path.strip("/").split("/")[0]
-            use_bins  = bins and top_level == coords_group
+            use_bins = bins and top_level == coords_group
 
             grp = _ensure_group_path(nc, group_path)
 
             for stat in stat_vars:
                 if use_bins:
                     dims = ("analysisCycle", "binsZDim", "binsYDim", "binsXDim")
-                    var  = grp.createVariable(
+                    var = grp.createVariable(
                         stat, "f4", dims,
                         zlib=True, complevel=1, fill_value=FILL_F,
                     )
                     var[:] = np.nan
                 else:
                     dims = ("analysisCycle", "Domain")
-                    var  = grp.createVariable(
+                    var = grp.createVariable(
                         stat, "f4", dims,
                         zlib=True, complevel=1, fill_value=FILL_F,
                     )

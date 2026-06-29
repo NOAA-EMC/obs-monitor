@@ -595,18 +595,20 @@ def read_dim_labels(
 # route each failure mode to an appropriate log message. All three are
 # subclasses of ValueError so callers that don't need the distinction can
 # catch the base class.
- 
+
+
 class CorruptFileError(ValueError):
     """
     Raised when a NetCDF file exists on disk but cannot be opened by
     netCDF4 (e.g. truncated, not a valid NetCDF file, I/O error).
     """
- 
+
+
 class MissingGroupError(ValueError):
     """
     Raised when a NetCDF file opens successfully but a required group path
     is absent from its hierarchy.
- 
+
     Attributes
     ----------
     group_path : str
@@ -617,12 +619,13 @@ class MissingGroupError(ValueError):
         super().__init__(
             f"Group '{group_path}' not found in '{filename}'."
         )
- 
+
+
 class MissingVariableError(ValueError):
     """
     Raised when a required group exists but a specific variable is absent
     from it.
- 
+
     Attributes
     ----------
     group_path : str
@@ -637,12 +640,12 @@ class MissingVariableError(ValueError):
             f"Variable '{variable}' not found in group '{group_path}' "
             f"of '{filename}'."
         )
- 
- 
+
+
 # ---------------------------------------------------------------------------
 # Pre-flight validation
 # ---------------------------------------------------------------------------
- 
+
 def validate_nc_file(
     path: "Path",
     coords_group: str,
@@ -651,17 +654,17 @@ def validate_nc_file(
     """
     Validate that a staged NetCDF file satisfies all structural requirements
     for the given figure specs before it is handed to the plotting pipeline.
- 
+
     Checks performed (in order):
     1. File opens without error                              → CorruptFileError
     2. The coords group (e.g. ``griddedBins``) exists        → MissingGroupError
     3. Each unique ``group_path`` in figure_specs exists     → MissingGroupError
     4. Each ``stat`` variable exists within its group_path   → MissingVariableError
- 
+
     Steps 3 and 4 deduplicate across figure specs so each unique
     ``(group_path, stat)`` pair is checked exactly once, regardless of how
     many specs share it.
- 
+
     Parameters
     ----------
     path:
@@ -673,7 +676,7 @@ def validate_nc_file(
         List of figure spec dicts from the plot config.  Each must have
         ``group_path`` and ``stat`` keys (already validated by the
         dispatcher's ``_validate_config`` before this is called).
- 
+
     Raises
     ------
     CorruptFileError
@@ -682,7 +685,7 @@ def validate_nc_file(
         If any required group is absent from the file hierarchy.
     MissingVariableError
         If any required stat variable is absent from its group.
- 
+
     Notes
     -----
     This function intentionally performs *only* structural checks — it does
@@ -693,7 +696,7 @@ def validate_nc_file(
     """
     path = Path(path)
     fname = path.name
- 
+
     # 1. File must be openable
     try:
         root = nc4.Dataset(path, "r")
@@ -701,12 +704,12 @@ def validate_nc_file(
         raise CorruptFileError(
             f"'{fname}' could not be opened by netCDF4: {exc}"
         ) from exc
- 
+
     with root:
         # 2. Coords group must exist
         if _navigate_to_group(root, coords_group) is None:
             raise MissingGroupError(coords_group, fname)
- 
+
         # 3 & 4. Check each unique (group_path, stat) pair once
         seen: set[tuple[str, str]] = set()
         for spec in figure_specs:
