@@ -246,9 +246,9 @@ def clone_schema_stub(ref_path: str | Path, out_path: str | Path, dt: datetime) 
     def specialize_valid_time(dst_grp, cycle_dt: datetime, offset_hours: int):
         for name, v in dst_grp.variables.items():
             if (
-                name.lower() == "validtime"
-                and v.ndim == 1
-                and v.dimensions[0].lower() == "analysiscycle"
+                name.lower() == "validtime" and
+                v.ndim == 1 and
+                v.dimensions[0].lower() == "analysiscycle"
             ):
                 target = _utc(cycle_dt) + timedelta(hours=offset_hours)
                 v[0] = _format_valid_iso(target)
