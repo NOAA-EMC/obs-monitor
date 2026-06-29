@@ -316,7 +316,7 @@ def write_generic_stub(
     Returns
     -------
     str
-        Absolute path of the written stub file.
+        Path of the written stub file.
 
     Raises
     ------
