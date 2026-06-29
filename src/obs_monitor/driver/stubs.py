@@ -36,8 +36,10 @@ DEFAULT_VALIDTIME_OFFSET_HOURS = 3
 def _utc(dt: datetime) -> datetime:
     return dt.astimezone(timezone.utc)
 
+
 def _format_valid_iso(dt: datetime) -> str:
     return _utc(dt).strftime(VALIDTIME_STRFTIME)
+
 
 def _extract_cycle_from_filename(name: str) -> Optional[datetime]:
     """
@@ -58,6 +60,7 @@ def _extract_cycle_from_filename(name: str) -> Optional[datetime]:
     except Exception:
         return None
     return None
+
 
 def _parse_valid_string(s: str) -> Optional[datetime]:
     """Parse several common validTime string styles -> UTC datetime."""
@@ -81,6 +84,7 @@ def _parse_valid_string(s: str) -> Optional[datetime]:
     except Exception:
         return None
     return None
+
 
 def _valid_offset_hours_from_reference(ref_valid: Optional[str], ref_fname: str) -> int:
     """
@@ -187,7 +191,8 @@ def clone_schema_stub(ref_path: str | Path, out_path: str | Path, dt: datetime) 
             var[:] = 0
         else:
             # Strings
-            arr = np.empty(shape, dtype=object); arr.fill("NA")
+            arr = np.empty(shape, dtype=object)
+            arr.fill("NA")
             var[:] = arr
 
     def read_ref_validtime_str(grp) -> Optional[str]:
@@ -291,15 +296,16 @@ def write_generic_stub(
         nc.createDimension("Domain", domain_size)
 
         # Root vars
-        vt = nc.createVariable("validTime", str, ("analysisCycle",)); vt[0] = vtime_str
+        vt = nc.createVariable("validTime", str, ("analysisCycle",))
+        vt[0] = vtime_str
         sd = nc.createVariable("statisticDomain", str, ("Domain",))
         sd[:] = np.array([f"D{i:02d}" for i in range(1, domain_size + 1)], dtype=object)
 
         def make_side(parent_grp, side_name: str):
             g = parent_grp.createGroup(side_name).createGroup(product_group)
-            mean  = g.createVariable("mean",  "f4", ("analysisCycle", "Domain"), zlib=True, complevel=1, fill_value=FILL)
+            mean = g.createVariable("mean", "f4", ("analysisCycle", "Domain"), zlib=True, complevel=1, fill_value=FILL)
             count = g.createVariable("count", "i4", ("analysisCycle", "Domain"), zlib=True, complevel=1)
-            rms   = g.createVariable("RMS",   "f4", ("analysisCycle", "Domain"), zlib=True, complevel=1, fill_value=FILL)
+            rms = g.createVariable("RMS", "f4", ("analysisCycle", "Domain"), zlib=True, complevel=1, fill_value=FILL)
             # Use NaN so line plots show gaps at missing cycles
             mean[:] = np.nan
             count[:] = 0
@@ -319,9 +325,9 @@ def write_generic_stub(
             def make_grid_side(parent_grp, side_name: str):
                 g = parent_grp.createGroup(side_name).createGroup(product_group)
                 dims = ("analysisCycle", "binsZDim", "binsYDim", "binsXDim")
-                mean  = g.createVariable("mean",  "f4", dims, zlib=True, complevel=1, fill_value=FILL)
+                mean = g.createVariable("mean", "f4", dims, zlib=True, complevel=1, fill_value=FILL)
                 count = g.createVariable("count", "i4", dims, zlib=True, complevel=1)
-                rms   = g.createVariable("RMS",   "f4", dims, zlib=True, complevel=1, fill_value=FILL)
+                rms = g.createVariable("RMS", "f4", dims, zlib=True, complevel=1, fill_value=FILL)
                 mean[:] = np.nan
                 count[:] = 0
                 rms[:] = np.nan

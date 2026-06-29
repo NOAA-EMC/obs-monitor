@@ -53,6 +53,7 @@ from conftest import (
 # read_group — shape and dimension tests
 # ---------------------------------------------------------------------------
 
+
 class TestReadGroupShape:
 
     def test_single_file_returns_dataset(self, single_nc_file, stat_group):
@@ -339,7 +340,7 @@ class TestReadDimLabels:
 
     def test_returns_list_of_strings(self, single_nc_file):
         labels = read_dim_labels([single_nc_file], var_name="statisticDomain")
-        assert all(isinstance(l, str) for l in labels)
+        assert all(isinstance(i, str) for i in labels)
 
     def test_correct_length(self, single_nc_file):
         labels = read_dim_labels([single_nc_file], var_name="statisticDomain")

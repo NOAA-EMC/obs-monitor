@@ -39,6 +39,12 @@ from wxflow import Logger
 from wxflow.configuration import cast_as_dtype
 
 from obs_monitor.plotting import dispatch_plots
+from obs_monitor.plotting.reader import (
+    validate_nc_file,
+    CorruptFileError,
+    MissingGroupError,
+    MissingVariableError,
+)
 
 from .stubs import (
     clone_schema_stub,
@@ -50,12 +56,17 @@ from .stubs import (
 # Configuration
 # -----------------------------------------------------------------------------
 
+
 class MonitoringConfig:
     """
     Encapsulates configuration for a single observation monitoring job.
 
     Uses PDY + CYC as the single cycle endpoint; window timestamps are
     derived from CYCLES and INTERVAL_HOURS.
+
+    Filesystem side effects (runtime directory creation) are intentionally
+    kept out of __init__. Call setup_runtime_dir() explicitly after
+    construction to create the directory.
     """
 
     def __init__(self, monitor_dict: dict, timestamp: str):
@@ -63,11 +74,11 @@ class MonitoringConfig:
 
         if self.monitor_type == 'radiance':
             self.satellite = monitor_dict["satellite"]
-            self.sensor    = monitor_dict["sensor"]
-            self.ob_type   = f"{self.sensor}_{self.satellite}"
+            self.sensor = monitor_dict["sensor"]
+            self.ob_type = f"{self.sensor}_{self.satellite}"
         elif self.monitor_type == 'conventional':
             self.variable = monitor_dict["variable"]
-            self.ob_type  = f"{self.variable}"
+            self.ob_type = f"{self.variable}"
         else:
             raise ValueError(f"Unknown monitor_type: {self.monitor_type}")
 
@@ -93,33 +104,49 @@ class MonitoringConfig:
         if self.cycles <= 0:
             raise ValueError("CYCLES must be > 0")
 
-        self.end_time   = datetime.strptime(pdy + cyc, "%Y%m%d%H").replace(tzinfo=timezone.utc)
+        self.end_time = datetime.strptime(pdy + cyc, "%Y%m%d%H").replace(tzinfo=timezone.utc)
         self.start_time = self.end_time - (self.cycles - 1) * timedelta(hours=self.interval_hours)
 
         # Paths
-        self.timestamp    = timestamp
+        self.timestamp = timestamp
         self.runtime_root = Path(os.getenv("RUNTIME_DIR"))
-        self.runtime_dir  = (
-            self.runtime_root
-            / f"runtime_{self.ob_type}_{timestamp}_{uuid.uuid4().hex[:8]}"
+
+        # NOTE: runtime_dir path is computed here but the directory is NOT
+        # created. Call setup_runtime_dir() after construction.
+        self.runtime_dir = (
+            self.runtime_root /
+            f"runtime_{self.ob_type}_{timestamp}_{uuid.uuid4().hex[:8]}"
         )
-        self.runtime_dir.mkdir(parents=True, exist_ok=False)
 
         self.experiment_dir = Path(os.getenv("EXPDIR"))
-        self.dataroot       = Path(os.getenv("DATAROOT"))
-        self.comroot        = Path(os.getenv("COMROOT"))
-        self.run            = Path(os.getenv("RUN"))
-        self.pdy            = Path(pdy)
-        self.cyc            = Path(cyc)
+        self.dataroot = Path(os.getenv("DATAROOT"))
+        self.comroot = Path(os.getenv("COMROOT"))
+        self.run = Path(os.getenv("RUN"))
+        self.pdy = Path(pdy)
+        self.cyc = Path(cyc)
 
         # Flags
-        self.copy_data    = cast_as_dtype(os.getenv("COPY_DATA"))
-        self.keep_data    = cast_as_dtype(os.getenv("KEEP_DATA"))
+        self.copy_data = cast_as_dtype(os.getenv("COPY_DATA"))
+        self.keep_data = cast_as_dtype(os.getenv("KEEP_DATA"))
         self.create_stubs = cast_as_dtype(os.getenv("CREATE_STUBS"))
+
+    def setup_runtime_dir(self) -> None:
+        """
+        Create the runtime directory on disk.
+
+        Separated from __init__ so that construction is side-effect-free and
+        testable without touching the filesystem.
+
+        Raises:
+            FileExistsError: if the directory already exists (uuid collision —
+                extremely unlikely but worth surfacing rather than silently
+                overwriting).
+        """
+        self.runtime_dir.mkdir(parents=True, exist_ok=False)
 
 
 # -----------------------------------------------------------------------------
-# Helpers  (all unchanged from original)
+# Helpers
 # -----------------------------------------------------------------------------
 
 def extract_timestamp(file: Path) -> str | None:
@@ -136,6 +163,12 @@ def extract_timestamp(file: Path) -> str | None:
 def infer_schema_from_template(cfg: MonitoringConfig) -> tuple[str, bool]:
     """
     Inspect the Jinja YAML template to infer (product_group, include_gridded_bins).
+
+    NOTE: cfg.template_path is not currently set by MonitoringConfig.__init__.
+    When this is called for a job that has no template_path attribute, the
+    open() call will raise AttributeError and fall through to the heuristic
+    fallback. This is a known issue to be addressed in a follow-up PR that
+    aligns stubs.py with the new YAML config schema.
     """
     pg = None
     include_gridded = False
@@ -145,7 +178,7 @@ def infer_schema_from_template(cfg: MonitoringConfig) -> tuple[str, bool]:
                 m = re.search(r"name:\s*([A-Za-z0-9_\/]+)", line)
                 if not m:
                     continue
-                path  = m.group(1).strip()
+                path = m.group(1).strip()
                 parts = path.split("/")
                 if parts and parts[0] == "griddedBins":
                     include_gridded = True
@@ -198,7 +231,7 @@ def create_stub_for_missing_cycle(
     out_dir = output_dir or cfg.runtime_dir
     out_dir.mkdir(parents=True, exist_ok=True)
     fname = expected_stub_filename(cfg, dt, reference_path)
-    out   = out_dir / fname
+    out = out_dir / fname
 
     if reference_path:
         try:
@@ -268,8 +301,8 @@ def build_expected_times_for_window(
     Build the expected timeline for the single window with exactly `cycles`
     timestamps, ending at `t_end`.
     """
-    interval  = timedelta(hours=interval_hours)
-    t_start   = t_end - (cycles - 1) * interval
+    interval = timedelta(hours=interval_hours)
+    t_start = t_end - (cycles - 1) * interval
     return [t_start + i * interval for i in range(cycles)]
 
 
@@ -284,7 +317,7 @@ def find_matching_inputs_for_times(
     Returns: (tarballs, expected_times, found_times)
     """
     tarballs_in_runtime = []
-    found_times         = []
+    found_times = []
 
     logger.info(
         f"[{cfg.ob_type}] Window search (tarballs) from {expected_times[0]} "
@@ -293,12 +326,12 @@ def find_matching_inputs_for_times(
     window_dir.mkdir(parents=True, exist_ok=True)
 
     for dt in expected_times:
-        pdy_str  = dt.strftime("%Y%m%d")
-        cyc_str  = dt.strftime("%H")
-        run_dir  = (
-            cfg.dataroot
-            / f"{cfg.run}.{pdy_str}"
-            / f"{cyc_str}/products/{cfg.component}/anlmon"
+        pdy_str = dt.strftime("%Y%m%d")
+        cyc_str = dt.strftime("%H")
+        run_dir = (
+            cfg.dataroot /
+            f"{cfg.run}.{pdy_str}" /
+            f"{cyc_str}/products/{cfg.component}/anlmon"
         )
 
         if not run_dir.exists():
@@ -316,9 +349,9 @@ def find_matching_inputs_for_times(
                 f"{dt.strftime('%Y%m%d%H')}: {archive_path}"
             )
             try:
-                time_prefix  = dt.strftime("%Y%m%d%H")
+                time_prefix = dt.strftime("%Y%m%d%H")
                 dest_filename = f"{time_prefix}_{archive_path.name}"
-                dest_archive  = window_dir / dest_filename
+                dest_archive = window_dir / dest_filename
                 shutil.copy2(archive_path, dest_archive)
                 logger.info(
                     f"[{cfg.ob_type}] Copied tarball to runtime: "
@@ -396,9 +429,9 @@ def extract_tarballs_and_find_nc_for_times(
         )
 
     # 2) Scan for .nc files per expected cycle
-    nc_files   = []
+    nc_files = []
     found_times = []
-    pattern    = f"{cfg.ob_type}_*.nc"
+    pattern = f"{cfg.ob_type}_*.nc"
 
     logger.info(
         f"[{cfg.ob_type}] Runtime search for .nc files from "
@@ -431,6 +464,126 @@ def extract_tarballs_and_find_nc_for_times(
         f"for window ending {expected_times[-1]}"
     )
     return sorted(nc_files), expected_times, found_times
+
+
+def validate_and_quarantine_nc_files(
+    nc_files: list[Path],
+    coords_group: str,
+    figure_specs: list[dict],
+    ob_type: str,
+    logger,
+) -> tuple[list[Path], list[datetime]]:
+    """
+    Run pre-flight structural validation on each discovered ``.nc`` file,
+    removing files that fail from both the return set and from disk.
+
+    For each file, calls :func:`~obs_monitor.plotting.reader.validate_nc_file`
+    which checks that the file opens, the coords group exists, and every
+    required (group_path, stat) pair is present.  Files that fail validation
+    are:
+
+    - Logged with a specific error message identifying the failure mode
+      (``CORRUPT FILE``, ``MISSING GROUP``, or ``MISSING VARIABLE``)
+    - Deleted from disk so that ``dispatch_plots`` cannot rediscover them
+      via glob and attempt to read them, which would defeat quarantine
+    - Excluded from the returned file and time lists
+
+    Cycle timestamps are derived from each filename using
+    :func:`extract_timestamp` rather than from a caller-supplied list,
+    avoiding the ``zip()`` truncation bug that arises when a single cycle
+    has more than one ``.nc`` file.
+
+    The caller (``run_monitoring_job``) treats quarantined cycles as missing,
+    feeding them into the existing stub-creation path so the plotting pipeline
+    always receives a complete set of input files and the frontend always
+    receives output plots.
+
+    Parameters
+    ----------
+    nc_files:
+        List of ``.nc`` Paths found by
+        ``extract_tarballs_and_find_nc_for_times``.
+    coords_group:
+        Top-level coords group name from ``nc_groups.coords`` in the plot
+        config (e.g. ``"griddedBins"``).
+    figure_specs:
+        List of figure spec dicts from the plot config.  Each must have
+        ``group_path`` and ``stat`` keys.
+    ob_type:
+        Used for log message prefixes only.
+    logger:
+        wxflow Logger instance.
+
+    Returns
+    -------
+    (valid_files, valid_times)
+        * ``valid_files`` — subset of ``nc_files`` that passed validation.
+        * ``valid_times`` — corresponding cycle datetimes parsed from the
+          filenames of the valid files.  Quarantined files and their cycle
+          times are excluded so the stub path in ``run_monitoring_job`` can
+          fill the gaps.
+
+    Notes
+    -----
+    If a filename does not contain a parseable 10-digit timestamp, its cycle
+    datetime is recorded as ``None`` and excluded from ``valid_times``.  This
+    is logged at WARNING level but does not prevent the file from being
+    validated and included in ``valid_files`` if it passes structural checks.
+    """
+    valid_files: list[Path] = []
+    valid_times: list[datetime] = []
+    quarantined = 0
+
+    for path in nc_files:
+        # Derive cycle_dt from the filename rather than relying on zip alignment
+        cycle_dt = None
+        ts = extract_timestamp(path)
+        if ts:
+            try:
+                cycle_dt = datetime.strptime(ts[:10], "%Y%m%d%H").replace(
+                    tzinfo=timezone.utc
+                )
+            except ValueError as exc:
+                logger.warning(
+                    f"[{ob_type}] Could not parse cycle timestamp from '{path.name}' (ts={ts!r}): {exc}"
+                )
+
+        try:
+            validate_nc_file(path, coords_group, figure_specs)
+            valid_files.append(path)
+            if cycle_dt is not None:
+                valid_times.append(cycle_dt)
+
+        except (CorruptFileError, MissingGroupError, MissingVariableError) as exc:
+            label = {
+                CorruptFileError: "CORRUPT FILE",
+                MissingGroupError: "MISSING GROUP",
+                MissingVariableError: "MISSING VARIABLE",
+            }[type(exc)]
+            cycle_str = cycle_dt.strftime("%Y%m%d%H") if cycle_dt else "unknown"
+            logger.error(
+                f"[{ob_type}] {label} — quarantining "
+                f"{path.name} (cycle {cycle_str}): {exc}"
+            )
+            # Delete from disk so dispatch_plots cannot rediscover it via glob
+            try:
+                path.unlink()
+            except Exception as unlink_exc:
+                logger.warning(
+                    f"[{ob_type}] Failed to remove quarantined file "
+                    f"{path.name}: {unlink_exc}"
+                )
+            quarantined += 1
+
+    if quarantined:
+        logger.warning(
+            f"[{ob_type}] {quarantined} file(s) failed validation and will be "
+            f"replaced with stubs. Check logs above for specific errors."
+        )
+    else:
+        logger.info(f"[{ob_type}] All {len(nc_files)} file(s) passed validation.")
+
+    return valid_files, valid_times
 
 
 def com_plots_dir_for_window(cfg: MonitoringConfig, t_end: datetime) -> Path:
@@ -494,18 +647,28 @@ def copy_plots_to_public(
         return
 
     for plot_file in plots_dir.rglob("*.png"):
-        rel_path    = plot_file.relative_to(plots_dir)
+        rel_path = plot_file.relative_to(plots_dir)
         target_path = public_root / rel_path
         target_path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(plot_file, target_path)
         logger.info(f"Copied plot to public: {target_path}")
 
 
-def cleanup_path(path: Path, logger):
-    """Delete a directory tree if it exists."""
+def cleanup_path(path: Path, logger) -> None:
+    """
+    Delete a directory tree if it exists, logging the outcome.
+
+    This is the single cleanup helper for all callers. The inline
+    "only-if-empty" guard that previously lived in run_monitoring_job
+    has been removed: partial output from a failed job should still be
+    cleaned up on the 6-hour operational schedule.
+    """
     if path.exists() and path.is_dir():
-        shutil.rmtree(path)
-        logger.info(f"Deleted runtime dir: {path}")
+        try:
+            shutil.rmtree(path)
+            logger.info(f"Deleted runtime dir: {path}")
+        except Exception as e:
+            logger.warning(f"Failed to delete runtime dir {path}: {e}")
 
 
 # -----------------------------------------------------------------------------
@@ -572,90 +735,162 @@ def run_monitoring_job(args):
     For the current cycle endpoint (PDY+CYC), build a window of `CYCLES`
     timestamps, discover inputs, optionally stub missing, run the internal
     plotting pipeline, copy plots, and clean up.
+
+    Each pipeline stage is wrapped individually so that a failure in one
+    stage produces a structured result dict rather than an unhandled
+    exception that would silently drop the job from the summary in main().
     """
-    monitor_dict, timestamp = args
-    cfg    = MonitoringConfig(monitor_dict, timestamp)
-    logger = Logger(f"Obs Monitor - {cfg.ob_type}")
+    monitor_dict, timestamp, all_plot_configs = args
+
+    job_ob_type = monitor_dict.get("variable") or (
+        f"{monitor_dict.get('sensor')}_{monitor_dict.get('satellite')}"
+        if monitor_dict.get("sensor") and monitor_dict.get("satellite")
+        else "unknown"
+    )
+    logger = Logger(f"Obs Monitor - {job_ob_type}")
+
+    # --- Stage 0: Config & runtime dir setup ---
+    try:
+        cfg = MonitoringConfig(monitor_dict, timestamp)
+        cfg.setup_runtime_dir()
+    except Exception as e:
+        logger.error(f"Config/setup failed: {e}")
+        return {"ob_type": job_ob_type, "status": "failed", "error": f"setup: {e}"}
+
     logger.info(f"Starting job for {cfg.ob_type}")
 
     try:
-        t_end    = cfg.end_time
+        t_end = cfg.end_time
         win_times = build_expected_times_for_window(
             t_end=t_end,
             interval_hours=cfg.interval_hours,
             cycles=cfg.cycles,
         )
-        win_start = win_times[0]
-
         window_dir = cfg.runtime_dir / f"{t_end.strftime('%Y%m%d%H%M')}"
         window_dir.mkdir(parents=True, exist_ok=True)
 
-        # 1) Discover tarballs in DATAROOT and copy them into runtime
-        tarballs_in_runtime, expected_times, found_tarball_times = (
-            find_matching_inputs_for_times(cfg, win_times, logger, window_dir=window_dir)
-        )
+        # --- Stage 1: Discover tarballs ---
+        try:
+            tarballs_in_runtime, expected_times, _ = find_matching_inputs_for_times(
+                cfg, win_times, logger, window_dir=window_dir
+            )
+        except Exception as e:
+            logger.error(f"[{cfg.ob_type}] Tarball discovery failed: {e}")
+            return {"ob_type": cfg.ob_type, "status": "failed",
+                    "error": f"tarball discovery: {e}"}
 
-        # 2) Extract tarballs and discover actual .nc files per cycle
-        nc_files, _, found_times = extract_tarballs_and_find_nc_for_times(
-            cfg,
-            tarballs_in_runtime=tarballs_in_runtime,
-            expected_times=expected_times,
-            logger=logger,
-            window_dir=window_dir,
-        )
+        # --- Stage 2: Extract tarballs, find .nc files ---
+        try:
+            nc_files, _, found_times = extract_tarballs_and_find_nc_for_times(
+                cfg,
+                tarballs_in_runtime=tarballs_in_runtime,
+                expected_times=expected_times,
+                logger=logger,
+                window_dir=window_dir,
+            )
+        except Exception as e:
+            logger.error(f"[{cfg.ob_type}] Tarball extraction failed: {e}")
+            return {"ob_type": cfg.ob_type, "status": "failed",
+                    "error": f"extraction: {e}"}
 
-        # 3) Write coverage report based on real .nc presence
-        cov_str = write_coverage_report(
-            expected_times, found_times, window_dir / "coverage.csv", logger
-        )
+        # --- Stage 2b: Pre-flight file validation ---
+        # Runs after extraction so we have real .nc paths, but before coverage
+        # and stub creation so quarantined cycles fall into the stub path below.
+        # Validation requires the plot config, which is already resolved from
+        # all_plot_configs (loaded once in main before any workers are spawned).
+        ob_plot_config_for_validation = all_plot_configs.get(cfg.ob_type)
+        if ob_plot_config_for_validation is not None and nc_files:
+            coords_group = ob_plot_config_for_validation.get("nc_groups", {}).get("coords", "")
+            figure_specs = ob_plot_config_for_validation.get("figures", [])
+            if coords_group and figure_specs:
+                try:
+                    nc_files, found_times = validate_and_quarantine_nc_files(
+                        nc_files=nc_files,
+                        coords_group=coords_group,
+                        figure_specs=figure_specs,
+                        ob_type=cfg.ob_type,
+                        logger=logger,
+                    )
+                except Exception as e:
+                    # Non-fatal: if validation itself errors out, proceed with
+                    # the original file set and let the dispatcher handle it.
+                    logger.warning(
+                        f"[{cfg.ob_type}] Validation step failed unexpectedly "
+                        f"(non-fatal, proceeding with unvalidated files): {e}"
+                    )
+            else:
+                logger.debug(
+                    f"[{cfg.ob_type}] Skipping pre-flight validation: "
+                    f"coords_group={coords_group!r}, "
+                    f"figure_specs count={len(figure_specs)}"
+                )
+
+        # --- Stage 3: Coverage report ---
+        try:
+            cov_str = write_coverage_report(
+                expected_times, found_times, window_dir / "coverage.csv", logger
+            )
+        except Exception as e:
+            # Non-fatal: a missing coverage report should not stop plotting.
+            logger.warning(f"[{cfg.ob_type}] Coverage report failed (non-fatal): {e}")
+            cov_str = "n/a"
 
         ref_path = nc_files[0] if nc_files else None
 
-        # 4) Optionally make stubs for missing cycles
+        # --- Stage 4: Stub creation ---
         if cfg.create_stubs and expected_times:
             missing = [dt for dt in expected_times if dt not in set(found_times)]
             if missing:
                 logger.info(
-                    f"[{cfg.ob_type}] Creating {len(missing)} stub files for "
+                    f"[{cfg.ob_type}] Creating {len(missing)} stub file(s) for "
                     f"missing cycles (window end {t_end:%Y-%m-%d %H:%M})"
                 )
                 for dt in missing:
-                    create_stub_for_missing_cycle(
-                        cfg, dt, logger,
-                        reference_path=ref_path,
-                        output_dir=window_dir,
-                    )
+                    try:
+                        create_stub_for_missing_cycle(
+                            cfg, dt, logger,
+                            reference_path=ref_path,
+                            output_dir=window_dir,
+                        )
+                    except Exception as e:
+                        # Non-fatal: log and continue — partial stubs are
+                        # better than no stubs for downstream plotting.
+                        logger.warning(
+                            f"[{cfg.ob_type}] Stub creation failed for "
+                            f"{dt.strftime('%Y%m%d%H')} (non-fatal): {e}"
+                        )
 
-        # 5) Skip if no inputs at all
+        # --- Stage 5: Guard — no inputs at all ---
         if not any(window_dir.glob("*.nc")):
             logger.warning(
                 f"[{cfg.ob_type}] No inputs (.nc) in window dir {window_dir}. "
                 f"Skipping plots. Coverage: {cov_str}"
             )
-            return {"ob_type": cfg.ob_type, "status": "skipped_no_input", "coverage": cov_str}
+            return {"ob_type": cfg.ob_type, "status": "skipped_no_input",
+                    "coverage": cov_str}
 
-        # 6) Load plot config for this ob_type
-        plot_config_yaml = os.getenv("PLOT_CONFIG_YAML")
-        if not plot_config_yaml:
-            logger.error(
-                f"[{cfg.ob_type}] PLOT_CONFIG_YAML is not set; cannot generate plots."
-            )
-            return {"ob_type": cfg.ob_type, "status": "failed",
-                    "error": "PLOT_CONFIG_YAML not set", "coverage": cov_str}
-
-        ob_plot_config = load_plot_config(plot_config_yaml, cfg.ob_type)
+        # --- Stage 6: Resolve plot config (pre-loaded in main) ---
+        ob_plot_config = all_plot_configs.get(cfg.ob_type)
         if ob_plot_config is None:
-            # Warning already logged inside load_plot_config
+            logger.warning(
+                f"[{cfg.ob_type}] No plot config entry found; skipping plots."
+            )
             return {"ob_type": cfg.ob_type, "status": "skipped_no_plot_config",
                     "coverage": cov_str}
 
-        # 7) Run the internal plotting pipeline
-        plot_result = dispatch_plots(
-            ob_type=cfg.ob_type,
-            runtime_dir=window_dir,
-            plot_config=ob_plot_config,
-            output_dir=window_dir / "plots",
-        )
+        # --- Stage 7: Run the plotting pipeline ---
+        try:
+            plot_result = dispatch_plots(
+                ob_type=cfg.ob_type,
+                runtime_dir=window_dir,
+                plot_config=ob_plot_config,
+                output_dir=window_dir / "plots",
+            )
+        except Exception as e:
+            logger.error(f"[{cfg.ob_type}] dispatch_plots raised: {e}")
+            return {"ob_type": cfg.ob_type, "status": "failed",
+                    "error": f"dispatch_plots: {e}", "coverage": cov_str}
+
         logger.info(
             f"[{cfg.ob_type}] Plots: "
             f"{plot_result['figures_written']}/{plot_result['figures_requested']} written, "
@@ -665,31 +900,34 @@ def run_monitoring_job(args):
             for err in plot_result["errors"]:
                 logger.warning(f"[{cfg.ob_type}] Plot warning: {err}")
 
-        # 8) Copy to COM (always, even on partial success — mirrors original behaviour)
-        copy_plots_to_com(cfg, logger, source_dir=window_dir, t_end=t_end)
+        # --- Stage 8: Copy to COM ---
+        try:
+            copy_plots_to_com(cfg, logger, source_dir=window_dir, t_end=t_end)
+        except Exception as e:
+            # Non-fatal: plots were produced; COM copy failure should not
+            # mark the whole job as failed.
+            logger.error(f"[{cfg.ob_type}] COM copy failed (non-fatal): {e}")
 
-        # 9) Optional public copy
+        # --- Stage 9: Optional public copy ---
         if cfg.copy_data:
-            copy_plots_to_public(cfg, logger, source_dir=window_dir)
+            try:
+                copy_plots_to_public(cfg, logger, source_dir=window_dir)
+            except Exception as e:
+                logger.warning(f"[{cfg.ob_type}] Public copy failed (non-fatal): {e}")
 
-        # Map dispatcher status onto driver status for the summary
-        if plot_result["status"] == "ok":
-            return {"ob_type": cfg.ob_type, "status": "ok", "coverage": cov_str}
-        elif plot_result["status"] == "partial":
-            return {"ob_type": cfg.ob_type, "status": "ok", "coverage": cov_str,
-                    "warnings": plot_result["errors"]}
+        # Map dispatcher status onto driver status
+        if plot_result["status"] in ("ok", "partial"):
+            result = {"ob_type": cfg.ob_type, "status": "ok", "coverage": cov_str}
+            if plot_result["errors"]:
+                result["warnings"] = plot_result["errors"]
+            return result
         else:
             return {"ob_type": cfg.ob_type, "status": "failed",
                     "error": "; ".join(plot_result["errors"]), "coverage": cov_str}
 
     finally:
-        if not cfg.keep_data and cfg.runtime_dir.exists():
-            try:
-                if not any(cfg.runtime_dir.iterdir()):
-                    shutil.rmtree(cfg.runtime_dir)
-                    logger.info(f"Deleted job root dir: {cfg.runtime_dir}")
-            except Exception as e:
-                logger.warning(f"[{cfg.ob_type}] Cleanup issue on job root: {e}")
+        if not cfg.keep_data:
+            cleanup_path(cfg.runtime_dir, logger)
         else:
             logger.info(
                 f"[{cfg.ob_type}] KEEP_DATA=True. Results kept under: {cfg.runtime_dir}"
@@ -703,6 +941,11 @@ def run_monitoring_job(args):
 def main():
     """
     Parse job list from CONFIG_YAML and run monitoring jobs in parallel.
+
+    The plot config YAML is loaded once here and passed into each worker via
+    the args tuple, avoiding N parallel reads of the same file under
+    multiprocessing.
+
     Respects optional COMPONENT filter from the environment.
     """
     main_logger = Logger("Obs Monitor - main")
@@ -737,9 +980,9 @@ def main():
     component_filter = os.getenv("COMPONENT")
     if component_filter:
         requested_components = {c.strip() for c in component_filter.split(",")}
-        original_count       = len(job_list)
+        original_count = len(job_list)
         job_list = [job for job in job_list if job.get("component") in requested_components]
-        skipped  = original_count - len(job_list)
+        skipped = original_count - len(job_list)
         main_logger.info(
             f"Filtered jobs: running {len(job_list)} matching components "
             f"({', '.join(requested_components)}), skipped {skipped}."
@@ -749,24 +992,43 @@ def main():
         main_logger.warning("No jobs match the given COMPONENT filter. Exiting ...")
         return
 
-    job_args = [(job, timestamp) for job in job_list]
-    nprocs   = min(cpu_count(), len(job_args))
+    # Load the plot config once here rather than once per worker process.
+    plot_config_yaml = os.getenv("PLOT_CONFIG_YAML")
+    if not plot_config_yaml:
+        raise EnvironmentError("PLOT_CONFIG_YAML is not set")
+
+    all_plot_configs: dict = {}
+    unique_ob_types = {job.get("variable") or f"{job.get('sensor')}_{job.get('satellite')}"
+                       for job in job_list}
+    for ob_type in unique_ob_types:
+        cfg_entry = load_plot_config(plot_config_yaml, ob_type)
+        if cfg_entry is not None:
+            all_plot_configs[ob_type] = cfg_entry
+
+    main_logger.info(
+        f"Loaded plot configs for {len(all_plot_configs)}/{len(unique_ob_types)} ob_types."
+    )
+
+    job_args = [(job, timestamp, all_plot_configs) for job in job_list]
+    nprocs = min(cpu_count(), len(job_args))
     main_logger.info(f"Starting multiprocessing with {nprocs} processes")
 
     with Pool(processes=nprocs) as pool:
         results = pool.map(run_monitoring_job, job_args)
 
-    ok      = sum(1 for r in results if r.get("status") == "ok")
+    ok = sum(1 for r in results if r.get("status") == "ok")
     skipped = [r for r in results if r.get("status", "").startswith("skipped")]
-    failed  = [r for r in results if r.get("status") == "failed"]
+    failed = [r for r in results if r.get("status") == "failed"]
 
     main_logger.info(
         f"Job summary: {ok} ok, {len(skipped)} skipped, {len(failed)} failed (non-fatal)."
     )
     for r in skipped:
-        main_logger.info(f"Skipped {r['ob_type']}: {r['status']} — coverage {r.get('coverage')}")
+        main_logger.info(
+            f"  Skipped {r['ob_type']}: {r['status']} — coverage {r.get('coverage')}"
+        )
     for r in failed:
-        main_logger.info(f"Failed {r['ob_type']}: {r.get('error')}")
+        main_logger.info(f"  Failed  {r['ob_type']}: {r.get('error')}")
 
 
 if __name__ == "__main__":
