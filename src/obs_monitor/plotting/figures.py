@@ -37,8 +37,8 @@ from pathlib import Path
 
 import matplotlib
 matplotlib.use("Agg")  # non-interactive backend; safe for operational/HPC use
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
+import matplotlib.pyplot as plt  # noqa: E402
+import matplotlib.dates as mdates  # noqa: E402
 
 # Hard EMCPy requirement — fail loudly at import time if missing.
 try:

@@ -588,7 +588,6 @@ def read_dim_labels(
     )
     return []
 
-
 # ---------------------------------------------------------------------------
 # Typed validation exceptions
 # ---------------------------------------------------------------------------
@@ -596,6 +595,7 @@ def read_dim_labels(
 # route each failure mode to an appropriate log message. All three are
 # subclasses of ValueError so callers that don't need the distinction can
 # catch the base class.
+
 
 class CorruptFileError(ValueError):
     """

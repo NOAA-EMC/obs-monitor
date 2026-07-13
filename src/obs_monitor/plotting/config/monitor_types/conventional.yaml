@@ -2,14 +2,21 @@
 #
 # Plot configuration for conventional ob_types.
 # Consumed by obs_monitor.plotting.dispatcher.dispatch_plots().
+#
+# File structure metadata (used by stubs.py for generic stub creation):
+#   domain_count: number of Domain dimension entries in real NC files
+#   nc_groups.bins: [binsZDim, binsYDim, binsXDim] for griddedBins variables
+#                   omit or set to null if the ob_type has no griddedBins group
 
 ob_types:
- 
+
   prepbufr_adpsfc:
     variable: stationPressure
     unit: Pa
+    domain_count: 7
     nc_groups:
       coords: griddedBins
+      bins: [1, 72, 144]
     figures:
       # --- Time Series ---
       - type: time_series
@@ -19,7 +26,7 @@ ob_types:
         title: "prepbufr_adpsfc Time Series — Assimilated Mean O-F"
         y_label: "stationPressure (Pa)"
         domains: [Global, NH, SH, CONUS]
- 
+
       - type: time_series
         group_path: byDomains/oman/stationPressure
         stat: assimilated_mean
@@ -27,7 +34,7 @@ ob_types:
         title: "prepbufr_adpsfc Time Series — Assimilated Mean O-A"
         y_label: "stationPressure (Pa)"
         domains: [Global, NH, SH, CONUS]
- 
+
       # --- Gridded Maps ---
       - type: map_gridded
         group_path: griddedBins/ombg/stationPressure
@@ -38,7 +45,7 @@ ob_types:
         projection: plcarr
         domain: global
         cmap: coolwarm
- 
+
       - type: map_gridded
         group_path: griddedBins/oman/stationPressure
         stat: assimilated_mean
@@ -48,12 +55,14 @@ ob_types:
         projection: plcarr
         domain: global
         cmap: coolwarm
- 
+
   prepbufr_adpupa:
     variable: stationPressure
     unit: Pa
+    domain_count: 7
     nc_groups:
       coords: griddedBins
+      bins: [1, 72, 144]
     figures:
       # --- Time Series ---
       - type: time_series
@@ -63,7 +72,7 @@ ob_types:
         title: "prepbufr_adpupa Time Series — Assimilated Mean O-F"
         y_label: "stationPressure (Pa)"
         domains: [Global, NH, SH, CONUS]
- 
+
       - type: time_series
         group_path: byDomains/oman/stationPressure
         stat: assimilated_mean
@@ -71,7 +80,7 @@ ob_types:
         title: "prepbufr_adpupa Time Series — Assimilated Mean O-A"
         y_label: "stationPressure (Pa)"
         domains: [Global, NH, SH, CONUS]
- 
+
       # --- Gridded Maps ---
       - type: map_gridded
         group_path: griddedBins/ombg/stationPressure
@@ -82,7 +91,7 @@ ob_types:
         projection: plcarr
         domain: global
         cmap: coolwarm
- 
+
       - type: map_gridded
         group_path: griddedBins/oman/stationPressure
         stat: assimilated_mean
@@ -92,12 +101,14 @@ ob_types:
         projection: plcarr
         domain: global
         cmap: coolwarm
- 
+
   prepbufr_sfcshp:
     variable: stationPressure
     unit: Pa
+    domain_count: 7
     nc_groups:
       coords: griddedBins
+      bins: [1, 72, 144]
     figures:
       # --- Time Series ---
       - type: time_series
@@ -107,7 +118,7 @@ ob_types:
         title: "prepbufr_sfcshp Time Series — Assimilated Mean O-F"
         y_label: "stationPressure (Pa)"
         domains: [Global, NH, SH, CONUS]
- 
+
       - type: time_series
         group_path: byDomains/oman/stationPressure
         stat: assimilated_mean
@@ -115,7 +126,7 @@ ob_types:
         title: "prepbufr_sfcshp Time Series — Assimilated Mean O-A"
         y_label: "stationPressure (Pa)"
         domains: [Global, NH, SH, CONUS]
- 
+
       # --- Gridded Maps ---
       - type: map_gridded
         group_path: griddedBins/ombg/stationPressure
@@ -126,7 +137,7 @@ ob_types:
         projection: plcarr
         domain: global
         cmap: coolwarm
- 
+
       - type: map_gridded
         group_path: griddedBins/oman/stationPressure
         stat: assimilated_mean

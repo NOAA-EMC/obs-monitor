@@ -1,6 +1,8 @@
+# This software is licensed under the terms of the Apache Licence Version 2.0
+# which can be obtained at http://www.apache.org/licenses/LICENSE-2.0.
+
 [pycodestyle]
-count = False
-ignore = E226,E401,E402,W504
-max-line-length = 160
+max-line-length = 120
+indent-size = 4
 statistics = True
-exclude = Experimental
+exclude = .git,sorc,UIdev
