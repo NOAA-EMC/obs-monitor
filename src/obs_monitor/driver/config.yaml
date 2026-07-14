@@ -14,7 +14,7 @@ jobs:
   - monitor_type: 'conventional'
     component: 'snow'
     variable: 'snocvr'
-    filename_template: 'snocvr_%Y%m%d%H_output_snow.nc'
+    filename_template: '%Y%m%d.%H%M%S.ioda_hofx_stats.snocvr.nc'
 
   - monitor_type: 'conventional'
     component: 'atmos'
