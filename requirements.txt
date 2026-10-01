@@ -14,4 +14,4 @@ pytest
 pytest-cov
 pycodestyle>=2.9.1
 git+https://github.com/NOAA-EMC/wxflow.git@develop#egg=wxflow
-git+https://github.com/NOAA-EMC/emcpy.git@7794574611e760475d61eb5d9458af2d3d2191d8#egg=emcpy
+git+https://github.com/NOAA-EMC/emcpy.git@d9aaf04032d65c41b734348930d6965cc242a75b#egg=emcpy
