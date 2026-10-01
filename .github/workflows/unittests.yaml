@@ -17,7 +17,7 @@ jobs:
       run: conda install pip
 
     - name: Checkout
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         path: obs-monitor
 
@@ -26,7 +26,7 @@ jobs:
       run: $CONDA/bin/pip3 install -r obs-monitor/requirements.txt --user
 
     - name: Checkout wxflow
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: NOAA-EMC/wxflow
         ref: develop
@@ -43,7 +43,7 @@ jobs:
 
     # Install EMCPy (replaces EVA)
     - name: Clone EMCPy
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
       with:
         repository: NOAA-EMC/emcpy
         ref: develop
@@ -70,7 +70,7 @@ jobs:
         MPLBACKEND: Agg  # non-interactive matplotlib backend; required in CI
       run: |
         cd obs-monitor
-        $CONDA/bin/pytest src/tests/plotting/ src/tests/driver/ -v --tb=short \
+        $CONDA/bin/python -m pytest src/tests/plotting/ src/tests/driver/ -v --tb=short \
           --cov=obs_monitor.plotting \
           --cov=obs_monitor.driver \
           --cov-report=term-missing
