@@ -5,7 +5,7 @@ Layouts are taken from ``ncdump -h`` of:
 
 * ``diag_prepbufr_adpsfc_2026093018.nc`` (conventional; dim ``Location``)
 * ``diag_radiance_atms_n20_2026093018.nc`` (radiance; dims ``Location``, ``Channel``)
- 
+
 from ``gdas.t18z.atmos_analysis.ioda_hofx.tar.gz`` (prjedi, 2026-09-30 18Z).
 Only structure is copied; all values are synthetic.
 """
@@ -37,7 +37,7 @@ ADPSFC_UNITS = {
 # Per-simulated-variable float groups common to both families
 SIM_FLOAT_GROUPS = ["ombg", "oman", "hofx0", "hofx1", "EffectiveError0", "EffectiveError1", "ObsBias0", "ObsBias1"]
 SIM_INT_GROUPS = ["EffectiveQC0", "EffectiveQC1"]
- 
+
 ATMS_N_CHANNELS = 22
 ATMS_PREDICTOR_GROUPS = [
     "constantPredictor", "emissivityJacobianPredictor", "lapseRatePredictor",
