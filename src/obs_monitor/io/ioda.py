@@ -235,7 +235,7 @@ def _normalise_longitude(lon: np.ndarray) -> np.ndarray:
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
- 
+
 def list_simulated_variables(path: str | Path) -> list[str]:
     """
     Return the simulated variables in an IODA diag file.
