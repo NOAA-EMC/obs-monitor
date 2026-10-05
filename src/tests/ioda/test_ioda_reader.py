@@ -10,13 +10,14 @@ import numpy as np
 import pytest
 
 from obs_monitor.io.ioda import (
-    DEFAULT_GROUP_MAP,
+    FIELDS,
     QC_MISSING,
     ChannelNotFoundError,
     IodaFormatError,
     VariableNotSimulatedError,
     list_simulated_variables,
     read_ioda,
+    resolve_group_map,
 )
 
 from ioda_fixtures import ADPSFC_SIMULATED, write_adpsfc, write_atms
@@ -65,7 +66,7 @@ class TestReadConventional:
         path, w = adpsfc
         ds = read_ioda(path, "stationPressure")
         assert dict(ds.sizes) == {"Location": w["n"]}
-        assert list(ds.data_vars) == list(DEFAULT_GROUP_MAP)
+        assert list(ds.data_vars) == list(FIELDS)
         assert set(ds.coords) == {"latitude", "longitude", "dateTime"}
 
     def test_attrs(self, adpsfc):
@@ -158,6 +159,63 @@ class TestReadConventional:
 
 
 # ---------------------------------------------------------------------------
+# Outer-loop groups: *_bg = lowest index, *_an = highest index
+# ---------------------------------------------------------------------------
+
+class TestOuterLoops:
+
+    def test_real_layout_one_outer_loop(self, adpsfc):
+        path, _ = adpsfc
+        gmap = resolve_group_map(path)
+        assert gmap["hofx_bg"] == "hofx0" and gmap["hofx_an"] == "hofx1"
+        assert gmap["qc_an"] == "EffectiveQC1" and gmap["err_an"] == "EffectiveError1"
+        assert gmap["bias_an"] == "ObsBias1"
+        assert read_ioda(path, "stationPressure").attrs["n_outer_loops"] == 1
+
+    @pytest.mark.parametrize("iterations, an", [((0, 1, 2), 2), (tuple(range(50)), 49), ((0, 1, 7), 7)])
+    def test_analysis_is_highest_index(self, tmp_path, iterations, an):
+        path = tmp_path / "diag_prepbufr_adpsfc_2026093018.nc"
+        w = write_adpsfc(path, iterations=iterations)
+        ds = read_ioda(path, "airTemperatureAt2M")
+        for field, prefix in [("hofx", "hofx"), ("qc", "EffectiveQC"), ("err", "EffectiveError"),
+                              ("bias", "ObsBias")]:
+            assert ds[f"{field}_bg"].attrs["ioda_group"] == f"{prefix}0"
+            assert ds[f"{field}_an"].attrs["ioda_group"] == f"{prefix}{an}"
+        np.testing.assert_allclose(ds["hofx_an"].values, w["groups"][f"hofx{an}"]["airTemperatureAt2M"], rtol=1e-6)
+        np.testing.assert_array_equal(ds["qc_an"].values, w["groups"][f"EffectiveQC{an}"]["airTemperatureAt2M"])
+        assert ds.attrs["n_outer_loops"] == an
+
+    def test_single_iteration_has_no_analysis_fields(self, tmp_path):
+        path = tmp_path / "diag_prepbufr_adpsfc_2026093018.nc"
+        write_adpsfc(path, iterations=(0,), drop_groups=("oman",))
+        ds = read_ioda(path, "stationPressure")
+        assert {"hofx_bg", "qc_bg", "err_bg", "bias_bg"} <= set(ds.data_vars)
+        assert {"hofx_an", "qc_an", "err_an", "bias_an", "oman"}.isdisjoint(ds.data_vars)
+        assert ds.attrs["n_outer_loops"] == 0
+
+    def test_lookalike_group_names_ignored(self, tmp_path):
+        path = tmp_path / "diag_prepbufr_adpsfc_2026093018.nc"
+        write_adpsfc(path)
+        with nc4.Dataset(path, "a") as ds:
+            for name in ("hofx9_old", "hofxPredictor", "EffectiveQC_extra"):
+                ds.createGroup(name)
+        gmap = resolve_group_map(path)
+        assert gmap["hofx_an"] == "hofx1" and gmap["qc_an"] == "EffectiveQC1"
+
+    def test_override_wins(self, tmp_path):
+        path = tmp_path / "diag_prepbufr_adpsfc_2026093018.nc"
+        write_adpsfc(path, iterations=(0, 1, 2))
+        ds = read_ioda(path, "airTemperatureAt2M", group_map={"hofx_an": "hofx1"})
+        assert ds["hofx_an"].attrs["ioda_group"] == "hofx1"
+        assert ds["qc_an"].attrs["ioda_group"] == "EffectiveQC2"
+
+    def test_override_unknown_field_raises(self, adpsfc):
+        path, _ = adpsfc
+        with pytest.raises(ValueError, match="Unknown field"):
+            read_ioda(path, "stationPressure", group_map={"hofx_final": "hofx1"})
+
+
+# ---------------------------------------------------------------------------
 # read_ioda — radiance
 # ---------------------------------------------------------------------------
 
@@ -192,7 +250,7 @@ class TestReadRadiance:
     def test_ignores_predictor_and_derived_groups(self, atms):
         path, _ = atms
         ds = read_ioda(path, "brightnessTemperature")
-        assert set(ds.data_vars) == set(DEFAULT_GROUP_MAP)
+        assert set(ds.data_vars) == set(FIELDS)
 
 
 # ---------------------------------------------------------------------------
