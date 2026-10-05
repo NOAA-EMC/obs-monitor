@@ -9,21 +9,23 @@ Input layer: everything that knows about files on disk.
 """
 
 from .ioda import (
-    DEFAULT_GROUP_MAP,
+    FIELDS,
     QC_MISSING,
     ChannelNotFoundError,
     IodaFormatError,
     VariableNotSimulatedError,
     list_simulated_variables,
     read_ioda,
+    resolve_group_map,
 )
 
 __all__ = [
-    "DEFAULT_GROUP_MAP",
+    "FIELDS",
     "QC_MISSING",
     "ChannelNotFoundError",
     "IodaFormatError",
     "VariableNotSimulatedError",
     "list_simulated_variables",
     "read_ioda",
+    "resolve_group_map",
 ]

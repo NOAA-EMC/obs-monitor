@@ -8,8 +8,18 @@ for one simulated variable into a canonical :class:`xarray.Dataset`.
 This module is the only place in obs-monitor that knows IODA group names.
 Everything downstream (reductions, figures) works with the canonical field
 names below, so a change in how a JEDI application names its groups is a
-change to :data:`DEFAULT_GROUP_MAP` or a per-obs-space override, never to
-downstream code.
+change here (or a per-obs-space ``group_map`` override), never downstream.
+
+Outer-loop groups
+-----------------
+JEDI writes one ``hofx<N>``, ``EffectiveQC<N>``, ``EffectiveError<N>`` and
+``ObsBias<N>`` group per outer-loop iteration: ``0`` is the background and
+the highest ``N`` is the final analysis (``hofx1`` with one outer loop,
+``hofx2`` with two, ``hofx49`` with 49).  :func:`resolve_group_map` reads the
+indices actually present in each file and maps ``*_bg`` to the lowest and
+``*_an`` to the highest, so ``hofx_an`` always means "H(x) at the final
+analysis" regardless of the outer-loop count.  Intermediate iterations are
+not read.
 
 Output contract
 ---------------
@@ -24,16 +34,17 @@ For a conventional obs space::
         obs        (Location) float64   ObsValue
         ombg       (Location) float64   observation minus background
         oman       (Location) float64   observation minus analysis
-        hofx_bg    (Location) float64   H(x) background   (hofx0)
-        hofx_an    (Location) float64   H(x) analysis     (hofx1)
-        qc_bg      (Location) int32     EffectiveQC0, QC_MISSING where filled
-        qc_an      (Location) int32     EffectiveQC1, QC_MISSING where filled
-        err_bg     (Location) float64   EffectiveError0
-        err_an     (Location) float64   EffectiveError1
-        bias_bg    (Location) float64   ObsBias0
-        bias_an    (Location) float64   ObsBias1
+        hofx_bg    (Location) float64   H(x) background   (hofx<lowest N>)
+        hofx_an    (Location) float64   H(x) analysis     (hofx<highest N>)
+        qc_bg      (Location) int32     EffectiveQC<lowest N>, QC_MISSING where filled
+        qc_an      (Location) int32     EffectiveQC<highest N>, QC_MISSING where filled
+        err_bg     (Location) float64   EffectiveError<lowest N>
+        err_an     (Location) float64   EffectiveError<highest N>
+        bias_bg    (Location) float64   ObsBias<lowest N>
+        bias_an    (Location) float64   ObsBias<highest N>
+    Each data variable's ``ioda_group`` attribute records the group it came from.
     Attributes:
-        obs_space, variable, units, source_path, ioda_layout
+        obs_space, variable, units, source_path, ioda_layout, n_outer_loops
 
 For a radiance obs space every data variable gains a trailing ``channel``
 dimension, and ``channel`` is a coordinate holding the sensor channel numbers
@@ -70,20 +81,29 @@ logger = logging.getLogger(__name__)
 # Constants
 # ---------------------------------------------------------------------------
 
-#: Canonical field name -> IODA group name.  Order is the order fields appear
-#: in the returned Dataset.  Override per obs space with ``group_map=``.
-DEFAULT_GROUP_MAP: dict[str, str] = {
+#: Canonical fields, in the order they appear in the returned Dataset.
+FIELDS: tuple[str, ...] = (
+    "obs", "ombg", "oman",
+    "hofx_bg", "hofx_an",
+    "qc_bg", "qc_an",
+    "err_bg", "err_an",
+    "bias_bg", "bias_an",
+)
+
+#: Fields whose IODA group name is fixed.
+FIXED_GROUPS: dict[str, str] = {
     "obs": "ObsValue",
     "ombg": "ombg",
     "oman": "oman",
-    "hofx_bg": "hofx0",
-    "hofx_an": "hofx1",
-    "qc_bg": "EffectiveQC0",
-    "qc_an": "EffectiveQC1",
-    "err_bg": "EffectiveError0",
-    "err_an": "EffectiveError1",
-    "bias_bg": "ObsBias0",
-    "bias_an": "ObsBias1",
+}
+
+#: IODA group prefix -> (background field, analysis field).  The file holds
+#: ``<prefix>0 .. <prefix>N``; background = lowest index, analysis = highest.
+OUTER_LOOP_GROUPS: dict[str, tuple[str, str]] = {
+    "hofx": ("hofx_bg", "hofx_an"),
+    "EffectiveQC": ("qc_bg", "qc_an"),
+    "EffectiveError": ("err_bg", "err_an"),
+    "ObsBias": ("bias_bg", "bias_an"),
 }
 
 #: Fields that must be present for the file to be usable.
@@ -232,9 +252,49 @@ def _normalise_longitude(lon: np.ndarray) -> np.ndarray:
     return ((lon + 180.0) % 360.0) - 180.0
 
 
+def _outer_loop_indices(group_names, prefix: str) -> list[int]:
+    """Sorted integer suffixes N of groups named exactly ``<prefix><N>``."""
+    pattern = re.compile(rf"^{re.escape(prefix)}(\d+)$")
+    return sorted(int(m.group(1)) for g in group_names if (m := pattern.match(g)))
+
+
+def _resolve_group_map(group_names, overrides: Mapping[str, str] | None = None) -> dict[str, str]:
+    """Map every canonical field to an IODA group name, given the groups in a file."""
+    gmap = dict(FIXED_GROUPS)
+    for prefix, (bg_field, an_field) in OUTER_LOOP_GROUPS.items():
+        idx = _outer_loop_indices(group_names, prefix)
+        if not idx:
+            continue
+        gmap[bg_field] = f"{prefix}{idx[0]}"
+        if len(idx) > 1:  # with a single iteration there is no separate analysis
+            gmap[an_field] = f"{prefix}{idx[-1]}"
+    if overrides:
+        gmap.update(overrides)
+    return gmap
+
+
 # ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
+
+def resolve_group_map(path: str | Path, group_map: Mapping[str, str] | None = None) -> dict[str, str]:
+    """
+    Return the canonical-field -> IODA-group mapping :func:`read_ioda` would
+    use for this file.
+
+    ``*_bg`` fields map to the lowest outer-loop index present (normally 0) and
+    ``*_an`` fields to the highest, e.g. ``hofx_an -> hofx2`` for a file with
+    ``hofx0, hofx1, hofx2``. A field whose groups are absent is left out; with
+    only one index present, the ``*_an`` field is left out. ``group_map``
+    entries override the result.
+
+    >>> resolve_group_map("diag_prepbufr_adpsfc_2026100100.nc")["hofx_an"]
+    'hofx1'
+    """
+    path = Path(path)
+    with _open(path) as root:
+        return _resolve_group_map(root.groups, group_map)
+
 
 def list_simulated_variables(path: str | Path) -> list[str]:
     """
@@ -285,11 +345,12 @@ def read_ioda(
         Radiance only: sensor channel numbers to read (others are never
         loaded). ``None`` reads all channels.
     fields:
-        Canonical fields to read (keys of the group map). ``None`` reads
-        every field whose group exists. Required fields are always read.
+        Canonical fields to read (see :data:`FIELDS`). ``None`` reads every
+        field whose group exists. Required fields are always read.
     group_map:
-        Overrides merged on top of :data:`DEFAULT_GROUP_MAP`, e.g.
-        ``{"qc_bg": "EffectiveQC"}`` for an application with one QC group.
+        Overrides applied on top of the mapping resolved from the file (see
+        :func:`resolve_group_map`), e.g. ``{"qc_bg": "EffectiveQC"}`` for an
+        application with one QC group.
 
     Raises
     ------
@@ -303,16 +364,17 @@ def read_ioda(
         A requested channel number is not in the file.
     """
     path = Path(path)
-    gmap = {**DEFAULT_GROUP_MAP, **(group_map or {})}
-    unknown = set(fields or ()) - set(gmap)
+    unknown = (set(fields or ()) | set(group_map or {})) - set(FIELDS)
     if unknown:
-        raise ValueError(f"Unknown field(s) {sorted(unknown)}. Known: {list(gmap)}")
-    wanted = list(gmap) if fields is None else [f for f in gmap if f in set(fields) | set(REQUIRED_FIELDS)]
+        raise ValueError(f"Unknown field(s) {sorted(unknown)}. Known: {list(FIELDS)}")
+    requested = set(FIELDS) if fields is None else set(fields) | set(REQUIRED_FIELDS)
 
     if obs_space is None:
         obs_space = re.sub(r"_\d{10}$", "", re.sub(r"^diag_", "", path.stem))
 
     with _open(path) as root:
+        gmap = _resolve_group_map(root.groups, group_map)
+        wanted = [f for f in FIELDS if f in requested and f in gmap]
         # --- variable must be simulated (when we can tell) ---
         sim_group = gmap.get("ombg", SIMULATED_VARIABLES_GROUP)
         if sim_group in root.groups:
@@ -370,6 +432,8 @@ def read_ioda(
             "units": units if units is not None else "",
             "source_path": str(path),
             "ioda_layout": str(getattr(root, "_ioda_layout", "")),
+            # highest hofx index = number of outer loops (0 if only the background is present)
+            "n_outer_loops": max(_outer_loop_indices(root.groups, "hofx"), default=0),
         }
 
     ds = xr.Dataset(data_vars, coords=coords, attrs=attrs)
