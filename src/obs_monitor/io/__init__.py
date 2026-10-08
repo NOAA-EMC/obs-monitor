@@ -6,9 +6,13 @@ Input layer: everything that knows about files on disk.
 
 ``ioda``
     Read JEDI IODA diag files into the canonical per-variable Dataset.
+``timewindow``
+    Cycle lists (ranges, trailing windows).
+``catalog``
+    Find diag files per (obs space, cycle): COM tarballs or files on disk.
 """
 
-from .ioda import (
+from obs_monitor.io.ioda import (
     FIELDS,
     QC_MISSING,
     ChannelNotFoundError,
