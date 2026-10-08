@@ -12,7 +12,7 @@ Input layer: everything that knows about files on disk.
     Find diag files per (obs space, cycle): COM tarballs or files on disk.
 """
 
-from obs_monitor.ioda import (
+from obs_monitor.io.ioda import (
     FIELDS,
     QC_MISSING,
     ChannelNotFoundError,
