@@ -1,0 +1,13 @@
+# Radiance obs spaces.
+#
+# Names are the <obs_space> in diag_<obs_space>_YYYYMMDDHH.nc, component 
+# is the COM folder holding the tarball (analysis/atmos/...ioda_hofx.tar.gz),
+# not the obs category.
+#
+# channels: omitted = all channels.
+
+obs_spaces:
+
+  radiance_atms_n20:
+    component: atmos
+    web_name: atms_n20
