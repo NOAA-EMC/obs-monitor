@@ -2,7 +2,7 @@
 obs_monitor.stats.cache
 =======================
 
-Per-cycle summaries on disk, so a rolling window only summarises the newest
+Per-cycle summaries on disk, so a rolling window only summarizes the newest
 cycle and re-reads the rest (a summary is KBs to a few MB; the diag file it
 came from is much larger).
 
