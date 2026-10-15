@@ -13,9 +13,9 @@ CycleSummary out (see :mod:`obs_monitor.stats.summary` for the contract).
     Per-cycle summaries on disk.
 """
 
-from .cache import read_summary, summary_path, write_summary
-from .regions import DEFAULT_REGIONS_FILE, Domain, Grid, load_regions
-from .summary import FIELD_QC, QC_CLASSES, STATS, reduce_cycle, stack_cycles
+from obs_monitor.stats.cache import read_summary, summary_path, write_summary
+from obs_monitor.stats.regions import DEFAULT_REGIONS_FILE, Domain, Grid, load_regions
+from obs_monitor.stats.summary import FIELD_QC, QC_CLASSES, STATS, reduce_cycle, stack_cycles
 
 __all__ = [
     "DEFAULT_REGIONS_FILE",

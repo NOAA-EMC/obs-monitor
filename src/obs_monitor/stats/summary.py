@@ -89,7 +89,7 @@ def reduce_cycle(
     gridded_qc: str = "assimilated",
 ) -> xr.Dataset:
     """
-    Summarise one cycle of one variable.
+    Summarize one cycle of one variable.
 
     Parameters
     ----------
@@ -101,7 +101,7 @@ def reduce_cycle(
     domains, grid
         From :func:`obs_monitor.stats.load_regions`.
     fields
-        Fields to summarise; ones the file lacks are skipped.
+        Fields to summarize; ones the file lacks are skipped.
     gridded_qc
         QC class used for the gridded maps (one class keeps radiance
         summaries small).
