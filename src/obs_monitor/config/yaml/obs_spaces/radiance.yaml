@@ -4,7 +4,9 @@
 # is the COM folder holding the tarball (analysis/atmos/...ioda_hofx.tar.gz),
 # not the obs category.
 #
+# component: atmos
 # channels: omitted = all channels.
+# web_name: optional; name used in website file names i.e. atms_n20
 
 obs_spaces:
 

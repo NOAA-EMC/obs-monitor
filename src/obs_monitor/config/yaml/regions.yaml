@@ -1,0 +1,24 @@
+# Statistics regions and map grid used by obs_monitor.stats.
+#
+# Domains: lat/lon boxes, edges inclusive on the low side and exclusive on the
+# high side (except lat 90 / lon 180, which are included). Longitudes are
+# in [-180, 180]; a box with lon_min > lon_max wraps across the dateline.
+#
+# Names, order and boundaries match the JEDI observation-statistics config that
+# produced the old stat files (GDASApp parm/jcb-gdas/observation_statistics,
+# "domains to process"). Global is every location.
+
+domains:
+  SH:     {lat: [-90, 0],   lon: [-180, 180]}
+  NH:     {lat: [0, 90],    lon: [-180, 180]}
+  CONUS:  {lat: [25, 49],   lon: [-125, -66]}
+  Europe: {lat: [35, 70],   lon: [-11, 38]}
+  Africa: {lat: [-35, 37],  lon: [-17, 52]}
+  Asia:   {lat: [0, 70],    lon: [38, 180]}
+  Global: {lat: [-90, 90],  lon: [-180, 180]}
+
+# Map grid: 72 x 144 (2.5 degree, negative longitudes), matching the stat
+# files' griddedBins ("regular grid binning" in the same config).
+grid:
+  lat: [-90, 90, 2.5]       # start, stop, step
+  lon: [-180, 180, 2.5]
