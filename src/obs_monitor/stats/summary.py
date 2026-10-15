@@ -52,7 +52,7 @@ from typing import Mapping, Sequence
 import numpy as np
 import xarray as xr
 
-from .regions import Domain, Grid
+from obs_monitor.stats.regions import Domain, Grid
 
 #: QC classes, in output order.
 QC_CLASSES: tuple[str, ...] = ("all", "assimilated", "monitored", "rejected")
@@ -60,7 +60,7 @@ QC_CLASSES: tuple[str, ...] = ("all", "assimilated", "monitored", "rejected")
 QC_PASS = 0
 QC_PASSIVE = 1
 
-#: Fields summarised, and the QC field each is classified by (first one present wins).
+#: Fields summarized, and the QC field each is classified by (first one present wins).
 FIELD_QC: dict[str, tuple[str, ...]] = {
     "ombg": ("qc_bg",),
     "oman": ("qc_an", "qc_bg"),
