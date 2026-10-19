@@ -2,7 +2,7 @@
 obs_monitor.plotting.naming
 ===========================
 
-Figure file names. **These are the website contract**: the web pages link to
+Figure file names. These are the website contract: the web pages link to
 PNGs by name, so any change here breaks the site. ``tests/plotting/test_naming.py``
 pins the exact names for every obs space currently on the site.
 

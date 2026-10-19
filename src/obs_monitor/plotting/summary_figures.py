@@ -2,7 +2,7 @@
 obs_monitor.plotting.summary_figures
 ====================================
 
-Figures from **summaries** (``obs_monitor.stats``), the replacement for the
+Figures from summaries (``obs_monitor.stats``), the replacement for the
 stat-file path in ``dispatcher.py`` / ``reader.py`` / ``transforms.py``.
 
 ::
@@ -21,7 +21,7 @@ PNG names don't change.
 Differences from the stat-file figures
 --------------------------------------
 * Missing cycles are NaN in the summary, so time series show a **gap** (no stub files).
-* The map is the **count-weighted** mean over the window (every assimilated ob
+* The map is the count-weighted mean over the window (every assimilated ob
   counts once), instead of the unweighted mean of per-cycle cell means.
 * Map colour limits default to symmetric about zero for means.
 * A figure that fails is logged and recorded in ``result.failed``; the others
