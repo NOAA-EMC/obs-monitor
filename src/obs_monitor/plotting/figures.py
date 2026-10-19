@@ -356,7 +356,7 @@ class MapGriddedFigure(FigureBase):
                 list(self.ds.data_vars),
             )
             return []
- 
+
         if "latitude" not in self.ds.coords or "longitude" not in self.ds.coords:
             logger.error(
                 "Dataset is missing 'latitude' or 'longitude' coordinates. "
