@@ -51,19 +51,11 @@ from obs_monitor.io.catalog import (
     DEFAULT_TARBALL_TEMPLATE,
     ComTarballLocator,
     GlobLocator,
-    Locator
+    Locator,
 )
-from obs_monitor.io.timewindow import (
-    CycleError,
-    cycle_range,
-    trailing_window
-)
-from obs_monitor.config.obs_spaces import (
-    DEFAULT_OBS_SPACE_DIR,
-    ConfigError,
-    ObsSpaceConfig,
-    load_obs_spaces
-)
+from obs_monitor.io.timewindow import CycleError, cycle_range, trailing_window
+from obs_monitor.config.errors import ConfigError
+from obs_monitor.config.obs_spaces import DEFAULT_OBS_SPACE_DIR, ObsSpaceConfig, load_obs_spaces
 
 _TOP_KEYS = {"cycles", "source", "obs_spaces", "obs_space_config", "output_dir", "work_dir", "keep_work"}
 _REQUIRED = {"cycles", "source", "obs_spaces", "output_dir", "work_dir"}

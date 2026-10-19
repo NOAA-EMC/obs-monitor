@@ -30,7 +30,6 @@ EMCPy is a hard runtime requirement.  If it cannot be imported, a clear
 from __future__ import annotations
 
 import logging
-import re
 from abc import ABC, abstractmethod
 from datetime import datetime
 from pathlib import Path
@@ -77,39 +76,9 @@ def _domain_color(domain: str, idx: int) -> str:
     return _DOMAIN_COLORS.get(domain, _FALLBACK_COLORS[idx % len(_FALLBACK_COLORS)])
 
 
-# ---------------------------------------------------------------------------
-# Filename helpers
-# ---------------------------------------------------------------------------
-
-def _safe_stem(text: str) -> str:
-    """Replace characters that are unsafe in filenames with underscores."""
-    return re.sub(r"[^\w\-]", "_", text)
-
-
-def build_timeseries_filename(ob_type: str, variable: str, stat: str, domain: str, label: str | None = None) -> str:
-    """
-    Construct the output PNG filename for a time-series plot.
-
-    Convention: ``{ob_type}_{variable}_{stat}_{label}_{domain}_timeseries.png``
-    """
-    parts = [ob_type, variable, stat]
-    if label:
-        parts.append(label)
-    parts += [domain, "timeseries"]
-    return "_".join(_safe_stem(p) for p in parts) + ".png"
-
-
-def build_map_filename(ob_type: str, variable: str, stat: str, label: str | None = None) -> str:
-    """
-    Construct the output PNG filename for a gridded map plot.
-
-    Convention: ``{ob_type}_{variable}_{stat_{label}_map.png``
-    """
-    parts = [ob_type, variable, stat]
-    if label:
-        parts.append(label)
-    parts.append("map")
-    return "_".join(_safe_stem(p) for p in parts) + ".png"
+# Filename helpers live in naming.py (the website contract); re-exported here
+# so existing imports keep working.
+from obs_monitor.plotting.naming import build_map_filename, build_timeseries_filename  # noqa: E402,F401
 
 
 # ---------------------------------------------------------------------------
@@ -141,6 +110,7 @@ class FigureBase(ABC):
         self.variable = variable
         self.stat = stat
         self.output_dir = Path(output_dir)
+        self.failed: list[tuple[Path, str]] = []   # (path, error) for figures that could not be saved
 
     @abstractmethod
     def _render(self) -> list[tuple["plt.Figure", Path]]:
@@ -170,6 +140,7 @@ class FigureBase(ABC):
                 written.append(out_path)
             except Exception as exc:
                 logger.error("Failed to save figure '%s': %s", out_path, exc)
+                self.failed.append((out_path, f"{type(exc).__name__}: {exc}"))
             finally:
                 plt.close(mpl_fig)
 
@@ -294,6 +265,7 @@ class TimeSeriesFigure(FigureBase):
             lp.label = dom_label
             lp.color = _domain_color(dom_label, dom_idx)
             lp.linewidth = 1.5
+            lp.marker = "o"      # without a marker, a cycle between two gaps would not show
             lp.markersize = 4
 
             # Zero reference line — uses EMCPy HorizontalLine so it renders
@@ -384,7 +356,7 @@ class MapGriddedFigure(FigureBase):
                 list(self.ds.data_vars),
             )
             return []
-
+ 
         if "latitude" not in self.ds.coords or "longitude" not in self.ds.coords:
             logger.error(
                 "Dataset is missing 'latitude' or 'longitude' coordinates. "

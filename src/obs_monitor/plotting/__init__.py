@@ -44,6 +44,14 @@ Module layout
     Orchestrates the read → transform → render pipeline for one ob-type.
     Key callable: :func:`~dispatcher.dispatch_plots`.
 
+``naming``
+    Figure file names (the website contract, pinned by tests).
+
+``summary_figures``
+    Figures from ``obs_monitor.stats`` summaries instead of stat files.
+    Key callable: :func:`~summary_figures.plot_obs_space`. Replaces
+    ``reader`` / ``transforms`` / ``dispatcher`` at the switchover.
+
 Dependencies
 ------------
 * ``netCDF4`` — NetCDF I/O
@@ -90,6 +98,12 @@ from .figures import (
 from .dispatcher import dispatch_plots
 
 # ---------------------------------------------------------------------------
+# Figures from obs_monitor.stats summaries
+# ---------------------------------------------------------------------------
+from .naming import build_map_filename, build_timeseries_filename  # noqa: E402
+from .summary_figures import PlotResult, plot_obs_space  # noqa: E402
+
+# ---------------------------------------------------------------------------
 # Package metadata
 # ---------------------------------------------------------------------------
 __all__ = [
@@ -111,4 +125,10 @@ __all__ = [
     "FIGURE_REGISTRY",
     # dispatcher
     "dispatch_plots",
+    # naming
+    "build_map_filename",
+    "build_timeseries_filename",
+    # summary figures
+    "PlotResult",
+    "plot_obs_space",
 ]
