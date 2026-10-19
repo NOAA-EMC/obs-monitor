@@ -64,7 +64,7 @@ Dependencies
 # ---------------------------------------------------------------------------
 # Reader
 # ---------------------------------------------------------------------------
-from .reader import (
+from obs_monitor.plotting.reader import (
     read_group,
     read_coords,
     read_dim_labels,
@@ -73,7 +73,7 @@ from .reader import (
 # ---------------------------------------------------------------------------
 # Transforms
 # ---------------------------------------------------------------------------
-from .transforms import (
+from obs_monitor.plotting.transforms import (
     cycle_mean,
     squeeze_gridded,
     attach_coords,
@@ -84,7 +84,7 @@ from .transforms import (
 # ---------------------------------------------------------------------------
 # Figures
 # ---------------------------------------------------------------------------
-from .figures import (
+from obs_monitor.plotting.figures import (
     FigureBase,
     TimeSeriesFigure,
     MapGriddedFigure,
@@ -95,13 +95,13 @@ from .figures import (
 # ---------------------------------------------------------------------------
 # Dispatcher — primary driver entry point
 # ---------------------------------------------------------------------------
-from .dispatcher import dispatch_plots
+from obs_monitor.plotting.dispatcher import dispatch_plots
 
 # ---------------------------------------------------------------------------
 # Figures from obs_monitor.stats summaries
 # ---------------------------------------------------------------------------
-from .naming import build_map_filename, build_timeseries_filename  # noqa: E402
-from .summary_figures import PlotResult, plot_obs_space  # noqa: E402
+from obs_monitor.plotting.naming import build_map_filename, build_timeseries_filename  # noqa: E402
+from obs_monitor.plotting.summary_figures import PlotResult, plot_obs_space  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # Package metadata
