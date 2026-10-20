@@ -20,7 +20,7 @@ PNG names don't change.
 
 Differences from the stat-file figures
 --------------------------------------
-* Missing cycles are NaN in the summary, so time series show a **gap** (no stub files).
+* Missing cycles are NaN in the summary, so time series show a gap (no stub files).
 * The map is the count-weighted mean over the window (every assimilated ob
   counts once), instead of the unweighted mean of per-cycle cell means.
 * Map colour limits default to symmetric about zero for means.
@@ -90,13 +90,30 @@ def time_series_dataset(stacked: xr.Dataset, field: str, stat: str, qc: str,
 
 def gridded_dataset(stacked: xr.Dataset, field: str, stat: str, qc: str,
                     channel: int | None = None) -> xr.Dataset:
-    """
+        """
     Window-total gridded field shaped for ``MapGriddedFigure``: variable
     ``<qc>_<stat>`` on ``(binsYDim, binsXDim)`` with 2-D ``latitude`` /
     ``longitude`` coordinates (bin centres).
 
-    ``mean`` is count-weighted over all cycles; ``count`` is the total. Boxes
-    with no obs are NaN.
+    How the window mean is computed
+    -------------------------------
+    Each cycle's summary stores, per 2.5° box, a mean ``m_c`` and a count
+    ``n_c``. Since mean x count = sum, the window mean is::
+
+        mean = sum_c(m_c * n_c) / sum_c(n_c)
+
+    i.e. the mean of every ob in the box over the whole window, each ob
+    counted once. This is count-weighted: a cycle with 300 obs in a box
+    counts 300 times as much as a cycle with 1. (The old stat-file maps took
+    the unweighted mean of per-cycle means, which over-weights sparse cycles.)
+    Example: cycles with (mean, count) = (1, 1), (3, 3), (-2, 1) give
+    (1 + 9 - 2) / 5 = 1.6, not (1 + 3 - 2) / 3 = 0.67.
+
+    Missing cycles (NaN in the stacked summary) and boxes with no obs in a
+    cycle contribute nothing to either sum. Boxes with no obs in the whole
+    window are NaN (blank on the map), never 0. ``stat="count"`` returns the
+    total count ``sum_c(n_c)`` instead. ``n_cycles`` is the number of cycles
+    with any data.
     """
     gqc = stacked.attrs.get("gridded_qc", "assimilated")
     if qc != gqc:
