@@ -16,6 +16,7 @@ read them. Adding an obs type to monitoring is an entry in a YAML file under
         component: atmos
         channels: [1, 2, 3]            # optional; radiance only; default = all
         web_name: atms_n20             # optional; name used in website file names
+        figures: [...]                 # optional; replaces config/yaml/figures.yaml defaults
 
 Files are grouped by obs category (``conventional.yaml``, ``radiance.yaml``,
 ...); the grouping is for people, the loader reads every ``*.yaml`` in the
@@ -33,12 +34,11 @@ import yaml
 
 from obs_monitor.io.ioda import FIELDS
 
+from obs_monitor.config.errors import ConfigError
+from obs_monitor.config.figures import FigureSpec, parse_figure_specs
+
 #: Directory holding the obs-space YAML files shipped with obs-monitor.
 DEFAULT_OBS_SPACE_DIR = Path(__file__).parent / "yaml" / "obs_spaces"
-
-
-class ConfigError(ValueError):
-    """A configuration file or value is invalid."""
 
 
 @dataclass(frozen=True)
@@ -49,6 +49,7 @@ class ObsSpaceConfig:
     channels: tuple[int, ...] | None = None
     web_name: str | None = None
     group_map: Mapping[str, str] = field(default_factory=dict)
+    figures: tuple[FigureSpec, ...] | None = None    # None = config/yaml/figures.yaml defaults
 
     @property
     def label(self) -> str:
@@ -56,7 +57,7 @@ class ObsSpaceConfig:
         return self.web_name or self.name
 
 
-_ALLOWED_KEYS = {"component", "variables", "channels", "web_name", "group_map"}
+_ALLOWED_KEYS = {"component", "variables", "channels", "web_name", "group_map", "figures"}
 
 
 def _str_list(value: Any, where: str) -> tuple[str, ...]:
@@ -99,8 +100,10 @@ def _parse_obs_space(name: str, spec: Any, source: str) -> ObsSpaceConfig:
     if bad:
         raise ConfigError(f"{where} 'group_map' has unknown field(s) {sorted(bad)}. Known: {list(FIELDS)}")
 
+    figures = None if spec.get("figures") is None else parse_figure_specs(spec["figures"], f"{where} 'figures'")
+
     return ObsSpaceConfig(name=name, component=component, variables=variables, channels=channels,
-                          web_name=web_name, group_map=dict(group_map))
+                          web_name=web_name, group_map=dict(group_map), figures=figures)
 
 
 def load_obs_spaces(paths: str | Path | Iterable[str | Path] = DEFAULT_OBS_SPACE_DIR) -> dict[str, ObsSpaceConfig]:

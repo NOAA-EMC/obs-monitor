@@ -1,0 +1,18 @@
+# Figures made for every obs space, unless the obs space lists its own
+# `figures:` in its obs-space YAML (which then replaces this list).
+#
+# Each entry:
+#   type:    time_series | map_gridded
+#   field:   ombg (O-F) | oman (O-A) | obs
+#   stat:    time_series: count | mean | rms | std    map_gridded: mean | count
+#   qc:      all | assimilated | monitored | rejected  (map_gridded: assimilated)
+#   domains: time_series only; one PNG per domain     (default: all domains)
+# Optional: title, y_label, colorbar_label, cmap, vmin, vmax, projection, map_domain.
+#
+# This set reproduces the figures on the website today.
+ 
+defaults:
+  - {type: time_series, field: ombg, stat: mean, qc: assimilated, domains: [Global, NH, SH, CONUS]}
+  - {type: time_series, field: oman, stat: mean, qc: assimilated, domains: [Global, NH, SH, CONUS]}
+  - {type: map_gridded, field: ombg, stat: mean, qc: assimilated}
+  - {type: map_gridded, field: oman, stat: mean, qc: assimilated}
