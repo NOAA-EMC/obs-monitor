@@ -206,3 +206,13 @@ class TestPlotObsSpace:
         with patch("matplotlib.figure.Figure.savefig", side_effect=OSError("disk full")):
             r = plot_obs_space(stacked, "x", [spec], tmp_path)
         assert not r.written and len(r.failed) == 1 and "disk full" in r.failed[0][1]
+
+
+def test_single_channel_plotted_multi_channel_skipped(stacked, tmp_path):
+    spec = parse_figure_spec({"type": "time_series", "field": "ombg", "stat": "mean", "qc": "assimilated",
+                              "domains": ["Global"]}, "t")
+    one = stacked.expand_dims(channel=[4]).transpose("cycle", "channel", ...)
+    assert len(plot_obs_space(one, "x", [spec], tmp_path / "one").written) == 1
+    two = xr.concat([stacked, stacked], dim=xr.DataArray([1, 2], dims="channel", name="channel"))
+    r = plot_obs_space(two, "x", [spec], tmp_path / "two")
+    assert not r.written and r.skipped and "not implemented" in r.skipped[0][1]

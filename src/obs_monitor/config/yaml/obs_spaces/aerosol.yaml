@@ -1,0 +1,34 @@
+# Aerosol obs spaces.
+#
+# Names are the <obs_space> in diag_<obs_space>_YYYYMMDDHH.nc, confirmed
+# against ncdump -h of 2024051400 diag files. component is the COM folder
+# holding the tarball (analysis/chem/...ioda_hofx.tar.gz).
+#
+# The files have a Channel dimension of size 1; single-channel obs spaces are
+# plotted like conventional data, so file names carry no channel.
+#
+# The figures replicate the website's VIIRS set: O-A only, Global only.
+
+_aod_figures: &aod_figures
+  - {type: time_series, field: oman, stat: mean, qc: assimilated, domains: [Global]}
+  - {type: map_gridded, field: oman, stat: mean, qc: assimilated, cmap: viridis}
+
+obs_spaces:
+
+  retrieval_aod_viirs_npp:
+    component: chem
+    variables: [aerosolOpticalDepth]
+    web_name: viirs_npp           # keeps the website's PNG names
+    figures: *aod_figures
+
+  retrieval_aod_viirs_n20:
+    component: chem
+    variables: [aerosolOpticalDepth]
+    web_name: viirs_n20
+    figures: *aod_figures
+
+  retrieval_aod_viirs_n21:
+    component: chem
+    variables: [aerosolOpticalDepth]
+    web_name: viirs_n21           # new: not on the website yet
+    figures: *aod_figures

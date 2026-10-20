@@ -144,9 +144,10 @@ def load_config(path: Path) -> Dict[str, Any]:
     cfg["resources"].setdefault("server", "None")
 
     cfg.setdefault("flags", {})
-    cfg["flags"].setdefault("copy_data", False)
     cfg["flags"].setdefault("keep_data", False)
-    cfg["flags"].setdefault("create_stubs", False)
+    for retired in ("copy_data", "create_stubs"):
+        if retired in cfg["flags"]:
+            print(f"Note: flags.{retired} is no longer used and is ignored.", file=sys.stderr)
 
     # Validate/normalize fields
     try:
@@ -210,9 +211,6 @@ def main() -> None:
     comroot = Path(paths["comroot"])
     dataroot = Path(paths["dataroot"])
 
-    # Path used by your downstream driver
-    config_yaml_for_driver = obsmondir / "src/obs_monitor/driver/config.yaml"
-
     # Output XML path
     output_path = expdir / f"{pslot}_obsmon_rocoto.xml"
 
@@ -223,12 +221,12 @@ def main() -> None:
     render_kwargs = {
         "PSLOT": pslot,
         "COMPONENT": component_str,
+        "COMPONENTS": component_str.split(","),
         "HOMEobsmon": str(obsmondir),
         "COMROOT": str(comroot),
         "EXPDIR": str(expdir),
         "DATAROOT": str(dataroot),
         "RUNTIME_DIR": str(runtime_dir),
-        "CONFIG_YAML": config_yaml_for_driver,
         "SCHEDULER": str(cfg["hpc"]["scheduler"]),
         "SDATE": str(cfg["start_date"]),
         "EDATE": str(cfg["end_date"]),
@@ -250,9 +248,7 @@ def main() -> None:
         "SERVER_USER": str(cfg.get("resources", {}).get("server_user", "$USER")),
 
         "RUN": str(cfg["run"]),
-        "COPY_DATA": bool(cfg["flags"]["copy_data"]),
         "KEEP_DATA": bool(cfg["flags"]["keep_data"]),
-        "CREATE_STUBS": bool(cfg["flags"]["create_stubs"]),
         "CYCLES": cfg.get("cycles"),
         "PUSH_FILES": str(cfg.get("flags", {}).get("push_files", "False"))
     }

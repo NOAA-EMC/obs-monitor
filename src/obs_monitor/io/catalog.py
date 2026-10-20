@@ -5,7 +5,7 @@ obs_monitor.io.catalog
 Find the IODA diag file for each (obs space, cycle). Nothing here opens a
 diag file; that is :mod:`obs_monitor.io.ioda`'s job.
 
-A locator answers one question: for this cycle, where are the diag files
+A *locator* answers one question: for this cycle, where are the diag files
 for these obs spaces?  Two are provided:
 
 :class:`ComTarballLocator`
@@ -38,7 +38,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Iterable, Mapping, Protocol, Sequence
 
-from obs_monitor.io.timewindow import format_cycle
+from .timewindow import format_cycle
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +46,7 @@ DEFAULT_TARBALL_TEMPLATE = (
     "{comroot}/{run}.{cycle:%Y%m%d}/{cycle:%H}/analysis/{component}/"
     "{run}.t{cycle:%H}z.{component}_analysis.ioda_hofx.tar.gz"
 )
+DEFAULT_EXTRACT_DIR_TEMPLATE = "{work_dir}/{cycle:%Y%m%d%H}"
 DEFAULT_MEMBER_TEMPLATE = "diag_{obs_space}_{cycle:%Y%m%d%H}.nc"
 
 _OBS_SPACE_TOKEN = "\x00OBS_SPACE\x00"
@@ -134,8 +135,10 @@ class GlobLocator:
 class ComTarballLocator:
     """
     Diag files inside per-cycle COM tarballs. Requested members are extracted
-    to ``{work_dir}/{YYYYMMDDHH}/<member name>``; an already-extracted file of
-    the same size is reused, so re-running a cycle does not re-extract.
+    to ``extract_dir_template`` (default ``{work_dir}/{YYYYMMDDHH}/``); an
+    already-extracted file of the same size is reused, so re-running a cycle
+    does not re-extract. ``extract_dir_template`` may use ``{work_dir}``,
+    ``{run}``, ``{component}`` and ``{cycle:...}``.
 
     The tarball is read as a stream (gzip can't seek), so all members needed
     for a cycle are extracted in a single pass.
@@ -149,6 +152,7 @@ class ComTarballLocator:
         run: str = "gdas",
         tarball_template: str = DEFAULT_TARBALL_TEMPLATE,
         member_template: str = DEFAULT_MEMBER_TEMPLATE,
+        extract_dir_template: str = DEFAULT_EXTRACT_DIR_TEMPLATE,
     ) -> None:
         self.comroot = Path(comroot)
         self.work_dir = Path(work_dir)
@@ -163,6 +167,12 @@ class ComTarballLocator:
         self.run = run
         self.tarball_template = tarball_template
         self.member_template = member_template
+        _check_template(extract_dir_template, ["cycle"])
+        self.extract_dir_template = extract_dir_template
+
+    def extract_dir(self, cycle: datetime) -> Path:
+        return Path(self.extract_dir_template.format(
+            work_dir=self.work_dir, run=self.run, component=self.component, cycle=cycle))
 
     def __repr__(self) -> str:
         return f"ComTarballLocator(comroot={str(self.comroot)!r}, component={self.component!r}, run={self.run!r})"
@@ -180,7 +190,7 @@ class ComTarballLocator:
             logger.warning("No tarball for %s: %s", format_cycle(cycle), tar_path)
             return {}
 
-        out_dir = self.work_dir / format_cycle(cycle)
+        out_dir = self.extract_dir(cycle)
         member_rx = _template_regex(self.member_template, cycle)
         wanted = None if obs_spaces is None else {self._member_name(cycle, s): s for s in obs_spaces}
         found: dict[str, Path] = {}

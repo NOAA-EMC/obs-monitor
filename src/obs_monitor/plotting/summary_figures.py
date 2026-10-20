@@ -2,7 +2,7 @@
 obs_monitor.plotting.summary_figures
 ====================================
 
-Figures from summaries (``obs_monitor.stats``), the replacement for the
+Figures from **summaries** (``obs_monitor.stats``), the replacement for the
 stat-file path in ``dispatcher.py`` / ``reader.py`` / ``transforms.py``.
 
 ::
@@ -20,12 +20,14 @@ PNG names don't change.
 
 Differences from the stat-file figures
 --------------------------------------
-* Missing cycles are NaN in the summary, so time series show a gap (no stub files).
-* The map is the count-weighted mean over the window (every assimilated ob
+* Missing cycles are NaN in the summary, so time series show a **gap** (no stub files).
+* The map is the **count-weighted** mean over the window (every assimilated ob
   counts once), instead of the unweighted mean of per-cycle cell means.
 * Map colour limits default to symmetric about zero for means.
 * A figure that fails is logged and recorded in ``result.failed``; the others
   are still made.
+* A single-channel obs space (e.g. VIIRS AOD) is plotted like conventional data;
+  multi-channel figures are skipped until Phase C.
 """
 
 from __future__ import annotations
@@ -41,8 +43,8 @@ import xarray as xr
 
 from obs_monitor.config.figures import FigureSpec
 
-from obs_monitor.plotting.figures import build_figure
-from obs_monitor.plotting.naming import stat_name
+from .figures import build_figure
+from .naming import stat_name
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +105,7 @@ def gridded_dataset(stacked: xr.Dataset, field: str, stat: str, qc: str,
         mean = sum_c(m_c * n_c) / sum_c(n_c)
 
     i.e. the mean of every ob in the box over the whole window, each ob
-    counted once. This is count-weighted: a cycle with 300 obs in a box
+    counted once. This is *count-weighted*: a cycle with 300 obs in a box
     counts 300 times as much as a cycle with 1. (The old stat-file maps took
     the unweighted mean of per-cycle means, which over-weights sparse cycles.)
     Example: cycles with (mean, count) = (1, 1), (3, 3), (-2, 1) give
@@ -216,8 +218,11 @@ def plot_obs_space(
     if stacked is None:
         result.skipped += [(_describe(s), "no data in window") for s in specs]
         return result
+    if "channel" in stacked.dims and stacked.sizes["channel"] == 1:
+        # One channel (e.g. VIIRS AOD) is just one field: plot it like conventional data, same file names.
+        stacked = stacked.isel(channel=0, drop=True)
     if "channel" in stacked.dims:
-        # Radiance figures (per channel, channel x cycle heatmap) come with Phase C.
+        # Multi-channel radiance figures (per channel, channel x cycle heatmap) come with Phase C.
         result.skipped += [(_describe(s), "per-channel figures not implemented yet") for s in specs]
         return result
 

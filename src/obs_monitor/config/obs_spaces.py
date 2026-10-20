@@ -20,8 +20,10 @@ read them. Adding an obs type to monitoring is an entry in a YAML file under
 
 Files are grouped by obs category (``conventional.yaml``, ``radiance.yaml``,
 ...); the grouping is for people, the loader reads every ``*.yaml`` in the
-directory. Unknown keys are an error, so a typo (``chanels:``) fails loudly
-instead of being silently ignored.
+directory. Top-level keys starting with ``_`` are ignored, so a file can hold
+YAML anchors shared by several entries (see ``snow.yaml``). Unknown keys are
+an error, so a typo (``chanels:``) fails loudly instead of being silently
+ignored.
 """
 
 from __future__ import annotations
@@ -34,8 +36,8 @@ import yaml
 
 from obs_monitor.io.ioda import FIELDS
 
-from obs_monitor.config.errors import ConfigError
-from obs_monitor.config.figures import FigureSpec, parse_figure_specs
+from .errors import ConfigError
+from .figures import FigureSpec, parse_figure_specs
 
 #: Directory holding the obs-space YAML files shipped with obs-monitor.
 DEFAULT_OBS_SPACE_DIR = Path(__file__).parent / "yaml" / "obs_spaces"
@@ -133,8 +135,11 @@ def load_obs_spaces(paths: str | Path | Iterable[str | Path] = DEFAULT_OBS_SPACE
             doc = yaml.safe_load(f.read_text()) or {}
         except yaml.YAMLError as exc:
             raise ConfigError(f"{f}: invalid YAML: {exc}") from exc
-        if not isinstance(doc, dict) or set(doc) != {"obs_spaces"} or not isinstance(doc["obs_spaces"], dict):
-            raise ConfigError(f"{f}: must contain exactly one top-level key 'obs_spaces' holding a mapping.")
+        # Top-level keys starting with "_" only hold YAML anchors (e.g. a shared figure list) and are ignored.
+        keys = {k for k in doc if not str(k).startswith("_")} if isinstance(doc, dict) else None
+        if keys != {"obs_spaces"} or not isinstance(doc["obs_spaces"], dict):
+            raise ConfigError(f"{f}: must contain exactly one top-level key 'obs_spaces' holding a mapping "
+                              "(plus optional '_'-prefixed anchor keys).")
         for name, spec in doc["obs_spaces"].items():
             if name in out:
                 raise ConfigError(f"Obs space '{name}' is defined in both {defined_in[name]} and {f}.")

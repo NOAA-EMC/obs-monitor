@@ -1,0 +1,35 @@
+# Snow obs spaces.
+#
+# Names are the <obs_space> in diag_<obs_space>_YYYYMMDDHH.nc, confirmed
+# against ncdump -h of 2024121900 diag files. component is the COM folder
+# holding the tarball (analysis/snow/...ioda_hofx.tar.gz).
+#
+# Only totalSnowDepth is simulated (ims_snow's ObsValue also has
+# snowCoverFraction, but it has no ombg). Units in the files are mm.
+#
+# The website shows Global-only O-F/O-A figures for snow, so these replace
+# the default figure set (config/yaml/figures.yaml).
+
+_snow_figures: &snow_figures
+  - {type: time_series, field: ombg, stat: mean, qc: assimilated, domains: [Global]}
+  - {type: time_series, field: oman, stat: mean, qc: assimilated, domains: [Global]}
+  - {type: map_gridded, field: ombg, stat: mean, qc: assimilated}
+  - {type: map_gridded, field: oman, stat: mean, qc: assimilated}
+
+obs_spaces:
+
+  snocvr_snomad:
+    component: snow
+    variables: [totalSnowDepth]
+    web_name: snocvr            # replaces the stat-file "snocvr"; keeps the website's PNG names
+    figures: *snow_figures
+
+  sfcsno:
+    component: snow
+    variables: [totalSnowDepth]
+    figures: *snow_figures
+
+  ims_snow:
+    component: snow
+    variables: [totalSnowDepth]
+    figures: *snow_figures

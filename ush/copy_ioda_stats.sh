@@ -1,26 +1,35 @@
 #!/bin/bash
 
-# --------------------------------------------------------
+# --------------------------------------------------------------------------
 #  copy_ioda_stats.sh
 #
-#  Copy these files: 
+#  Stage the monitored JEDI diag files for obs-monitor (run from cron).
 #
-#     - ${RUN}.t[HH]z.${COMPONENT}.ioda_hofx_stats.tar.gz 
-#     - ${RUN}.t[HH]z.${COMPONENT}.txt
+#  For every cycle in SOURCE not yet staged in TARGET, extract only the
+#  diag_<obs_space>_YYYYMMDDHH.nc files that obs-monitor monitors (the obs
+#  spaces in src/obs_monitor/config/yaml/obs_spaces/ for COMPONENT) from
 #
-#  from SOURCE to TARGET preserving the source directory 
-#  structure.  
+#     SOURCE/${RUN}.YYYYMMDD/HH/analysis/${COMPONENT}/${RUN}.tHHz.${COMPONENT}_analysis.ioda_hofx.tar.gz
 #
-#  Only copy files that are non-zero sized and older 
-#  than 10 minutes to avoid copying partial files.
-# --------------------------------------------------------
+#  into
+#
+#     TARGET/${RUN}.YYYYMMDD/HH/analysis/${COMPONENT}/
+#
+#  and write obsmon_staged.json there when the cycle is complete (the Rocoto
+#  driver task waits on it). Tarballs modified in the last 10 minutes are left
+#  for the next run. Already-staged cycles are skipped, so it is safe to run
+#  as often as you like.
+#
+#  (Name kept from when this copied the stat-file tarballs, so existing cron
+#  entries keep working. Same options as before.)
+# --------------------------------------------------------------------------
 
 usage() {
     echo ""
     echo "Usage: $0 [ -s | --src SOURCE_DIR ] [ -t | --target TARGET_DIR ]"
     echo ""
     echo "  optional parameters:   -r | --run RUN (default is gdas)"
-    echo "                         -c | --run COMPONENT (default is atmos)"
+    echo "                         -c | --component COMPONENT (default is atmos)"
     exit 1
 }
 
@@ -29,179 +38,51 @@ TARGET=""
 RUN="gdas"
 COMPONENT="atmos"
 
-# ------------------------
-# Handle input parameters
-# ------------------------
 while [[ $# -gt 0 ]]; do
-    # --------------------------------------------------------------------
-    # If an arg contains '=', split it into two separate args ($1 and $2)
-    # --------------------------------------------------------------------
-    if [[ "$1" == "--"*=* ]]; then
-        arg="${1%%=*}"
-        val="${1#*=}"
-        shift
+    if [[ "$1" == "--"*=* ]]; then          # --opt=value -> --opt value
+        arg="${1%%=*}"; val="${1#*=}"; shift
         set -- "$arg" "$val" "$@"
     fi
-
     case $1 in
-        -s|--src)
-	    if [[ -z "$2" || "$2" == -* ]]; then
-                echo "Error: -s|--src requires a value."
-                exit 1
-            fi
-            SOURCE="$2"; shift 2 ;;
-
-	-t|--target)
-            if [[ -z "$2" || "$2" == -* ]]; then
-                echo "Error: -t|--target requires a value."
-                exit 1
-            fi
-            TARGET="$2"; shift 2 ;;
-
-        -r|--run)
-            if [[ -z "$2" || "$2" == -* ]]; then
-                echo "Error: -t|--target requires a value."
-                exit 1
-            fi
-            RUN="$2"; shift 2 ;;
-
-        -c|--component)
-            if [[ -z "$2" || "$2" == -* ]]; then
-                echo "Error: -t|--target requires a value."
-                exit 1
-            fi
-            COMPONENT="$2"; shift 2 ;;
-
-        -h|--help)
-            usage
-            ;;
-        *)
-            echo "Unknown: $1"; 
-            usage
-	    ;;
+        -s|--src)       [[ -z "${2:-}" || "$2" == -* ]] && { echo "Error: $1 requires a value."; exit 1; }
+                        SOURCE="$2"; shift 2 ;;
+        -t|--target)    [[ -z "${2:-}" || "$2" == -* ]] && { echo "Error: $1 requires a value."; exit 1; }
+                        TARGET="$2"; shift 2 ;;
+        -r|--run)       [[ -z "${2:-}" || "$2" == -* ]] && { echo "Error: $1 requires a value."; exit 1; }
+                        RUN="$2"; shift 2 ;;
+        -c|--component) [[ -z "${2:-}" || "$2" == -* ]] && { echo "Error: $1 requires a value."; exit 1; }
+                        COMPONENT="$2"; shift 2 ;;
+        -h|--help)      usage ;;
+        *)              echo "Unknown: $1"; usage ;;
     esac
 done
 
-
-# ----------------------------------------------------------
-# Confirm required parameters have been provided and parsed
-# ----------------------------------------------------------
 if [[ -z "$SOURCE" ]] || [[ -z "$TARGET" ]]; then
     echo "Error: Both --src and --target are required."
     usage
 fi
+[[ -d "$SOURCE" ]] || { echo "Source $SOURCE is not a valid directory"; exit 2; }
+[[ -d "$TARGET" ]] || { echo "Target $TARGET is not a valid directory"; exit 2; }
 
-# ------------------------------------------------
-# Perform sanity check for both source and target
-# ------------------------------------------------
-if [[ ! -d "$SOURCE" ]]; then
-   echo "Source $SOURCE is not a valid directory"
-   exit 2
+# ---------------------------------------------------------------
+# Python environment: same modules as the Rocoto jobs when the
+# module command is available (cron shells often lack it).
+# ---------------------------------------------------------------
+HOMEobsmon="${HOMEobsmon:-$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)}"
+if command -v module >/dev/null 2>&1; then
+    MACHINE="UNKNOWN"
+    source "${HOMEobsmon}/ush/detect_machine.sh"
+    module use "${HOMEobsmon}/modulefiles"
+    module load "obs-monitor/${MACHINE_ID}"
 fi
-if [[ ! -d "$TARGET" ]]; then
-   echo "Target $TARGET is not a valid directory"
-   exit 2
-fi
+export PYTHONPATH="${HOMEobsmon}/src:${PYTHONPATH:-}"
 
 echo; echo "using:"
 echo "  SOURCE    = $SOURCE"
 echo "  TARGET    = $TARGET"
 echo "  RUN       = $RUN"
-echo "  COMPONENT = $COMPONENT";echo
+echo "  COMPONENT = $COMPONENT"; echo
 
-ioda_file="${COMPONENT}_analysis.ioda_hofx_stats.tar.gz"
-atmos_file="${COMPONENT}_stats.txt"
-
-
-# ------------------------------------------------------------
-# Determine the latest cycle time in target directory
-#
-# 1. Find files matching $ioda_file
-# 2. Use sed to extract YYYYMMDD and HH from the path
-# 3. Sort and Unique to ensure each cycle is only listed once
-# ------------------------------------------------------------
-mapfile -t cycles < <(find "${TARGET}" -type f \
-    \( -name "${RUN}.t[0-9][0-9]z.${ioda_file}" \) \
-    | sed -n "s/.*${RUN}\.\([0-9]\{8\}\)\/\([0-9]\{2\}\).*/\1\2/p" \
-    | sort -u)
-
-if [[ ${#cycles[@]} -eq 0 ]]; then
-    echo "WARNING:  No cycle times found in TARGET directory. Assuming TARGET directory is new/empty"
-    LAST_TARGET_CYCLE=0
-else
-    LAST_TARGET_CYCLE="${cycles[-1]}"
-fi
-
-echo; echo "latest cycle in TARGET: $LAST_TARGET_CYCLE"; echo
-
-# -----------------------------------------------------
-# In source directory get an array of available cycles 
-# -----------------------------------------------------
-mapfile -t cycles < <(find "${SOURCE}" -type f \
-    \( -name "${RUN}.t[0-9][0-9]z.${ioda_file}" \
-    -o -name "${RUN}.t[0-9][0-9]z.${atmos_file}" \) \
-    | sed -n "s/.*${RUN}\.\([0-9]\{8\}\)\/\([0-9]\{2\}\).*/\1\2/p" \
-    | sort -u)
-
-if [[ ${#cycles[@]} -eq 0 ]]; then
-    echo "No matching files found. Check your SOURCE or file patterns."
-
-else
-    SOURCE_CYCLE_TIME=$(echo "$PATH_VAR" | sed -n 's/.*${RUN}\.\([0-9]\{8\}\)\/\([0-9]\{2\}\).*/\1\2/p')
-    echo "$SOURCE_CYCLE_TIME"
-
-fi
-
-# -------------------------------------------------------------------
-# Determine which available cycles are newer than $LAST_TARGET_CYCLE
-# -------------------------------------------------------------------
-for cycle in "${cycles[@]}"; do
-
-    if [[ ${cycle} -gt ${LAST_TARGET_CYCLE} ]]; then
-        ymd="${cycle:0:8}"
-        hh="${cycle:8:2}"
-        
-        # Define the base directory for this cycle
-        cycle_base="${RUN}.${ymd}/${hh}"
-
-	#-------------------------------------------------------------
-        # Find the specific files we want within this cycle's folder.
-	#
-        # Using 'find' inside the loop to get the FULL relative path
-	# with included checks to avoid copying zero-sized files and 
-	# those less than 10 min old.
-	#-------------------------------------------------------------
-	
-	find "${SOURCE}/${cycle_base}" -type f \( \
-            -name "${RUN}.t${hh}z.${ioda_file}" -o \
-            -name "${RUN}.t${hh}z.${atmos_file}" \
-        \) -mmin +10 -size +0c | while read -r full_src_path; do
-
-            # -------------------------------------
-            # Get the path relative to $SOURCE
-            # -------------------------------------
-            rel_file_path="${full_src_path#$SOURCE/}"
-           
-	    # ------------------------------------------------------- 
-            # Get the directory portion of the relative path
-            # e.g., ${RUN}.20260224/06/products/${COMPNONENT}/anlmon
-	    # ------------------------------------------------------- 
-            rel_dir_path=$(dirname "${rel_file_path}")
-
-	    # --------------------------------------
-            # Create the target directory structure
-	    # --------------------------------------
-            mkdir -p "${TARGET}/${rel_dir_path}"
-
-	    # --------------
-            # Copy the file
-	    # --------------
-	    echo; echo "copying files for cycle ${cycle}"
-            cp -v "${full_src_path}" "${TARGET}/${rel_file_path}"
-        done
-
-    fi
-
-done
-
-exit
+"${PYTHON:-python}" -m obs_monitor.pipelines.stage \
+    --src "$SOURCE" --target "$TARGET" --run "$RUN" --component "$COMPONENT"
+exit $?

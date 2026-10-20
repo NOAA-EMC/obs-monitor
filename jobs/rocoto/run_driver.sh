@@ -19,9 +19,8 @@ export jobid="${job}.$$"
 # Ensure the package root is importable
 export PYTHONPATH="${HOMEobsmon}/src:${PYTHONPATH:-}"
 
-# Execute the JJOB
-echo "Executing Python driver module"
-python -m obs_monitor.driver.driver "$@"
+# Run the operational pipeline (diag files -> summaries -> figures + status)
+echo "Executing obs-monitor operational pipeline"
+python -m obs_monitor.pipelines.operational "$@"
 
 exit $?
-

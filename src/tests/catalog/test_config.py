@@ -149,3 +149,46 @@ class TestRunConfig:
         assert load_run_config(f).output_dir == tmp_path / "out"
         with pytest.raises(ConfigError, match="not found"):
             load_run_config(tmp_path / "missing.yaml")
+
+
+class TestSummaryAndComponentTemplates:
+
+    def test_default_summary_path(self, tmp_path):
+        rc = RunConfig.from_dict(base(tmp_path))
+        o = rc.obs_spaces[0]
+        assert rc.summary_path(o, "stationPressure", datetime(2026, 10, 1)) == \
+            tmp_path / f"out/summaries/{o.name}/stationPressure/summary_{o.name}_stationPressure_2026100100.nc"
+
+    def test_custom_summary_template(self, tmp_path):
+        rc = RunConfig.from_dict(base(tmp_path, summary_template=str(tmp_path) +
+                                      "/{component}/s_{obs_space}_{variable}_{cycle:%Y%m%d%H}.nc"))
+        o = {x.name: x for x in rc.obs_spaces}["prepbufr_adpsfc"]
+        assert rc.summary_path(o, "v", datetime(2026, 10, 1)) == tmp_path / "atmos/s_prepbufr_adpsfc_v_2026100100.nc"
+
+    @pytest.mark.parametrize("tmpl", ["relative/{obs_space}_{variable}_{cycle:%Y}.nc", "/x/{obs_space}_{cycle:%Y}.nc"])
+    def test_bad_summary_template(self, tmp_path, tmpl):
+        with pytest.raises(ConfigError, match="summary_template"):
+            RunConfig.from_dict(base(tmp_path, summary_template=tmpl))
+
+    def test_glob_component_placeholder(self, tmp_path):
+        tmpl = str(tmp_path) + "/{component}/diag_{obs_space}_{cycle:%Y%m%d%H}.nc"
+        rc = RunConfig.from_dict(base(tmp_path, source={"type": "glob", "template": tmpl}))
+        assert rc.locators["prepbufr_adpsfc"].template == str(tmp_path) + "/atmos/diag_{obs_space}_{cycle:%Y%m%d%H}.nc"
+
+
+def test_shipped_snow_spaces():
+    spaces = load_obs_spaces()
+    for name in ("snocvr_snomad", "sfcsno", "ims_snow"):
+        o = spaces[name]
+        assert o.component == "snow" and o.variables == ("totalSnowDepth",)
+        assert [f.domains for f in o.figures if f.type == "time_series"] == [("Global",), ("Global",)]
+    assert spaces["snocvr_snomad"].label == "snocvr"
+
+
+def test_underscore_anchor_keys_ignored(tmp_path):
+    f = tmp_path / "x.yaml"
+    f.write_text("_shared: &c atmos\nobs_spaces:\n  foo: {component: *c}\n")
+    assert load_obs_spaces(f)["foo"].component == "atmos"
+    f.write_text("shared: 1\nobs_spaces:\n  foo: {component: atmos}\n")
+    with pytest.raises(ConfigError, match="exactly one top-level key"):
+        load_obs_spaces(f)
