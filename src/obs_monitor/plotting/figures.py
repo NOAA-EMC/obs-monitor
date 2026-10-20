@@ -35,7 +35,7 @@ from datetime import datetime
 from pathlib import Path
 
 import matplotlib
-matplotlib.use("Agg")  # non-interactive backend; safe for operational/HPC use
+matplotlib.use("Agg")  # non-interactive backend; safe for batch/HPC use
 import matplotlib.pyplot as plt  # noqa: E402
 import matplotlib.dates as mdates  # noqa: E402
 
@@ -78,7 +78,7 @@ def _domain_color(domain: str, idx: int) -> str:
 
 # Filename helpers live in naming.py (the website contract); re-exported here
 # so existing imports keep working.
-from obs_monitor.plotting.naming import build_map_filename, build_timeseries_filename  # noqa: E402,F401
+from .naming import build_map_filename, build_timeseries_filename  # noqa: E402,F401
 
 
 # ---------------------------------------------------------------------------

@@ -3,8 +3,8 @@ obs_monitor.pipelines.stage
 ===========================
 
 The copy step (``ush/copy_ioda_stats.sh``, run from cron): for every cycle in
-the global-workflow output that hasn't been staged yet, extract **only the
-monitored** ``diag_<obs_space>_YYYYMMDDHH.nc`` files from::
+the global-workflow output that hasn't been staged yet, extract only the
+monitored ``diag_<obs_space>_YYYYMMDDHH.nc`` files from::
 
     SOURCE/<run>.YYYYMMDD/HH/analysis/<component>/<run>.tHHz.<component>_analysis.ioda_hofx.tar.gz
 

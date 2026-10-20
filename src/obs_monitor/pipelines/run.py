@@ -3,7 +3,7 @@ obs_monitor.pipelines.run
 =========================
 
 The shared engine: one :class:`~obs_monitor.config.RunConfig` in, figures and
-a status report out. Operational (``operational.py``) and experiment runs
+a status report out. Workflow (``workflow.py``) and experiment runs
 differ only in how they build the RunConfig.
 
 For each obs space and simulated variable::

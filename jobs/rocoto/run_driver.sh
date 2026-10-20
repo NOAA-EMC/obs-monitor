@@ -19,8 +19,8 @@ export jobid="${job}.$$"
 # Ensure the package root is importable
 export PYTHONPATH="${HOMEobsmon}/src:${PYTHONPATH:-}"
 
-# Run the operational pipeline (diag files -> summaries -> figures + status)
-echo "Executing obs-monitor operational pipeline"
-python -m obs_monitor.pipelines.operational "$@"
+# Run the monitoring pipeline (diag files -> summaries -> figures + status)
+echo "Executing obs-monitor workflow pipeline"
+python -m obs_monitor.pipelines.workflow "$@"
 
 exit $?

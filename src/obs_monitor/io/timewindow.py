@@ -81,7 +81,7 @@ def cycle_range(start, end, interval_hours: int = 6) -> list[datetime]:
 def trailing_window(end, n_cycles: int, interval_hours: int = 6) -> list[datetime]:
     """
     The ``n_cycles`` cycles ending at ``end`` (inclusive), oldest first.
-    This is the operational rolling window: the current cycle plus history.
+    This is the workflow's rolling window: the current cycle plus history.
     """
     if not isinstance(n_cycles, int) or isinstance(n_cycles, bool) or n_cycles <= 0:
         raise CycleError(f"n_cycles must be a positive integer, got {n_cycles!r}.")

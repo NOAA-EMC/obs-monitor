@@ -6,8 +6,9 @@ Entry points that tie io -> stats -> plotting together.
 
 ``run``
     :func:`run_window`: the shared engine (one RunConfig in, figures + status out).
-``operational``
-    The Rocoto job: environment variables -> RunConfig per component -> run_window.
+``workflow``
+    Workflow jobs (Rocoto, later global-workflow): environment variables ->
+    RunConfig per component -> run_window.
 ``stage``
     The copy step: extract the monitored diag files from global-workflow
     tarballs into DATAROOT.

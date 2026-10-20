@@ -1,4 +1,4 @@
-"""Tests for obs_monitor.pipelines (run_window, operational, stage) and the workflow pieces around them."""
+"""Tests for obs_monitor.pipelines (run_window, workflow, stage) and the workflow pieces around them."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ from jinja2 import Environment, FileSystemLoader
 
 from obs_monitor.config import RunConfig
 from obs_monitor.pipelines import run as runmod
-from obs_monitor.pipelines import operational, stage
+from obs_monitor.pipelines import stage, workflow
 from obs_monitor.pipelines.run import STATUS_FILE, run_window
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "ioda"))
@@ -167,7 +167,7 @@ class TestRunWindow:
 
 
 # ---------------------------------------------------------------------------
-# operational
+# workflow entry point
 # ---------------------------------------------------------------------------
 
 def env(tmp_path, **over):
@@ -178,10 +178,10 @@ def env(tmp_path, **over):
     return {k: v for k, v in e.items() if v is not None}
 
 
-class TestOperational:
+class TestWorkflowEntry:
 
     def test_layout(self, tmp_path):
-        rc = operational.build_run_configs(env(tmp_path))["atmos"]
+        rc = workflow.build_run_configs(env(tmp_path))["atmos"]
         assert rc.output_dir == tmp_path / f"com/gdas.{END:%Y%m%d}/{END:%H}/atmos"
         assert rc.cycles[0] == CYCLES[0] and rc.cycles[-1] == END
         obs = {o.name: o for o in rc.obs_spaces}["prepbufr_adpsfc"]
@@ -192,24 +192,24 @@ class TestOperational:
             anlmon / f"summary_prepbufr_adpsfc_stationPressure_{END:%Y%m%d%H}.nc"
 
     def test_cdate_and_unconfigured_component(self, tmp_path):
-        cfgs = operational.build_run_configs(env(tmp_path, PDY=None, CYC=None, CDATE=f"{END:%Y%m%d%H}",
-                                                 COMPONENT="atmos, ice"))
+        cfgs = workflow.build_run_configs(env(tmp_path, PDY=None, CYC=None, CDATE=f"{END:%Y%m%d%H}",
+                                              COMPONENT="atmos, ice"))
         assert list(cfgs) == ["atmos"]
 
     @pytest.mark.parametrize("over", [{"DATAROOT": None}, {"PDY": None, "CYC": None}, {"CYCLES": "four"},
                                       {"COMROOT": "relative/com"}, {"CDATE": "2026101", "PDY": None}])
     def test_bad_environment_exits_2(self, tmp_path, over):
-        assert operational.main(env(tmp_path, **over)) == 2
+        assert workflow.main(env(tmp_path, **over)) == 2
 
     def test_exit_codes(self, tmp_path):
-        assert operational.main(env(tmp_path)) == 1                 # nothing produced
+        assert workflow.main(env(tmp_path)) == 1                 # nothing produced
         stage_diags(tmp_path / "data")
-        assert operational.main(env(tmp_path)) == 0
+        assert workflow.main(env(tmp_path)) == 0
         status = json.loads((tmp_path / f"com/gdas.{END:%Y%m%d}/{END:%H}/atmos" / STATUS_FILE).read_text())
         assert {s["obs_space"]: s["status"] for s in status["obs_spaces"]}["prepbufr_adpsfc"] == "ok"
 
     def test_nothing_configured_exits_0(self, tmp_path):
-        assert operational.main(env(tmp_path, COMPONENT="ocean")) == 0
+        assert workflow.main(env(tmp_path, COMPONENT="ocean")) == 0
 
 
 # ---------------------------------------------------------------------------
@@ -296,7 +296,7 @@ def render(**kw):
     return tpl.render(**base)
 
 
-class TestWorkflow:
+class TestRocotoFiles:
 
     def test_rocoto_single_component(self):
         xml = render()
@@ -313,7 +313,7 @@ class TestWorkflow:
 
     def test_run_driver_calls_new_pipeline(self):
         sh = (REPO / "jobs/rocoto/run_driver.sh").read_text()
-        assert "python -m obs_monitor.pipelines.operational" in sh and "obs_monitor.driver.driver" not in sh
+        assert "python -m obs_monitor.pipelines.workflow" in sh and "obs_monitor.driver.driver" not in sh
 
     def test_push_files_fails_on_rsync_error(self, tmp_path, monkeypatch):
         from obs_monitor.driver import push_files

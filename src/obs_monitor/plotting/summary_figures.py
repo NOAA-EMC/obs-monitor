@@ -105,7 +105,7 @@ def gridded_dataset(stacked: xr.Dataset, field: str, stat: str, qc: str,
         mean = sum_c(m_c * n_c) / sum_c(n_c)
 
     i.e. the mean of every ob in the box over the whole window, each ob
-    counted once. This is count-weighted: a cycle with 300 obs in a box
+    counted once. This is *count-weighted*: a cycle with 300 obs in a box
     counts 300 times as much as a cycle with 1. (The old stat-file maps took
     the unweighted mean of per-cycle means, which over-weights sparse cycles.)
     Example: cycles with (mean, count) = (1, 1), (3, 3), (-2, 1) give

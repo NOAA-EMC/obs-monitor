@@ -5,7 +5,7 @@ obs_monitor.io.catalog
 Find the IODA diag file for each (obs space, cycle). Nothing here opens a
 diag file; that is :mod:`obs_monitor.io.ioda`'s job.
 
-A locator answers one question: for this cycle, where are the diag files
+A *locator* answers one question: for this cycle, where are the diag files
 for these obs spaces?  Two are provided:
 
 :class:`ComTarballLocator`
