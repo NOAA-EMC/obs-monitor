@@ -90,7 +90,7 @@ def time_series_dataset(stacked: xr.Dataset, field: str, stat: str, qc: str,
 
 def gridded_dataset(stacked: xr.Dataset, field: str, stat: str, qc: str,
                     channel: int | None = None) -> xr.Dataset:
-        """
+    """
     Window-total gridded field shaped for ``MapGriddedFigure``: variable
     ``<qc>_<stat>`` on ``(binsYDim, binsXDim)`` with 2-D ``latitude`` /
     ``longitude`` coordinates (bin centres).
