@@ -2,7 +2,7 @@
 obs_monitor.plotting.summary_figures
 ====================================
 
-Figures from **summaries** (``obs_monitor.stats``), the replacement for the
+Figures from summaries (``obs_monitor.stats``), the replacement for the
 stat-file path in ``dispatcher.py`` / ``reader.py`` / ``transforms.py``.
 
 ::
@@ -20,8 +20,8 @@ PNG names don't change.
 
 Differences from the stat-file figures
 --------------------------------------
-* Missing cycles are NaN in the summary, so time series show a **gap** (no stub files).
-* The map is the **count-weighted** mean over the window (every assimilated ob
+* Missing cycles are NaN in the summary, so time series show a gap (no stub files).
+* The map is the count-weighted mean over the window (every assimilated ob
   counts once), instead of the unweighted mean of per-cycle cell means.
 * Map colour limits default to symmetric about zero for means.
 * A figure that fails is logged and recorded in ``result.failed``; the others
@@ -105,7 +105,7 @@ def gridded_dataset(stacked: xr.Dataset, field: str, stat: str, qc: str,
         mean = sum_c(m_c * n_c) / sum_c(n_c)
 
     i.e. the mean of every ob in the box over the whole window, each ob
-    counted once. This is *count-weighted*: a cycle with 300 obs in a box
+    counted once. This is count-weighted: a cycle with 300 obs in a box
     counts 300 times as much as a cycle with 1. (The old stat-file maps took
     the unweighted mean of per-cycle means, which over-weights sparse cycles.)
     Example: cycles with (mean, count) = (1, 1), (3, 3), (-2, 1) give
