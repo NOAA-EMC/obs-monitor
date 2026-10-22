@@ -192,3 +192,24 @@ def test_underscore_anchor_keys_ignored(tmp_path):
     f.write_text("shared: 1\nobs_spaces:\n  foo: {component: atmos}\n")
     with pytest.raises(ConfigError, match="exactly one top-level key"):
         load_obs_spaces(f)
+
+
+def test_obs_space_yaml_headers_document_every_key():
+    """Every obs-space YAML carries the same reference block, and it covers every allowed key and field."""
+    import re
+
+    from obs_monitor.config.obs_spaces import _ALLOWED_KEYS, DEFAULT_OBS_SPACE_DIR
+    from obs_monitor.io.ioda import FIELDS
+
+    blocks = {}
+    for f in sorted(DEFAULT_OBS_SPACE_DIR.glob("*.yaml")):
+        text = f.read_text()
+        m = re.search(r"^# -{20,}\n# Obs-space entry reference.*?^# -{20,}\n", text, re.S | re.M)
+        assert m, f"{f.name}: missing the obs-space entry reference block"
+        blocks[f.name] = m.group(0)
+    assert len(set(blocks.values())) == 1, "reference blocks differ between files"
+    block = next(iter(blocks.values()))
+    for key in _ALLOWED_KEYS:
+        assert re.search(rf"^#\s+{key}:", block, re.M), f"reference block doesn't document '{key}'"
+    for field in FIELDS:
+        assert re.search(rf"\b{field}\b", block), f"reference block doesn't list group_map field '{field}'"

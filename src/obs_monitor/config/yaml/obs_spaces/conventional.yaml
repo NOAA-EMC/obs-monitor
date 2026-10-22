@@ -1,11 +1,29 @@
-# Conventional obs spaces.
+# Conventional obs spaces
+# ---------------------------------------------------------------------------
+# Obs-space entry reference (the same in every file in config/yaml/obs_spaces/)
 #
-# Names are the <obs_space> in diag_<obs_space>_YYYYMMDDHH.nc, component 
-# is the COM folder holding the tarball (analysis/atmos/...ioda_hofx.tar.gz),
-# not the obs category.
+# obs_spaces:
+#   <obs_space>:              The name in diag_<obs_space>_YYYYMMDDHH.nc (required)
+#     component: atmos        Required. COM folder holding the diag tarball,
+#                             analysis/<component>/gdas.tHHz.<component>_analysis.ioda_hofx.tar.gz
+#                             (atmos, chem, snow, ...). Not the obs category.
+#     variables: [name, ...]  Optional. Simulated variables to monitor (names in the
+#                             ombg group). Omitted = every simulated variable in the file.
+#     web_name: name          Optional. Name used in figure file names, which the website
+#                             links to. Omitted = the obs-space name.
+#     group_map:              Optional. Read a field from a non-standard IODA group, for
+#       obs: ObsValue         files that don't follow the usual layout. Fields: obs, ombg,
+#                             oman, hofx_bg, hofx_an, qc_bg, qc_an, err_bg, err_an,
+#                             bias_bg, bias_an.
+#     figures: [...]          Optional. Replaces the default figure list for this obs
+#                             space. Each item is {type, field, stat, qc} plus options
+#                             (see config/yaml/figures.yaml).
 #
-# variables: omitted = every simulated variable in the file (the ombg group).
-# stationPressure matches what the stat-file pipeline monitored.
+# Any other key is an error, so a typo fails at startup instead of being ignored.
+# Top-level keys starting with "_" only hold shared YAML anchors and are ignored:
+#   _my_figures: &my_figures [...]    then in an entry:    figures: *my_figures
+# Every *.yaml file in this folder is read. The split by category is only for people.
+# ---------------------------------------------------------------------------
 
 obs_spaces:
 
