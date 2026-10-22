@@ -1,10 +1,11 @@
 """
-obs_monitor.pipelines.operational
-=================================
+obs_monitor.pipelines.workflow
+==============================
 
-The Rocoto ``obs_monitor_driver`` task (``jobs/rocoto/run_driver.sh``)::
+Entry point for workflow jobs: today the Rocoto ``obs_monitor_driver`` task
+(``jobs/rocoto/run_driver.sh``), later a global-workflow task::
 
-    python -m obs_monitor.pipelines.operational
+    python -m obs_monitor.pipelines.workflow
 
 Reads the job's environment, builds one :class:`~obs_monitor.config.RunConfig`
 per component and runs :func:`~obs_monitor.pipelines.run.run_window`. This is
@@ -49,7 +50,7 @@ from obs_monitor.io.timewindow import CycleError, parse_cycle
 
 from .run import run_window
 
-logger = logging.getLogger("obs_monitor.operational")
+logger = logging.getLogger("obs_monitor.workflow")
 
 DIAG_TEMPLATE = "{dataroot}/{run}.{{cycle:%Y%m%d}}/{{cycle:%H}}/analysis/{{component}}/" \
                 "diag_{{obs_space}}_{{cycle:%Y%m%d%H}}.nc"
@@ -110,7 +111,7 @@ def build_run_configs(env: Mapping[str, str]) -> dict[str, RunConfig]:
         }
         if extra:
             cfg["obs_space_config"] = extra
-        configs[comp] = RunConfig.from_dict(cfg, source_name=f"operational ({comp})")
+        configs[comp] = RunConfig.from_dict(cfg, source_name=f"workflow ({comp})")
     return configs
 
 
