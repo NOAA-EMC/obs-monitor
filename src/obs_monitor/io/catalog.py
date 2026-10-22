@@ -38,7 +38,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Iterable, Mapping, Protocol, Sequence
 
-from .timewindow import format_cycle
+from obs_monitor.io.timewindow import format_cycle
 
 logger = logging.getLogger(__name__)
 

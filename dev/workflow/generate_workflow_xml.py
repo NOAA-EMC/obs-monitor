@@ -145,9 +145,6 @@ def load_config(path: Path) -> Dict[str, Any]:
 
     cfg.setdefault("flags", {})
     cfg["flags"].setdefault("keep_data", False)
-    for retired in ("copy_data", "create_stubs"):
-        if retired in cfg["flags"]:
-            print(f"Note: flags.{retired} is no longer used and is ignored.", file=sys.stderr)
 
     # Validate/normalize fields
     try:

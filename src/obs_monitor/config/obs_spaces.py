@@ -36,8 +36,8 @@ import yaml
 
 from obs_monitor.io.ioda import FIELDS
 
-from .errors import ConfigError
-from .figures import FigureSpec, parse_figure_specs
+from obs_monitor.config.errors import ConfigError
+from obs_monitor.config.figures import FigureSpec, parse_figure_specs
 
 #: Directory holding the obs-space YAML files shipped with obs-monitor.
 DEFAULT_OBS_SPACE_DIR = Path(__file__).parent / "yaml" / "obs_spaces"

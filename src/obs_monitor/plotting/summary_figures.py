@@ -43,8 +43,8 @@ import xarray as xr
 
 from obs_monitor.config.figures import FigureSpec
 
-from .figures import build_figure
-from .naming import stat_name
+from obs_monitor.plotting.figures import build_figure
+from obs_monitor.plotting.naming import stat_name
 
 logger = logging.getLogger(__name__)
 
