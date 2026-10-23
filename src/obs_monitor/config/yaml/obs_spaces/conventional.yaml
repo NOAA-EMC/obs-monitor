@@ -9,6 +9,8 @@
 #                             (atmos, chem, snow, ...). Not the obs category.
 #     variables: [name, ...]  Optional. Simulated variables to monitor (names in the
 #                             ombg group). Omitted = every simulated variable in the file.
+#     channels: [1, 2, 3]     Optional, radiances only. Sensor channel numbers to read
+#                             (positive integers). Omitted = all channels.
 #     web_name: name          Optional. Name used in figure file names, which the website
 #                             links to. Omitted = the obs-space name.
 #     group_map:              Optional. Read a field from a non-standard IODA group, for

@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
 import sys
+import xml.dom.minidom
 import tarfile
 import time
 from datetime import datetime, timedelta
@@ -14,7 +16,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 from jinja2 import Environment, FileSystemLoader
 
-from obs_monitor.config import RunConfig
+from obs_monitor.config import RunConfig, load_obs_spaces
 from obs_monitor.pipelines import run as runmod
 from obs_monitor.pipelines import stage, workflow
 from obs_monitor.pipelines.run import STATUS_FILE, run_window
@@ -208,6 +210,25 @@ class TestWorkflowEntry:
         status = json.loads((tmp_path / f"com/gdas.{END:%Y%m%d}/{END:%H}/atmos" / STATUS_FILE).read_text())
         assert {s["obs_space"]: s["status"] for s in status["obs_spaces"]}["prepbufr_adpsfc"] == "ok"
 
+    def test_two_components_end_to_end(self, tmp_path):
+        """COMPONENT="atmos,snow": each component gets its own output folder and status file."""
+        stage_diags(tmp_path / "data")
+        for c in CYCLES:
+            p = tmp_path / f"data/gdas.{c:%Y%m%d}/{c:%H}/analysis/snow/diag_snocvr_snomad_{c:%Y%m%d%H}.nc"
+            p.parent.mkdir(parents=True, exist_ok=True)
+            write_snow(p, cycle=c)
+        assert workflow.main(env(tmp_path, COMPONENT="atmos,snow")) == 0
+        out = tmp_path / f"com/gdas.{END:%Y%m%d}/{END:%H}"
+        assert (out / "atmos/prepbufr_adpsfc_stationPressure_assimilated_mean_ombg_Global_timeseries.png").is_file()
+        assert (out / "snow/snocvr_totalSnowDepth_assimilated_mean_ombg_Global_timeseries.png").is_file()
+        known = load_obs_spaces()
+        for comp, expect in (("atmos", "prepbufr_adpsfc"), ("snow", "snocvr_snomad")):
+            status = json.loads((out / comp / STATUS_FILE).read_text())
+            by = {s["obs_space"]: s["status"] for s in status["obs_spaces"]}
+            assert by[expect] == "ok"
+            # each component's status lists exactly that component's obs spaces
+            assert set(by) == {n for n, o in known.items() if o.component == comp}
+
     def test_nothing_configured_exits_0(self, tmp_path):
         assert workflow.main(env(tmp_path, COMPONENT="ocean")) == 0
 
@@ -291,7 +312,7 @@ class TestStage:
 
 def render(**kw):
     tpl = Environment(loader=FileSystemLoader(str(REPO))).get_template("parm/monitor_rocoto_template.xml.j2")
-    base = dict(COMPONENTS=["atmos"], INTERVAL_HOURS=6, SDATE="202610110000", EDATE="202610120000")
+    base = dict(COMPONENT="atmos", INTERVAL_HOURS=6, SDATE="202610110000", EDATE="202610120000")
     base.update(kw)
     return tpl.render(**base)
 
@@ -306,10 +327,48 @@ class TestRocotoFiles:
             assert retired not in xml
 
     def test_rocoto_multi_component_and_interval(self):
-        xml = render(COMPONENTS=["atmos", "snow"], INTERVAL_HOURS=3)
+        xml = render(COMPONENT="atmos,snow", INTERVAL_HOURS=3)
         driver = xml.split("push_to_server")[0]
         assert "03:00:00</cycledef>" in xml
         assert "<and>" in driver and "analysis/snow/obsmon_staged.json" in driver
+
+    @pytest.mark.parametrize("component", ['"atmos, snow"', "[atmos, snow]"])
+    def test_generator_multi_component(self, tmp_path, component):
+        """dev/workflow/generate_workflow_xml.py end to end: comma string or YAML list both work."""
+        cfg = tmp_path / "wf.yaml"
+        cfg.write_text(f"""pslot: "t"
+            component: {component}
+            start_date: "202610110000"
+            end_date: "202610120000"
+            interval_hours: 6
+            cycles: 4
+            paths: {{obsmondir: "{REPO}", expdir: "{tmp_path}/exp", rundir: "{tmp_path}/run",
+            comroot: "{tmp_path}/com", dataroot: "{tmp_path}/data"}}
+            flags: {{keep_data: false, push_files: false}}
+            """)
+        r = subprocess.run([sys.executable, str(REPO / "dev/workflow/generate_workflow_xml.py"), "-y", str(cfg)],
+                           capture_output=True, text=True)
+        assert r.returncode == 0, r.stderr
+        xml_path = tmp_path / "exp/t_obsmon_rocoto.xml"
+        text = xml_path.read_text()
+        xml.dom.minidom.parse(str(xml_path))                       # well-formed
+        driver = text.split("push_to_server")[0]
+        assert "<envar><name>COMPONENT</name><value>atmos,snow</value></envar>" in driver
+        assert "<and>" in driver
+        assert "analysis/atmos/obsmon_staged.json" in driver and "analysis/snow/obsmon_staged.json" in driver
+
+    def test_generator_rejects_unknown_component(self, tmp_path):
+        cfg = tmp_path / "wf.yaml"
+        cfg.write_text(f"""pslot: "t"
+            component: "atmos,ozone"
+            start_date: "202610110000"
+            end_date: "202610120000"
+            paths: {{obsmondir: "{REPO}", expdir: "{tmp_path}/exp", rundir: "{tmp_path}/run",
+            comroot: "{tmp_path}/com", dataroot: "{tmp_path}/data"}}
+            """)
+        r = subprocess.run([sys.executable, str(REPO / "dev/workflow/generate_workflow_xml.py"), "-y", str(cfg)],
+                           capture_output=True, text=True)
+        assert r.returncode == 2 and "ozone" in r.stderr
 
     def test_run_driver_calls_new_pipeline(self):
         sh = (REPO / "jobs/rocoto/run_driver.sh").read_text()

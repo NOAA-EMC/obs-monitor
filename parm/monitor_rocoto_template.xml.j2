@@ -49,13 +49,13 @@
 
     <!-- Wait until ush/copy_ioda_stats.sh has staged this cycle's diag files for every component -->
     <dependency>
-      {%- if COMPONENTS|length > 1 %}
+      {%- if "," in COMPONENT %}
       <and>
       {%- endif %}
-      {%- for comp in COMPONENTS %}
+      {%- for comp in COMPONENT.split(",") %}
       <datadep age="00:00:30"><cyclestr>&DATAROOT;/&RUN;.@Y@m@d/@H/analysis/{{ comp }}/obsmon_staged.json</cyclestr></datadep>
       {%- endfor %}
-      {%- if COMPONENTS|length > 1 %}
+      {%- if "," in COMPONENT %}
       </and>
       {%- endif %}
     </dependency>

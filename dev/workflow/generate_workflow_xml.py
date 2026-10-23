@@ -218,7 +218,6 @@ def main() -> None:
     render_kwargs = {
         "PSLOT": pslot,
         "COMPONENT": component_str,
-        "COMPONENTS": component_str.split(","),
         "HOMEobsmon": str(obsmondir),
         "COMROOT": str(comroot),
         "EXPDIR": str(expdir),
