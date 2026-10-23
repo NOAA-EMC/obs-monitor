@@ -205,3 +205,19 @@ class TestInventory:
         loc = ComTarballLocator(com, tmp_path / "work", component="atmos")
         with pytest.raises(CatalogError, match="No locator"):
             build_inventory({"prepbufr_adpsfc": loc}, CYCLES, ["prepbufr_adpsfc", "radiance_atms_n20"])
+
+
+def test_extract_dir_template(tmp_path):
+    import tarfile as _t
+    cycle = datetime(2026, 10, 1, 0)
+    com = tmp_path / "com/gdas.20261001/00/analysis/atmos"
+    com.mkdir(parents=True)
+    f = com / "diag_prepbufr_adpsfc_2026100100.nc"
+    f.write_bytes(b"x" * 10)
+    with _t.open(com / "gdas.t00z.atmos_analysis.ioda_hofx.tar.gz", "w:gz") as tar:
+        tar.add(f, arcname=f.name)
+    f.unlink()
+    loc = ComTarballLocator(tmp_path / "com", tmp_path / "tgt", component="atmos",
+                            extract_dir_template="{work_dir}/{run}.{cycle:%Y%m%d}/{cycle:%H}/{component}")
+    found = loc.locate(cycle, ["prepbufr_adpsfc"])
+    assert found["prepbufr_adpsfc"] == tmp_path / "tgt/gdas.20261001/00/atmos/diag_prepbufr_adpsfc_2026100100.nc"

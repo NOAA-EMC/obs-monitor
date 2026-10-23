@@ -23,7 +23,5 @@ resources:
   task_mem: "4G"
 
 flags:
-  copy_data: false
   keep_data: True
-  create_stubs: True
   push_files: False

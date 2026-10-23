@@ -149,3 +149,67 @@ class TestRunConfig:
         assert load_run_config(f).output_dir == tmp_path / "out"
         with pytest.raises(ConfigError, match="not found"):
             load_run_config(tmp_path / "missing.yaml")
+
+
+class TestSummaryAndComponentTemplates:
+
+    def test_default_summary_path(self, tmp_path):
+        rc = RunConfig.from_dict(base(tmp_path))
+        o = rc.obs_spaces[0]
+        assert rc.summary_path(o, "stationPressure", datetime(2026, 10, 1)) == \
+            tmp_path / f"out/summaries/{o.name}/stationPressure/summary_{o.name}_stationPressure_2026100100.nc"
+
+    def test_custom_summary_template(self, tmp_path):
+        rc = RunConfig.from_dict(base(tmp_path, summary_template=str(tmp_path) +
+                                      "/{component}/s_{obs_space}_{variable}_{cycle:%Y%m%d%H}.nc"))
+        o = {x.name: x for x in rc.obs_spaces}["prepbufr_adpsfc"]
+        assert rc.summary_path(o, "v", datetime(2026, 10, 1)) == tmp_path / "atmos/s_prepbufr_adpsfc_v_2026100100.nc"
+
+    @pytest.mark.parametrize("tmpl", ["relative/{obs_space}_{variable}_{cycle:%Y}.nc", "/x/{obs_space}_{cycle:%Y}.nc"])
+    def test_bad_summary_template(self, tmp_path, tmpl):
+        with pytest.raises(ConfigError, match="summary_template"):
+            RunConfig.from_dict(base(tmp_path, summary_template=tmpl))
+
+    def test_glob_component_placeholder(self, tmp_path):
+        tmpl = str(tmp_path) + "/{component}/diag_{obs_space}_{cycle:%Y%m%d%H}.nc"
+        rc = RunConfig.from_dict(base(tmp_path, source={"type": "glob", "template": tmpl}))
+        assert rc.locators["prepbufr_adpsfc"].template == str(tmp_path) + "/atmos/diag_{obs_space}_{cycle:%Y%m%d%H}.nc"
+
+
+def test_shipped_snow_spaces():
+    spaces = load_obs_spaces()
+    for name in ("snocvr_snomad", "sfcsno", "ims_snow"):
+        o = spaces[name]
+        assert o.component == "snow" and o.variables == ("totalSnowDepth",)
+        assert [f.domains for f in o.figures if f.type == "time_series"] == [("Global",), ("Global",)]
+    assert spaces["snocvr_snomad"].label == "snocvr"
+
+
+def test_underscore_anchor_keys_ignored(tmp_path):
+    f = tmp_path / "x.yaml"
+    f.write_text("_shared: &c atmos\nobs_spaces:\n  foo: {component: *c}\n")
+    assert load_obs_spaces(f)["foo"].component == "atmos"
+    f.write_text("shared: 1\nobs_spaces:\n  foo: {component: atmos}\n")
+    with pytest.raises(ConfigError, match="exactly one top-level key"):
+        load_obs_spaces(f)
+
+
+def test_obs_space_yaml_headers_document_every_key():
+    """Every obs-space YAML carries the same reference block, and it covers every allowed key and field."""
+    import re
+
+    from obs_monitor.config.obs_spaces import _ALLOWED_KEYS, DEFAULT_OBS_SPACE_DIR
+    from obs_monitor.io.ioda import FIELDS
+
+    blocks = {}
+    for f in sorted(DEFAULT_OBS_SPACE_DIR.glob("*.yaml")):
+        text = f.read_text()
+        m = re.search(r"^# -{20,}\n# Obs-space entry reference.*?^# -{20,}\n", text, re.S | re.M)
+        assert m, f"{f.name}: missing the obs-space entry reference block"
+        blocks[f.name] = m.group(0)
+    assert len(set(blocks.values())) == 1, "reference blocks differ between files"
+    block = next(iter(blocks.values()))
+    for key in _ALLOWED_KEYS:
+        assert re.search(rf"^#\s+{key}:", block, re.M), f"reference block doesn't document '{key}'"
+    for field in FIELDS:
+        assert re.search(rf"\b{field}\b", block), f"reference block doesn't list group_map field '{field}'"

@@ -7,7 +7,7 @@ which obs spaces, where the diag files are, and where output goes. It is
 plain data: it never reads environment variables. Front doors build it:
 
 * experiment runs: :func:`load_run_config` from a YAML file
-* operational runs: the Rocoto/global-workflow job builds the same dict from
+* workflow runs: the Rocoto/global-workflow job builds the same dict from
   its settings and calls :meth:`RunConfig.from_dict` (later PR)
 
 Run YAML
@@ -25,13 +25,16 @@ Run YAML
       comroot: /scratch3/NCEPDEV/da/$USER/obsmon_data/prjedi
       run: gdas                   # optional, default gdas
     # source:
-    #   type: glob                # plain files on disk
+    #   type: glob                # plain files on disk; {component} optional
     #   template: /path/expt/diag_{obs_space}_{cycle:%Y%m%d%H}.nc
 
     obs_spaces: all               # or a list of names
     output_dir: /scratch3/NCEPDEV/da/$USER/obsmon_out
     work_dir: /scratch3/NCEPDEV/da/$USER/obsmon_work
     keep_work: false              # optional
+    summary_template: /path/{obs_space}/summary_{obs_space}_{variable}_{cycle:%Y%m%d%H}.nc
+                                  # optional; where per-cycle summaries are cached
+                                  # (default: <output_dir>/summaries/...); {component} optional
 
 Paths may use ``~`` and ``$VARS``; after expansion they must be absolute.
 """
@@ -57,8 +60,12 @@ from obs_monitor.io.timewindow import CycleError, cycle_range, trailing_window
 from obs_monitor.config.errors import ConfigError
 from obs_monitor.config.obs_spaces import DEFAULT_OBS_SPACE_DIR, ObsSpaceConfig, load_obs_spaces
 
-_TOP_KEYS = {"cycles", "source", "obs_spaces", "obs_space_config", "output_dir", "work_dir", "keep_work"}
+_TOP_KEYS = {"cycles", "source", "obs_spaces", "obs_space_config", "output_dir", "work_dir", "keep_work",
+             "summary_template"}
 _REQUIRED = {"cycles", "source", "obs_spaces", "output_dir", "work_dir"}
+
+DEFAULT_SUMMARY_TEMPLATE = \
+    "{output_dir}/summaries/{obs_space}/{variable}/summary_{obs_space}_{variable}_{cycle:%Y%m%d%H}.nc"
 
 
 @dataclass(frozen=True)
@@ -69,10 +76,17 @@ class RunConfig:
     output_dir: Path
     work_dir: Path
     keep_work: bool = False
+    summary_template: str = ""      # set by from_dict; see summary_path
 
     @property
     def obs_space_names(self) -> list[str]:
         return [o.name for o in self.obs_spaces]
+
+    def summary_path(self, obs_space: ObsSpaceConfig, variable: str, cycle: datetime) -> Path:
+        """Where the cached summary for (obs space, variable, cycle) lives."""
+        template = self.summary_template or DEFAULT_SUMMARY_TEMPLATE.replace("{output_dir}", str(self.output_dir))
+        return Path(template.format(obs_space=obs_space.name, variable=variable, cycle=cycle,
+                                    component=obs_space.component))
 
     @classmethod
     def from_dict(cls, cfg: Mapping[str, Any], source_name: str = "run config") -> "RunConfig":
@@ -102,8 +116,14 @@ class RunConfig:
         obs_spaces = _select_obs_spaces(cfg["obs_spaces"], known, source_name)
 
         locators = _build_locators(cfg["source"], obs_spaces, work_dir, source_name)
+
+        summary_template = ""
+        if cfg.get("summary_template") is not None:
+            summary_template = _template(cfg["summary_template"], "summary_template", source_name,
+                                         required=("{obs_space}", "{variable}", "{cycle"))
         return cls(cycles=tuple(cycles), obs_spaces=tuple(obs_spaces), locators=locators,
-                   output_dir=output_dir, work_dir=work_dir, keep_work=keep_work)
+                   output_dir=output_dir, work_dir=work_dir, keep_work=keep_work,
+                   summary_template=summary_template)
 
 
 def load_run_config(path: str | Path) -> RunConfig:
@@ -132,6 +152,14 @@ def _abs_path(value: Any, key: str, source_name: str) -> Path:
     if not p.is_absolute():
         raise ConfigError(f"{source_name}: {key} must be an absolute path, got '{value}'.")
     return p
+
+
+def _template(value: Any, key: str, source_name: str, required: tuple[str, ...]) -> str:
+    """An absolute path template containing every placeholder in ``required``; ~ and $VARS expanded."""
+    if not isinstance(value, str) or not all(r in value for r in required):
+        raise ConfigError(f"{source_name}: {key} must be a path template containing {' and '.join(required)}.")
+    _abs_path(value.split("{", 1)[0] or "x", key, source_name)
+    return os.path.expandvars(os.path.expanduser(value))
 
 
 def _parse_cycles(spec: Any, source_name: str) -> list[datetime]:
@@ -178,8 +206,10 @@ def _build_locators(spec: Any, obs_spaces: list[ObsSpaceConfig], work_dir: Path,
         if not isinstance(template, str) or "{obs_space}" not in template or "{cycle" not in template:
             raise ConfigError(f"{where} (glob) template must be a string containing {{obs_space}} and {{cycle:...}}.")
         _abs_path(template.split("{", 1)[0] or "x", "source.template", source_name)
-        loc = GlobLocator(os.path.expandvars(os.path.expanduser(template)))
-        return {o.name: loc for o in obs_spaces}
+        template = os.path.expandvars(os.path.expanduser(template))
+        # {component} is filled per obs space, so one template can cover several components
+        per_component = {c: GlobLocator(template.replace("{component}", c)) for c in {o.component for o in obs_spaces}}
+        return {o.name: per_component[o.component] for o in obs_spaces}
 
     if kind == "com":
         allowed = {"type", "comroot", "run", "tarball_template", "member_template"}
