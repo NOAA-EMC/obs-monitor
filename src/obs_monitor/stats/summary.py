@@ -34,8 +34,6 @@ field is not missing.
 * ``monitored``: ``EffectiveQC == 1`` (UFO ``passive``: computed, not assimilated).
 * ``rejected``: any other flag (``EffectiveQC > 1``).
 
-TODO(PR5): confirm these against the stat files with compare_stats.py.
-
 O-B and the observation use the background QC (``qc_bg``); O-A uses the
 final-analysis QC (``qc_an``), falling back to ``qc_bg`` when the file has a
 single iteration. These definitions live only here.

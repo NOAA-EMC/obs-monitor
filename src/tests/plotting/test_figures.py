@@ -38,7 +38,9 @@ from obs_monitor.plotting.figures import (
     build_map_filename,
 )
 
-from conftest import DOMAINS, N_DOMAINS, BINS_Y, BINS_X
+DOMAINS = ["SH", "NH", "CONUS", "Europe", "Africa", "Asia", "Global"]   # config/yaml/regions.yaml order
+N_DOMAINS = len(DOMAINS)
+BINS_Y, BINS_X = 72, 144                                              # 2.5 degree grid
 
 
 # ---------------------------------------------------------------------------
@@ -46,7 +48,7 @@ from conftest import DOMAINS, N_DOMAINS, BINS_Y, BINS_X
 # ---------------------------------------------------------------------------
 
 def _domain_ds(n_cycles: int = 4, domains: list[str] = DOMAINS) -> xr.Dataset:
-    """Minimal time-series Dataset as returned by prepare_time_series."""
+    """Minimal time-series Dataset as returned by summary_figures.time_series_dataset."""
     times = np.array(
         [np.datetime64(f"2025-11-13T{h*6:02d}:00:00", "ns") for h in range(n_cycles)]
     )
@@ -62,7 +64,7 @@ def _domain_ds(n_cycles: int = 4, domains: list[str] = DOMAINS) -> xr.Dataset:
 
 
 def _gridded_ds() -> xr.Dataset:
-    """Minimal gridded Dataset as returned by prepare_gridded."""
+    """Minimal gridded Dataset as returned by summary_figures.gridded_dataset."""
     lat_1d = np.linspace(-88.75, 88.75, BINS_Y)
     lon_1d = np.linspace(-178.75, 178.75, BINS_X)
     lon2d, lat2d = np.meshgrid(lon_1d, lat_1d)
