@@ -35,7 +35,7 @@ from datetime import datetime
 from pathlib import Path
 
 import matplotlib
-matplotlib.use("Agg")  # non-interactive backend; safe for operational/HPC use
+matplotlib.use("Agg")  # non-interactive backend; safe for batch/HPC use
 import matplotlib.pyplot as plt  # noqa: E402
 import matplotlib.dates as mdates  # noqa: E402
 

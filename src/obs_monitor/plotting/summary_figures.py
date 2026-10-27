@@ -26,6 +26,8 @@ Differences from the stat-file figures
 * Map colour limits default to symmetric about zero for means.
 * A figure that fails is logged and recorded in ``result.failed``; the others
   are still made.
+* A single-channel obs space (e.g. VIIRS AOD) is plotted like conventional data;
+  multi-channel figures are skipped until Phase C.
 """
 
 from __future__ import annotations
@@ -216,8 +218,11 @@ def plot_obs_space(
     if stacked is None:
         result.skipped += [(_describe(s), "no data in window") for s in specs]
         return result
+    if "channel" in stacked.dims and stacked.sizes["channel"] == 1:
+        # One channel (e.g. VIIRS AOD) is just one field: plot it like conventional data, same file names.
+        stacked = stacked.isel(channel=0, drop=True)
     if "channel" in stacked.dims:
-        # Radiance figures (per channel, channel x cycle heatmap) come with Phase C.
+        # Multi-channel radiance figures (per channel, channel x cycle heatmap) come with Phase C.
         result.skipped += [(_describe(s), "per-channel figures not implemented yet") for s in specs]
         return result
 

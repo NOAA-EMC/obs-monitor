@@ -240,3 +240,90 @@ def write_atms(
                   np.zeros((n, n_channels), dtype=np.int32))
 
     return dict(lat=lat, lon=lon, times=times, n=n, channels=chans, pattern=pattern, cycle=cycle)
+
+
+# ---------------------------------------------------------------------------
+# Snow (from ncdump -h of diag_ims_snow / diag_snocvr_snomad / diag_sfcsno, 2024121900)
+# ---------------------------------------------------------------------------
+
+def write_snow(path: Path, cycle: datetime = datetime(2024, 12, 19, 0), n: int = 50, ims: bool = False,
+               seed: int = 0) -> dict:
+    """
+    Snow diag file. ``ims=True`` mirrors ``diag_ims_snow``: ``dateTime`` counted from the
+    *cycle* (not 1970), and ``ObsValue``/``EffectiveQC`` also carry ``snowCoverFraction``,
+    which is not simulated (no ``ombg``). Otherwise mirrors ``diag_snocvr_snomad`` / ``diag_sfcsno``.
+    """
+    rng = np.random.default_rng(seed)
+    lat = rng.uniform(20, 70, n).astype(np.float32)
+    lon = rng.uniform(-180, 180, n).astype(np.float32)
+    offsets = rng.integers(-3 * 3600, 3 * 3600, n).astype(np.int64)
+    epoch = cycle if ims else datetime(1970, 1, 1)
+    secs = offsets + int((cycle - epoch).total_seconds())
+    depth = rng.uniform(0, 500, n).astype(np.float32)
+    ombg = rng.normal(0, 20, n).astype(np.float32)
+    qc = rng.choice([0, 0, 0, 12, 19], n).astype(np.int32)
+    vars_obs = ["snowCoverFraction", "totalSnowDepth"] if ims else ["totalSnowDepth"]
+    with nc4.Dataset(path, "w") as ds:
+        ds.createDimension("Location", None)
+        ds.setncattr("_ioda_layout", "ObsGroup")
+        ds.setncattr("_ioda_layout_version", 0)
+        meta = ds.createGroup("MetaData")
+        for name, data in (("latitude", lat), ("longitude", lon)):
+            v = meta.createVariable(name, "f4", ("Location",), fill_value=FLOAT_FILL)
+            v[:] = data
+        t = meta.createVariable("dateTime", "i8", ("Location",), fill_value=INT64_FILL)
+        t.units = f"seconds since {epoch:%Y-%m-%dT%H:%M:%SZ}"
+        t[:] = secs
+        ov = ds.createGroup("ObsValue")
+        for name in vars_obs:
+            v = ov.createVariable(name, "f4", ("Location",), fill_value=FLOAT_FILL)
+            v.units = "mm" if name == "totalSnowDepth" else "1"
+            v[:] = depth if name == "totalSnowDepth" else rng.uniform(0, 1, n).astype(np.float32)
+        for g in ("ombg", "oman", "hofx0", "hofx1", "ObsBias0", "ObsBias1"):
+            v = ds.createGroup(g).createVariable("totalSnowDepth", "f4", ("Location",), fill_value=FLOAT_FILL)
+            v[:] = ombg if g in ("ombg", "oman") else depth - ombg
+        for g in ("EffectiveQC0", "EffectiveQC1"):
+            grp = ds.createGroup(g)
+            for name in vars_obs:
+                v = grp.createVariable(name, "i4", ("Location",), fill_value=INT_FILL)
+                v[:] = qc
+    return {"n": n, "offsets": offsets, "ombg": ombg, "qc": qc}
+
+
+# ---------------------------------------------------------------------------
+# VIIRS AOD (from ncdump -h of diag_retrieval_aod_viirs_{n20,n21,npp}_2024051400)
+# ---------------------------------------------------------------------------
+
+def write_aod(path: Path, cycle: datetime = datetime(2024, 5, 14, 0), n: int = 60, channel: int = 4,
+              seed: int = 0) -> dict:
+    """VIIRS AOD retrieval diag: dims (Location, Channel=1); no units attribute on ObsValue."""
+    rng = np.random.default_rng(seed)
+    lat = rng.uniform(-60, 60, n).astype(np.float32)
+    lon = rng.uniform(-180, 180, n).astype(np.float32)
+    secs = rng.integers(-3 * 3600, 3 * 3600, n).astype(np.int64) + int((cycle - datetime(1970, 1, 1)).total_seconds())
+    aod = rng.uniform(0, 1, (n, 1)).astype(np.float32)
+    omb = rng.normal(0, 0.1, (n, 1)).astype(np.float32)
+    qc = rng.choice([0, 0, 1, 12], (n, 1)).astype(np.int32)
+    with nc4.Dataset(path, "w") as ds:
+        ds.createDimension("Channel", 1)
+        ds.createDimension("Location", None)
+        c = ds.createVariable("Channel", "i4", ("Channel",), fill_value=INT_FILL)
+        c[:] = [channel]
+        ds.setncattr("_ioda_layout", "ObsGroup")
+        ds.setncattr("_ioda_layout_version", 0)
+        meta = ds.createGroup("MetaData")
+        t = meta.createVariable("dateTime", "i8", ("Location",), fill_value=INT64_FILL)
+        t.units = TIME_UNITS
+        t[:] = secs
+        for name, data in (("latitude", lat), ("longitude", lon)):
+            v = meta.createVariable(name, "f4", ("Location",), fill_value=FLOAT_FILL)
+            v[:] = data
+        dims = ("Location", "Channel")
+        for g in ("ObsValue", "ObsError", "ombg", "oman", "hofx0", "hofx1", "ObsBias0", "ObsBias1",
+                  "EffectiveError0", "EffectiveError1"):
+            v = ds.createGroup(g).createVariable("aerosolOpticalDepth", "f4", dims, fill_value=FLOAT_FILL)
+            v[:] = aod if g == "ObsValue" else omb if g in ("ombg", "oman") else aod - omb
+        for g in ("EffectiveQC0", "EffectiveQC1", "PreQC"):
+            v = ds.createGroup(g).createVariable("aerosolOpticalDepth", "i4", dims, fill_value=INT_FILL)
+            v[:] = qc if g != "PreQC" else np.zeros_like(qc)
+    return {"n": n, "qc": qc[:, 0], "channel": channel}
