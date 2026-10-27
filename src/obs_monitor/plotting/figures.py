@@ -20,8 +20,9 @@ Both classes share a common interface::
     fig.save()          # writes a PNG; returns the Path
 
 Neither class mutates the Dataset it receives.  All domain filtering,
-title formatting, and output path construction happen here; the dispatcher
-passes fully-prepared Datasets and receives back output Paths.
+title formatting, and output path construction happen here;
+:mod:`~obs_monitor.plotting.summary_figures` passes fully-prepared Datasets
+and receives back output Paths.
 
 EMCPy is a hard runtime requirement.  If it cannot be imported, a clear
 ``ImportError`` is raised at module load time rather than at first use.
@@ -165,7 +166,7 @@ class TimeSeriesFigure(FigureBase):
     Parameters
     ----------
     ds:
-        Dataset from :func:`~obs_monitor.plotting.transforms.prepare_time_series`.
+        Dataset from :func:`~obs_monitor.plotting.summary_figures.time_series_dataset`.
         Expected shape of each variable: ``(analysisCycle, dim_0)``.
     spec:
         Figure spec dict from the job config.  Recognised keys:
@@ -322,7 +323,7 @@ class MapGriddedFigure(FigureBase):
     Parameters
     ----------
     ds:
-        Dataset from :func:`~obs_monitor.plotting.transforms.prepare_gridded`.
+        Dataset from :func:`~obs_monitor.plotting.summary_figures.gridded_dataset`.
         Each variable should have shape ``(binsYDim, binsXDim)`` with
         ``latitude`` and ``longitude`` attached as coordinates.
     spec:
@@ -360,7 +361,7 @@ class MapGriddedFigure(FigureBase):
         if "latitude" not in self.ds.coords or "longitude" not in self.ds.coords:
             logger.error(
                 "Dataset is missing 'latitude' or 'longitude' coordinates. "
-                "Was prepare_gridded() called?  Skipping MapGriddedFigure."
+                "Expected gridded_dataset() output.  Skipping MapGriddedFigure."
             )
             return []
 
@@ -422,7 +423,7 @@ class MapGriddedFigure(FigureBase):
 # ---------------------------------------------------------------------------
 
 #: Maps the ``type`` field in a figure spec to the corresponding class.
-#: Extend this dict to register new figure types without changing dispatcher.py.
+#: Extend this dict to register new figure types without changing summary_figures.py.
 FIGURE_REGISTRY: dict[str, type[FigureBase]] = {
     "time_series": TimeSeriesFigure,
     "map_gridded": MapGriddedFigure,
@@ -448,8 +449,8 @@ def build_figure(
         String key from the job config, e.g. ``"time_series"`` or
         ``"map_gridded"``.
     ds:
-        Prepared Dataset (output of the appropriate ``transforms.prepare_*``
-        function).
+        Prepared Dataset (from ``summary_figures.time_series_dataset`` or
+        ``summary_figures.gridded_dataset``).
     spec:
         Full figure spec dict from the job config.
     ob_type, variable, stat:

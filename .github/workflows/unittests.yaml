@@ -70,7 +70,6 @@ jobs:
         MPLBACKEND: Agg  # non-interactive matplotlib backend; required in CI
       run: |
         cd obs-monitor
-        $CONDA/bin/python -m pytest src/tests/plotting/ src/tests/driver/ -v --tb=short \
-          --cov=obs_monitor.plotting \
-          --cov=obs_monitor.driver \
+        $CONDA/bin/python -m pytest src/tests/ -v --tb=short \
+          --cov=obs_monitor \
           --cov-report=term-missing
