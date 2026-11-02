@@ -2,8 +2,7 @@
 obs_monitor.plotting.summary_figures
 ====================================
 
-Figures from summaries (``obs_monitor.stats``), the replacement for the
-stat-file path in ``dispatcher.py`` / ``reader.py`` / ``transforms.py``.
+Figures from summaries (``obs_monitor.stats``).
 
 ::
 
@@ -11,7 +10,7 @@ stat-file path in ``dispatcher.py`` / ``reader.py`` / ``transforms.py``.
     result = plot_obs_space(stacked, "prepbufr_adpsfc", specs, output_dir)
     result.written, result.failed
 
-The rendering itself is unchanged: :func:`time_series_dataset` and
+The rendering is the same as for the old stat files: :func:`time_series_dataset` and
 :func:`gridded_dataset` reshape a stacked summary into exactly what
 :class:`~obs_monitor.plotting.figures.TimeSeriesFigure` and
 :class:`~obs_monitor.plotting.figures.MapGriddedFigure` already take, and the

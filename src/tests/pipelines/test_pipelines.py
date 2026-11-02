@@ -8,6 +8,7 @@ import subprocess
 import sys
 import xml.dom.minidom
 import tarfile
+import textwrap
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -336,7 +337,8 @@ class TestRocotoFiles:
     def test_generator_multi_component(self, tmp_path, component):
         """dev/workflow/generate_workflow_xml.py end to end: comma string or YAML list both work."""
         cfg = tmp_path / "wf.yaml"
-        cfg.write_text(f"""pslot: "t"
+        cfg.write_text(textwrap.dedent(f"""\
+            pslot: "t"
             component: {component}
             start_date: "202610110000"
             end_date: "202610120000"
@@ -345,7 +347,7 @@ class TestRocotoFiles:
             paths: {{obsmondir: "{REPO}", expdir: "{tmp_path}/exp", rundir: "{tmp_path}/run",
             comroot: "{tmp_path}/com", dataroot: "{tmp_path}/data"}}
             flags: {{keep_data: false, push_files: false}}
-            """)
+            """))
         r = subprocess.run([sys.executable, str(REPO / "dev/workflow/generate_workflow_xml.py"), "-y", str(cfg)],
                            capture_output=True, text=True)
         assert r.returncode == 0, r.stderr
@@ -359,13 +361,14 @@ class TestRocotoFiles:
 
     def test_generator_rejects_unknown_component(self, tmp_path):
         cfg = tmp_path / "wf.yaml"
-        cfg.write_text(f"""pslot: "t"
+        cfg.write_text(textwrap.dedent(f"""\
+            pslot: "t"
             component: "atmos,ozone"
             start_date: "202610110000"
             end_date: "202610120000"
             paths: {{obsmondir: "{REPO}", expdir: "{tmp_path}/exp", rundir: "{tmp_path}/run",
             comroot: "{tmp_path}/com", dataroot: "{tmp_path}/data"}}
-            """)
+            """))
         r = subprocess.run([sys.executable, str(REPO / "dev/workflow/generate_workflow_xml.py"), "-y", str(cfg)],
                            capture_output=True, text=True)
         assert r.returncode == 2 and "ozone" in r.stderr
