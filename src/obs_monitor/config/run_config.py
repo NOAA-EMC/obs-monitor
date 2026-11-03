@@ -6,9 +6,10 @@ obs_monitor.config.run_config
 which obs spaces, where the diag files are, and where output goes. It is
 plain data: it never reads environment variables. Front doors build it:
 
-* experiment runs: :func:`load_run_config` from a YAML file
-* workflow runs: the Rocoto/global-workflow job builds the same dict from
-  its settings and calls :meth:`RunConfig.from_dict` (later PR)
+* experiment runs (``pipelines/experiment.py``): command-line options, or
+  :func:`load_run_config` from a YAML file (``--config``)
+* workflow runs (``pipelines/workflow.py``): the Rocoto job's environment
+  variables, turned into the same dict and passed to :meth:`RunConfig.from_dict`
 
 Run YAML
 --------
