@@ -87,6 +87,9 @@ def main():
 
     main_logger.info(f"Output: {result.stdout}")
     main_logger.info(f"Return Code: {result.returncode}")  # 0 means success
+    if result.returncode != 0:
+        main_logger.error(f"rsync failed: {result.stderr}")
+        raise SystemExit(result.returncode)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,52 @@
+# Snow obs spaces
+# ---------------------------------------------------------------------------
+# Obs-space entry reference (the same in every file in config/yaml/obs_spaces/)
+#
+# obs_spaces:
+#   <obs_space>:              The name in diag_<obs_space>_YYYYMMDDHH.nc (required)
+#     component: atmos        Required. COM folder holding the diag tarball,
+#                             analysis/<component>/gdas.tHHz.<component>_analysis.ioda_hofx.tar.gz
+#                             (atmos, chem, snow, ...). Not the obs category.
+#     variables: [name, ...]  Optional. Simulated variables to monitor (names in the
+#                             ombg group). Omitted = every simulated variable in the file.
+#     channels: [1, 2, 3]     Optional, radiances only. Sensor channel numbers to read
+#                             (positive integers). Omitted = all channels.
+#     web_name: name          Optional. Name used in figure file names, which the website
+#                             links to. Omitted = the obs-space name.
+#     group_map:              Optional. Read a field from a non-standard IODA group, for
+#       obs: ObsValue         files that don't follow the usual layout. Fields: obs, ombg,
+#                             oman, hofx_bg, hofx_an, qc_bg, qc_an, err_bg, err_an,
+#                             bias_bg, bias_an.
+#     figures: [...]          Optional. Replaces the default figure list for this obs
+#                             space. Each item is {type, field, stat, qc} plus options
+#                             (see config/yaml/figures.yaml).
+#
+# Any other key is an error, so a typo fails at startup instead of being ignored.
+# Top-level keys starting with "_" only hold shared YAML anchors and are ignored:
+#   _my_figures: &my_figures [...]    then in an entry:    figures: *my_figures
+# Every *.yaml file in this folder is read. The split by category is only for people.
+# ---------------------------------------------------------------------------
+
+_snow_figures: &snow_figures
+  - {type: time_series, field: ombg, stat: mean, qc: assimilated, domains: [Global]}
+  - {type: time_series, field: oman, stat: mean, qc: assimilated, domains: [Global]}
+  - {type: map_gridded, field: ombg, stat: mean, qc: assimilated}
+  - {type: map_gridded, field: oman, stat: mean, qc: assimilated}
+
+obs_spaces:
+
+  snocvr_snomad:
+    component: snow
+    variables: [totalSnowDepth]
+    web_name: snocvr            # replaces the stat-file "snocvr", keeps the website's PNG names
+    figures: *snow_figures
+
+  sfcsno:
+    component: snow
+    variables: [totalSnowDepth]
+    figures: *snow_figures
+
+  ims_snow:
+    component: snow
+    variables: [totalSnowDepth]
+    figures: *snow_figures

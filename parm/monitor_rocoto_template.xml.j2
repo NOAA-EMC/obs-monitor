@@ -14,7 +14,7 @@
 
   <log verbosity="10"><cyclestr>{{ COMROOT }}/{{ PSLOT }}/logs/@Y@m@d@H.log</cyclestr></log>
 
-  <cycledef group="obsmon">{{ SDATE }} {{ EDATE }} 06:00:00</cycledef>
+  <cycledef group="obsmon">{{ SDATE }} {{ EDATE }} {{ "%02d:00:00" % INTERVAL_HOURS }}</cycledef>
 
   <task name="obs_monitor_driver" cycledefs="obsmon" maxtries="&MAXTRIES;">
     <command>&HOMEobsmon;/jobs/rocoto/run_driver.sh</command>
@@ -39,22 +39,26 @@
     <envar><name>EXPDIR</name><value>{{ EXPDIR }}</value></envar>
     <envar><name>DATAROOT</name><value>{{ DATAROOT }}</value></envar>
     <envar><name>RUNTIME_DIR</name><value>{{ RUNTIME_DIR }}</value></envar>
-    <envar><name>CONFIG_YAML</name><value>{{ CONFIG_YAML }}</value></envar>
     <envar><name>INTERVAL_HOURS</name><value>{{ INTERVAL_HOURS }}</value></envar>
     <envar><name>CYCLES</name><value>{{ CYCLES }}</value></envar>
     <envar><name>RUN</name><value>{{ RUN }}</value></envar>
     <envar><name>CDATE</name><value><cyclestr>@Y@m@d@H</cyclestr></value></envar>
     <envar><name>PDY</name><value><cyclestr>@Y@m@d</cyclestr></value></envar>
     <envar><name>CYC</name><value><cyclestr>@H</cyclestr></value></envar>
-    <envar><name>COPY_DATA</name><value>{{ COPY_DATA }}</value></envar>
     <envar><name>KEEP_DATA</name><value>{{ KEEP_DATA }}</value></envar>
-    <envar><name>CREATE_STUBS</name><value>{{ CREATE_STUBS }}</value></envar>
 
+    <!-- Wait until ush/copy_ioda_stats.sh has staged this cycle's diag files for every component -->
     <dependency>
-    <datadep age="00:10:00" minsize="1K">
-	<cyclestr>&DATAROOT;/&RUN;.@Y@m@d/@H/products/&COMPONENT;/anlmon/&RUN;.t@Hz.&COMPONENT;_stats.txt</cyclestr>
-    </datadep>
-  </dependency>
+      {%- if "," in COMPONENT %}
+      <and>
+      {%- endif %}
+      {%- for comp in COMPONENT.split(",") %}
+      <datadep age="00:00:30"><cyclestr>&DATAROOT;/&RUN;.@Y@m@d/@H/analysis/{{ comp }}/obsmon_staged.json</cyclestr></datadep>
+      {%- endfor %}
+      {%- if "," in COMPONENT %}
+      </and>
+      {%- endif %}
+    </dependency>
     
   </task>
 

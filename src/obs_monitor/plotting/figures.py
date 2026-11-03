@@ -20,8 +20,9 @@ Both classes share a common interface::
     fig.save()          # writes a PNG; returns the Path
 
 Neither class mutates the Dataset it receives.  All domain filtering,
-title formatting, and output path construction happen here; the dispatcher
-passes fully-prepared Datasets and receives back output Paths.
+title formatting, and output path construction happen here;
+:mod:`~obs_monitor.plotting.summary_figures` passes fully-prepared Datasets
+and receives back output Paths.
 
 EMCPy is a hard runtime requirement.  If it cannot be imported, a clear
 ``ImportError`` is raised at module load time rather than at first use.
@@ -30,13 +31,12 @@ EMCPy is a hard runtime requirement.  If it cannot be imported, a clear
 from __future__ import annotations
 
 import logging
-import re
 from abc import ABC, abstractmethod
 from datetime import datetime
 from pathlib import Path
 
 import matplotlib
-matplotlib.use("Agg")  # non-interactive backend; safe for operational/HPC use
+matplotlib.use("Agg")  # non-interactive backend; safe for batch/HPC use
 import matplotlib.pyplot as plt  # noqa: E402
 import matplotlib.dates as mdates  # noqa: E402
 
@@ -77,39 +77,9 @@ def _domain_color(domain: str, idx: int) -> str:
     return _DOMAIN_COLORS.get(domain, _FALLBACK_COLORS[idx % len(_FALLBACK_COLORS)])
 
 
-# ---------------------------------------------------------------------------
-# Filename helpers
-# ---------------------------------------------------------------------------
-
-def _safe_stem(text: str) -> str:
-    """Replace characters that are unsafe in filenames with underscores."""
-    return re.sub(r"[^\w\-]", "_", text)
-
-
-def build_timeseries_filename(ob_type: str, variable: str, stat: str, domain: str, label: str | None = None) -> str:
-    """
-    Construct the output PNG filename for a time-series plot.
-
-    Convention: ``{ob_type}_{variable}_{stat}_{label}_{domain}_timeseries.png``
-    """
-    parts = [ob_type, variable, stat]
-    if label:
-        parts.append(label)
-    parts += [domain, "timeseries"]
-    return "_".join(_safe_stem(p) for p in parts) + ".png"
-
-
-def build_map_filename(ob_type: str, variable: str, stat: str, label: str | None = None) -> str:
-    """
-    Construct the output PNG filename for a gridded map plot.
-
-    Convention: ``{ob_type}_{variable}_{stat_{label}_map.png``
-    """
-    parts = [ob_type, variable, stat]
-    if label:
-        parts.append(label)
-    parts.append("map")
-    return "_".join(_safe_stem(p) for p in parts) + ".png"
+# Filename helpers live in naming.py (the website contract); re-exported here
+# so existing imports keep working.
+from obs_monitor.plotting.naming import build_map_filename, build_timeseries_filename  # noqa: E402,F401
 
 
 # ---------------------------------------------------------------------------
@@ -141,6 +111,7 @@ class FigureBase(ABC):
         self.variable = variable
         self.stat = stat
         self.output_dir = Path(output_dir)
+        self.failed: list[tuple[Path, str]] = []   # (path, error) for figures that could not be saved
 
     @abstractmethod
     def _render(self) -> list[tuple["plt.Figure", Path]]:
@@ -170,6 +141,7 @@ class FigureBase(ABC):
                 written.append(out_path)
             except Exception as exc:
                 logger.error("Failed to save figure '%s': %s", out_path, exc)
+                self.failed.append((out_path, f"{type(exc).__name__}: {exc}"))
             finally:
                 plt.close(mpl_fig)
 
@@ -194,7 +166,7 @@ class TimeSeriesFigure(FigureBase):
     Parameters
     ----------
     ds:
-        Dataset from :func:`~obs_monitor.plotting.transforms.prepare_time_series`.
+        Dataset from :func:`~obs_monitor.plotting.summary_figures.time_series_dataset`.
         Expected shape of each variable: ``(analysisCycle, dim_0)``.
     spec:
         Figure spec dict from the job config.  Recognised keys:
@@ -294,6 +266,7 @@ class TimeSeriesFigure(FigureBase):
             lp.label = dom_label
             lp.color = _domain_color(dom_label, dom_idx)
             lp.linewidth = 1.5
+            lp.marker = "o"      # without a marker, a cycle between two gaps would not show
             lp.markersize = 4
 
             # Zero reference line — uses EMCPy HorizontalLine so it renders
@@ -350,7 +323,7 @@ class MapGriddedFigure(FigureBase):
     Parameters
     ----------
     ds:
-        Dataset from :func:`~obs_monitor.plotting.transforms.prepare_gridded`.
+        Dataset from :func:`~obs_monitor.plotting.summary_figures.gridded_dataset`.
         Each variable should have shape ``(binsYDim, binsXDim)`` with
         ``latitude`` and ``longitude`` attached as coordinates.
     spec:
@@ -388,7 +361,7 @@ class MapGriddedFigure(FigureBase):
         if "latitude" not in self.ds.coords or "longitude" not in self.ds.coords:
             logger.error(
                 "Dataset is missing 'latitude' or 'longitude' coordinates. "
-                "Was prepare_gridded() called?  Skipping MapGriddedFigure."
+                "Expected gridded_dataset() output.  Skipping MapGriddedFigure."
             )
             return []
 
@@ -450,7 +423,7 @@ class MapGriddedFigure(FigureBase):
 # ---------------------------------------------------------------------------
 
 #: Maps the ``type`` field in a figure spec to the corresponding class.
-#: Extend this dict to register new figure types without changing dispatcher.py.
+#: Extend this dict to register new figure types without changing summary_figures.py.
 FIGURE_REGISTRY: dict[str, type[FigureBase]] = {
     "time_series": TimeSeriesFigure,
     "map_gridded": MapGriddedFigure,
@@ -476,8 +449,8 @@ def build_figure(
         String key from the job config, e.g. ``"time_series"`` or
         ``"map_gridded"``.
     ds:
-        Prepared Dataset (output of the appropriate ``transforms.prepare_*``
-        function).
+        Prepared Dataset (from ``summary_figures.time_series_dataset`` or
+        ``summary_figures.gridded_dataset``).
     spec:
         Full figure spec dict from the job config.
     ob_type, variable, stat:
