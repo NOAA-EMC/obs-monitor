@@ -131,6 +131,10 @@ class TestRunConfig:
         ({"source": {"type": "com"}}, "comroot"),
         ({"source": {"type": "com", "comroot": "/x", "compnent": "atmos"}}, "unknown key"),
         ({"source": {"type": "glob", "template": "/x/diag_{cycle:%Y%m%d%H}.nc"}}, "obs_space"),
+        ({"source": {"type": "glob", "template": "/x/diag_{obs_space}_{cycle:%Y%m%d%H}_{member}.nc"}},
+         "not valid"),
+        ({"source": {"type": "com", "comroot": "/x", "tarball_template": "/x/{cycle:%Y}/{oops}.tar"}},
+         "not valid"),
         ({"keep_work": "yes"}, "keep_work"),
         ({"outputdir": "/x"}, "unknown key"),
     ])

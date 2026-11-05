@@ -29,6 +29,7 @@ load("py-matplotlib/3.7.4")
 load("py-cartopy/0.24.1")
 load("proj/9.4.1")
 load("py-wxflow/0.2.0")
+load("py-pytest/8.2.1")
 
 -- Set the venv path
 local venv_root = "/scratch3/NCEPDEV/da/Edward.Safford/noscrub/python/envs/obs-mon"

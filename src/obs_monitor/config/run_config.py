@@ -6,9 +6,10 @@ obs_monitor.config.run_config
 which obs spaces, where the diag files are, and where output goes. It is
 plain data: it never reads environment variables. Front doors build it:
 
-* experiment runs: :func:`load_run_config` from a YAML file
-* workflow runs: the Rocoto/global-workflow job builds the same dict from
-  its settings and calls :meth:`RunConfig.from_dict` (later PR)
+* experiment runs (``pipelines/experiment.py``): command-line options, or
+  :func:`load_run_config` from a YAML file (``--config``)
+* workflow runs (``pipelines/workflow.py``): the Rocoto job's environment
+  variables, turned into the same dict and passed to :meth:`RunConfig.from_dict`
 
 Run YAML
 --------
@@ -36,6 +37,26 @@ Run YAML
                                   # optional; where per-cycle summaries are cached
                                   # (default: <output_dir>/summaries/...); {component} optional
 
+Source: where the diag files come from
+--------------------------------------
+``type: glob``
+    The diag files are already on disk as plain files. ``template`` is the
+    full path to one file, with ``{obs_space}`` and ``{cycle:<strftime>}``
+    filled in for each obs space and cycle (and optionally ``{component}``).
+    "Glob" is the Unix name for matching file names with wildcards: to find
+    every obs space for a cycle, ``{obs_space}`` becomes ``*``. Files are
+    only read, never moved or deleted. This is what the workflow run (on the
+    staged files in DATAROOT) and ``obs-monitor-exp --input`` use.
+
+``type: com``
+    The diag files are still inside the global-workflow tarballs,
+    ``{comroot}/{run}.YYYYMMDD/HH/analysis/<component>/
+    {run}.tHHz.<component>_analysis.ioda_hofx.tar.gz``. Only the diag files
+    the run needs are extracted, into ``work_dir``, and those extracted files
+    are removed at the end unless ``keep_work: true``. ``tarball_template``
+    and ``member_template`` are optional, for layouts that differ from
+    global-workflow.
+
 Paths may use ``~`` and ``$VARS``; after expansion they must be absolute.
 """
 
@@ -52,6 +73,7 @@ import yaml
 from obs_monitor.io.catalog import (
     DEFAULT_MEMBER_TEMPLATE,
     DEFAULT_TARBALL_TEMPLATE,
+    CatalogError,
     ComTarballLocator,
     GlobLocator,
     Locator,
@@ -115,7 +137,10 @@ class RunConfig:
         known = load_obs_spaces(config_paths)
         obs_spaces = _select_obs_spaces(cfg["obs_spaces"], known, source_name)
 
-        locators = _build_locators(cfg["source"], obs_spaces, work_dir, source_name)
+        try:
+            locators = _build_locators(cfg["source"], obs_spaces, work_dir, source_name)
+        except CatalogError as exc:
+            raise ConfigError(f"{source_name}: source: {exc}") from exc
 
         summary_template = ""
         if cfg.get("summary_template") is not None:
@@ -126,16 +151,20 @@ class RunConfig:
                    summary_template=summary_template)
 
 
-def load_run_config(path: str | Path) -> RunConfig:
-    """Load and validate a run YAML (see module docstring)."""
+def read_run_yaml(path: str | Path) -> Any:
+    """The parsed run YAML, not yet validated (see :meth:`RunConfig.from_dict`)."""
     path = Path(path)
     if not path.is_file():
         raise ConfigError(f"Run config not found: {path}")
     try:
-        cfg = yaml.safe_load(path.read_text())
+        return yaml.safe_load(path.read_text())
     except yaml.YAMLError as exc:
         raise ConfigError(f"{path}: invalid YAML: {exc}") from exc
-    return RunConfig.from_dict(cfg, source_name=str(path))
+
+
+def load_run_config(path: str | Path) -> RunConfig:
+    """Load and validate a run YAML (see module docstring)."""
+    return RunConfig.from_dict(read_run_yaml(path), source_name=str(path))
 
 
 # ---------------------------------------------------------------------------

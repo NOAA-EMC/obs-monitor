@@ -174,6 +174,55 @@ class TestGlobLocator:
         with pytest.raises(CatalogError, match="absolute"):
             GlobLocator("expt/diag_{obs_space}_{cycle:%Y%m%d%H}.nc")
 
+    @pytest.mark.parametrize("name", [
+        "diag_{obs_space}_{cycle:%Y%m%d%H}_{member}.nc",     # unknown field
+        "diag_{obs_space}_{cycle:%Y%m%d%H}}.nc",             # unbalanced brace
+        "diag_{obs_space}_{cycle:%Y%m%d%H}_{0}.nc",          # positional field
+        "diag_{obs_space}_{cycle.nope}_{cycle:%Y}.nc",       # bad attribute
+    ])
+    def test_template_must_format(self, tmp_path, name):
+        with pytest.raises(CatalogError, match="not valid"):
+            GlobLocator(str(tmp_path / name))
+
+
+class TestCleanup:
+
+    def test_removes_only_what_it_extracted(self, com, tmp_path):
+        loc = ComTarballLocator(com, tmp_path / "work", "atmos")
+        out = loc.extract_dir(CYCLES[0])
+        out.mkdir(parents=True)
+        mine = out / "mine.txt"
+        mine.write_text("user file in the same folder")
+        found = loc.locate(CYCLES[0], ["prepbufr_adpsfc", "prepbufr_adpupa"])
+        assert loc.cleanup() == 2
+        assert not any(p.exists() for p in found.values())
+        assert mine.is_file() and out.is_dir()                  # folder not empty, so kept
+
+    def test_reused_files_are_not_removed(self, com, tmp_path):
+        loc = ComTarballLocator(com, tmp_path / "work", "atmos")
+        path = loc.locate(CYCLES[0], ["prepbufr_adpsfc"])["prepbufr_adpsfc"]
+        loc2 = ComTarballLocator(com, tmp_path / "work", "atmos")   # a later run finds it already extracted
+        assert loc2.locate(CYCLES[0], ["prepbufr_adpsfc"]) == {"prepbufr_adpsfc": path}
+        assert loc2.cleanup() == 0 and path.is_file()
+
+    def test_empty_folders_removed_up_to_work_dir(self, com, tmp_path):
+        loc = ComTarballLocator(com, tmp_path / "work", "atmos")
+        loc.locate(CYCLES[0], ["prepbufr_adpsfc"])
+        loc.cleanup()
+        assert not loc.extract_dir(CYCLES[0]).exists() and (tmp_path / "work").is_dir()
+
+    def test_never_removes_outside_work_dir(self, com, tmp_path):
+        loc = ComTarballLocator(com, tmp_path / "work", "atmos")
+        outside = tmp_path / "precious.nc"
+        outside.write_text("x")
+        loc.extracted.add(outside)                              # should be impossible; check the guard anyway
+        link = tmp_path / "work" / "link.nc"
+        link.parent.mkdir(parents=True, exist_ok=True)
+        link.symlink_to(outside)
+        loc.extracted.add(link)
+        assert loc.cleanup() == 0
+        assert outside.is_file() and link.is_symlink()
+
 
 # ---------------------------------------------------------------------------
 # Inventory
