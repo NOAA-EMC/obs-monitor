@@ -6,6 +6,7 @@ import json
 import logging
 import shutil
 import sys
+import tarfile
 from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import patch
@@ -104,6 +105,30 @@ class TestRuns:
         assert exp("--config", write_yaml(tmp_path, "diags")) == 0
         assert (tmp_path / "out" / TS_PNG).is_file()
         assert (tmp_path / "out" / "summaries" / experiment.RUN_RECORD).is_file()     # YAML runs record too
+
+    def test_config_yaml_com_source(self, tmp_path):
+        """source: {type: com} reads g-w tarballs, extracts only what it needs and removes it afterwards."""
+        com = tmp_path / "COMROOT"
+        for c in CYCLES:
+            d = com / f"gdas.{c:%Y%m%d}/{c:%H}/analysis/atmos"
+            d.mkdir(parents=True)
+            diag = tmp_path / f"diag_prepbufr_adpsfc_{c:%Y%m%d%H}.nc"
+            write_adpsfc(diag, cycle=c, n=300)
+            with tarfile.open(d / f"gdas.t{c:%H}z.atmos_analysis.ioda_hofx.tar.gz", "w:gz") as tar:
+                tar.add(diag, arcname=diag.name)
+            diag.unlink()
+        cfg = tmp_path / "run.yaml"
+        cfg.write_text(f"cycles: {{start: {START}, end: {END}}}\n"
+                       f"source: {{type: com, comroot: {com}}}\n"
+                       f"obs_spaces: [prepbufr_adpsfc]\n"
+                       f"output_dir: {tmp_path}/out\n"
+                       f"work_dir: {tmp_path}/work\n")
+        assert exp("--config", cfg) == 0
+        assert (tmp_path / "out" / TS_PNG).is_file()
+        assert not [p for p in (tmp_path / "work").rglob("*") if p.is_file()]     # extracted files removed
+        assert len(list(com.rglob("*.tar.gz"))) == len(CYCLES)                     # tarballs untouched
+        record = json.loads((tmp_path / "out" / "summaries" / experiment.RUN_RECORD).read_text())
+        assert record["input"].startswith(f"com:{com}|gdas|atmos|")
 
     @pytest.mark.parametrize("value", ["prepbufr_adpsfc,prepbufr_sfcshp", "prepbufr_adpsfc prepbufr_sfcshp"])
     def test_obs_space_list(self, tmp_path, value):

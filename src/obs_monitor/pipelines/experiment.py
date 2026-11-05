@@ -14,6 +14,11 @@ a time range, get the same figures and status file as the workflow run::
 
 (``python -m obs_monitor.pipelines.experiment`` works the same.)
 
+``--input``/``--pattern`` is a ``source: {type: glob}`` run: plain diag files
+already on disk. A run YAML can also use ``source: {type: com}`` to read
+straight from global-workflow tarballs, extracting only the diag files it
+needs (see :mod:`obs_monitor.config.run_config`).
+
 Finding the files
 -----------------
 ``--pattern`` is the file name under ``--input``, with ``{obs_space}`` and

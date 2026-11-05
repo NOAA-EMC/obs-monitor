@@ -37,6 +37,26 @@ Run YAML
                                   # optional; where per-cycle summaries are cached
                                   # (default: <output_dir>/summaries/...); {component} optional
 
+Source: where the diag files come from
+--------------------------------------
+``type: glob``
+    The diag files are already on disk as plain files. ``template`` is the
+    full path to one file, with ``{obs_space}`` and ``{cycle:<strftime>}``
+    filled in for each obs space and cycle (and optionally ``{component}``).
+    "Glob" is the Unix name for matching file names with wildcards: to find
+    every obs space for a cycle, ``{obs_space}`` becomes ``*``. Files are
+    only read, never moved or deleted. This is what the workflow run (on the
+    staged files in DATAROOT) and ``obs-monitor-exp --input`` use.
+
+``type: com``
+    The diag files are still inside the global-workflow tarballs,
+    ``{comroot}/{run}.YYYYMMDD/HH/analysis/<component>/
+    {run}.tHHz.<component>_analysis.ioda_hofx.tar.gz``. Only the diag files
+    the run needs are extracted, into ``work_dir``, and those extracted files
+    are removed at the end unless ``keep_work: true``. ``tarball_template``
+    and ``member_template`` are optional, for layouts that differ from
+    global-workflow.
+
 Paths may use ``~`` and ``$VARS``; after expansion they must be absolute.
 """
 
