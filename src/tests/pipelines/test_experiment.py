@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import shutil
 import sys
 import tarfile
@@ -51,6 +52,11 @@ def write_yaml(tmp_path, input_folder, out="out") -> Path:
     return cfg
 
 
+def cache_folders(out: Path) -> list[Path]:
+    """The per-input cache folders under <out>/summaries."""
+    return sorted(p.parent for p in (out / "summaries").glob(f"*/{experiment.INPUT_INFO}"))
+
+
 def exp(*args) -> int:
     return experiment.main([str(a) for a in args])
 
@@ -72,8 +78,10 @@ class TestRuns:
         assert [s["obs_space"] for s in st] == ["prepbufr_adpsfc"]          # only what was found
         assert st[0]["status"] == "partial" and st[0]["missing_cycles"] == [f"{CYCLES[1]:%Y%m%d%H}"]
         assert (out / "summaries").is_dir()
-        record = json.loads((out / "summaries" / experiment.RUN_RECORD).read_text())
-        assert record["input"] == "glob:" + str(tmp_path / "diags" / experiment.DEFAULT_PATTERN)
+        (cache,) = cache_folders(out)
+        info = json.loads((cache / experiment.INPUT_INFO).read_text())
+        assert info == {"type": "glob", "template": str(tmp_path / "diags" / experiment.DEFAULT_PATTERN)}
+        assert list(cache.rglob("summary_prepbufr_adpsfc_stationPressure_*.nc"))
 
     def test_subfolder_pattern(self, tmp_path):
         write_diags(tmp_path / "diags", subdirs=True)
@@ -104,7 +112,7 @@ class TestRuns:
         write_diags(tmp_path / "diags")
         assert exp("--config", write_yaml(tmp_path, "diags")) == 0
         assert (tmp_path / "out" / TS_PNG).is_file()
-        assert (tmp_path / "out" / "summaries" / experiment.RUN_RECORD).is_file()     # YAML runs record too
+        assert len(cache_folders(tmp_path / "out")) == 1                              # YAML runs are keyed too
 
     def test_config_yaml_com_source(self, tmp_path):
         """source: {type: com} reads g-w tarballs, extracts only what it needs and removes it afterwards."""
@@ -127,8 +135,9 @@ class TestRuns:
         assert (tmp_path / "out" / TS_PNG).is_file()
         assert not [p for p in (tmp_path / "work").rglob("*") if p.is_file()]     # extracted files removed
         assert len(list(com.rglob("*.tar.gz"))) == len(CYCLES)                     # tarballs untouched
-        record = json.loads((tmp_path / "out" / "summaries" / experiment.RUN_RECORD).read_text())
-        assert record["input"].startswith(f"com:{com}|gdas|atmos|")
+        (cache,) = cache_folders(tmp_path / "out")
+        info = json.loads((cache / experiment.INPUT_INFO).read_text())
+        assert info["type"] == "com" and info["comroot"] == str(com) and info["run"] == "gdas"
 
     @pytest.mark.parametrize("value", ["prepbufr_adpsfc,prepbufr_sfcshp", "prepbufr_adpsfc prepbufr_sfcshp"])
     def test_obs_space_list(self, tmp_path, value):
@@ -205,31 +214,125 @@ class TestErrors:
         args = [a.replace("{d}", str(tmp_path / "diags")).replace("{o}", str(tmp_path / "out")) for a in args]
         assert exp(*args) == 2
 
-    def test_output_reused_for_other_input_refused(self, tmp_path):
-        write_diags(tmp_path / "diags")
-        assert basic(tmp_path) == 0
-        shutil.copytree(tmp_path / "diags", tmp_path / "other")
-        assert basic(tmp_path, inp=tmp_path / "other") == 2
-        assert basic(tmp_path, inp=tmp_path / "other", out=tmp_path / "out2") == 0
 
-    def test_yaml_run_reusing_output_refused(self, tmp_path):
-        """A --config run for experiment B can't reuse experiment A's cache (command line or YAML)."""
-        write_diags(tmp_path / "diags")
-        shutil.copytree(tmp_path / "diags", tmp_path / "other")
-        assert basic(tmp_path) == 0
-        with patch.object(experiment, "run_window", side_effect=AssertionError("ran anyway")):
-            assert exp("--config", write_yaml(tmp_path, "other")) == 2
-        assert exp("--config", write_yaml(tmp_path, "diags")) == 0                # same input: fine
+# ---------------------------------------------------------------------------
+# Cache folders keyed by input (one per configured source)
+# ---------------------------------------------------------------------------
 
-    @pytest.mark.parametrize("content", ["", "{trunc", "{}", '{"input": ""}', '{"input": 5}', "[1, 2]"])
-    def test_unreadable_record_refused(self, tmp_path, content):
+class TestInputKeyedCache:
+
+    def test_two_inputs_one_output_never_mix(self, tmp_path):
+        """Experiment B in experiment A's --output reads B's own files and gets B's own cache."""
+        write_diags(tmp_path / "diags")
+        write_diags(tmp_path / "other", skip=[CYCLES[0]])                  # B differs: no first cycle
+        assert basic(tmp_path) == 0
+        with patch.object(runmod, "read_ioda", wraps=runmod.read_ioda) as reads:
+            assert basic(tmp_path, inp=tmp_path / "other") == 0
+        assert reads.call_count == len(CYCLES) - 1                         # nothing taken from A's cache
+        status = json.loads((tmp_path / "out" / STATUS_FILE).read_text())["obs_spaces"][0]
+        assert status["missing_cycles"] == [f"{CYCLES[0]:%Y%m%d%H}"]      # A's first cycle not borrowed
+        assert len(cache_folders(tmp_path / "out")) == 2
+        with patch.object(runmod, "read_ioda", side_effect=AssertionError("re-read")):
+            assert basic(tmp_path) == 0                                    # A's cache still intact
+
+    def test_unrecorded_old_cache_is_never_read(self, tmp_path):
+        """Summaries left by a direct run_window run (no input info) are not adopted."""
+        from obs_monitor.config import RunConfig
+        from obs_monitor.pipelines.run import run_window
+        write_diags(tmp_path / "diags")
+        write_diags(tmp_path / "other")
+        run_window(RunConfig.from_dict({                                   # old flat layout: summaries/<obs>/...
+            "cycles": {"start": START, "end": END},
+            "source": {"type": "glob", "template": str(tmp_path / "diags" / experiment.DEFAULT_PATTERN)},
+            "obs_spaces": ["prepbufr_adpsfc"], "output_dir": str(tmp_path / "out"),
+            "work_dir": str(tmp_path / "work")}))
+        assert (tmp_path / "out" / "summaries" / "prepbufr_adpsfc").is_dir()
+        with patch.object(runmod, "read_ioda", wraps=runmod.read_ioda) as reads:
+            assert basic(tmp_path, inp=tmp_path / "other") == 0
+        assert reads.call_count == len(CYCLES)
+
+    def test_two_inputs_never_share_a_path(self, tmp_path):
+        """No shared state between different inputs, so two first runs at once can't collide."""
+        a, _, _ = experiment.keyed_cache({"source": {"type": "glob", "template": "/a/diag_{obs_space}_{cycle:%Y}.nc"},
+                                          "output_dir": "/out"})
+        b, _, _ = experiment.keyed_cache({"source": {"type": "glob", "template": "/b/diag_{obs_space}_{cycle:%Y}.nc"},
+                                          "output_dir": "/out"})
+        assert a["summary_template"] != b["summary_template"]
+        assert a["summary_template"].split("{")[0] != b["summary_template"].split("{")[0]
+
+    def test_id_independent_of_obs_spaces_and_components(self, tmp_path):
+        com = {"type": "com", "comroot": "/com/expt"}
+        ids = {experiment.keyed_cache({"source": com, "output_dir": "/out", "obs_spaces": o})[0]["summary_template"]
+               for o in (["prepbufr_adpsfc"], ["prepbufr_adpsfc", "snocvr_snomad"], "all")}
+        assert len(ids) == 1
+        glob = {"type": "glob", "template": "/e/{component}/diag_{obs_space}_{cycle:%Y%m%d%H}.nc"}
+        ids = {experiment.keyed_cache({"source": glob, "output_dir": "/out", "obs_spaces": o})[0]["summary_template"]
+               for o in (["prepbufr_adpsfc"], ["prepbufr_adpsfc", "snocvr_snomad"])}
+        assert len(ids) == 1
+
+    @pytest.mark.parametrize("a, b", [
+        ({"type": "com", "comroot": "/com/expt"}, {"type": "com", "comroot": "/com/expt/"}),
+        ({"type": "com", "comroot": "/com/expt"}, {"type": "com", "comroot": "/com/expt", "run": "gdas"}),
+        ({"type": "glob", "template": "/e//diag_{obs_space}_{cycle:%Y}.nc"},
+         {"type": "glob", "template": "/e/diag_{obs_space}_{cycle:%Y}.nc"}),
+    ])
+    def test_same_source_written_differently_same_id(self, a, b):
+        assert experiment.input_id(experiment.describe_source(a)) == experiment.input_id(experiment.describe_source(b))
+
+    @pytest.mark.parametrize("b", [
+        {"type": "com", "comroot": "/com/other"},
+        {"type": "com", "comroot": "/com/expt", "run": "gfs"},
+        {"type": "com", "comroot": "/com/expt", "member_template": "x_{obs_space}_{cycle:%Y}.nc"},
+        {"type": "glob", "template": "/com/expt/diag_{obs_space}_{cycle:%Y}.nc"},
+    ])
+    def test_different_source_different_id(self, b):
+        a = {"type": "com", "comroot": "/com/expt"}
+        assert experiment.input_id(experiment.describe_source(a)) != experiment.input_id(experiment.describe_source(b))
+
+    def test_custom_summary_template_is_keyed_too(self, tmp_path):
+        write_diags(tmp_path / "diags")
+        cfg = write_yaml(tmp_path, "diags")
+        cfg.write_text(cfg.read_text() + f"summary_template: {tmp_path}/cache/sum_{{obs_space}}_{{variable}}_"
+                       "{cycle:%Y%m%d%H}.nc\n")
+        assert exp("--config", cfg) == 0
+        (info,) = (tmp_path / "cache").glob(f"*/{experiment.INPUT_INFO}")
+        assert len(list(info.parent.glob("sum_prepbufr_adpsfc_stationPressure_*.nc"))) == len(CYCLES)
+        assert not list((tmp_path / "cache").glob("sum_*.nc"))             # nothing written unkeyed
+
+    def test_folder_names_are_readable(self, tmp_path):
+        """<input folder name>-<12-hex id>: people can tell caches apart, ids keep them unique."""
+        write_diags(tmp_path / "diags")
+        write_diags(tmp_path / "other")
+        assert basic(tmp_path) == 0 and basic(tmp_path, inp=tmp_path / "other") == 0
+        names = sorted(p.name for p in cache_folders(tmp_path / "out"))
+        assert [n.rsplit("-", 1)[0] for n in names] == ["diags", "other"]
+        assert all(re.fullmatch(r"[0-9a-f]{12}", n.rsplit("-", 1)[1]) for n in names)
+
+    @pytest.mark.parametrize("source, label", [
+        ({"type": "glob", "template": "/s/myexpt/diags/diag_{obs_space}_{cycle:%Y%m%d%H}.nc"}, "diags"),
+        ({"type": "glob", "template": "/s/myexpt/diags/{cycle:%Y%m%d%H}/diag_{obs_space}.nc"}, "diags"),
+        ({"type": "glob", "template": "/s/myexpt/{obs_space}/diag_{cycle:%Y%m%d%H}.nc"}, "myexpt"),
+        ({"type": "glob", "template": "/{obs_space}_{cycle:%Y}.nc"}, "input"),
+        ({"type": "com", "comroot": "/scratch/COMROOT/my expt (v2)/"}, "my_expt_v2"),
+        ({"type": "com", "comroot": "/s/" + "x" * 60}, "x" * 40),
+    ])
+    def test_label(self, source, label):
+        assert experiment.input_label(experiment.describe_source(source)) == label
+
+    def test_same_name_different_place_never_shares(self):
+        a = experiment.describe_source({"type": "glob", "template": "/a/diags/diag_{obs_space}_{cycle:%Y}.nc"})
+        b = experiment.describe_source({"type": "glob", "template": "/b/diags/diag_{obs_space}_{cycle:%Y}.nc"})
+        assert experiment.input_label(a) == experiment.input_label(b) == "diags"
+        assert experiment.cache_folder_name(a) != experiment.cache_folder_name(b)
+
+    def test_input_info_written_atomically(self, tmp_path):
         write_diags(tmp_path / "diags")
         assert basic(tmp_path) == 0
-        (tmp_path / "out" / "summaries" / experiment.RUN_RECORD).write_text(content)
+        assert not list((tmp_path / "out" / "summaries").rglob("*.tmp"))
+
+    def test_unwritable_cache_folder_exits_2(self, tmp_path):
+        write_diags(tmp_path / "diags")
+        (tmp_path / "out").mkdir()
+        (tmp_path / "out" / "summaries").write_text("a file, not a folder")
         with patch.object(experiment, "run_window", side_effect=AssertionError("ran anyway")):
             assert basic(tmp_path) == 2
-
-    def test_record_written_atomically(self, tmp_path):
-        write_diags(tmp_path / "diags")
-        assert basic(tmp_path) == 0
-        assert not list((tmp_path / "out" / "summaries").glob("*.tmp"))

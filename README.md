@@ -59,10 +59,14 @@ At the end the log lists each obs space with its status, cycles found and figure
     prepbufr_adpsfc_stationPressure_assimilated_mean_ombg_map.png
     ...
     obsmon_status.json        ok / partial / no_data / failed for each obs space, with any missing cycles
-    summaries/                per-cycle statistics cache (plus obsmon_run.json, which input made it)
+    summaries/diags-46fd7765333d/
+                              per-cycle statistics cache, one folder per input: the input folder's name
+                              plus a short id, so two inputs never share one (input.json gives the full path)
 ```
 Missing cycles show as gaps in the time series. Re-running, or extending `--end`, only reads the new
-cycles. Use a new `--output` folder for each experiment: a folder made from one input is refused for another.
+cycles. Each input gets its own cache folder, so cached statistics from two experiments are never mixed.
+Still, use one `--output` folder per experiment: the figures and status file at the top are replaced by
+the next run there.
 
 ### Options
 | Option | What it does |
@@ -106,7 +110,7 @@ work_dir: /scratch/me/myexpt/obsmon/work
 | 0 | Figures were written. Check `obsmon_status.json` for anything `partial` or `failed` |
 | 1, "No files for any configured obs space matched ..." | Nothing matched `--input` + `--pattern` in the window. Check the folder, the file names and the dates |
 | 1, "No figures were produced" | Files were found but none could be read or plotted. The log names each obs space's error |
-| 2 | Bad option or config, explained on the last log line (unknown obs space, bad `--pattern`, `--output` already used for another input, ...) |
+| 2 | Bad option or config, explained on the last log line (unknown obs space, bad `--pattern`, can't write to `--output`, ...) |
 | "Found files for obs spaces with no configuration, skipped: ..." | Those obs spaces need an entry in `--obs-space-config` |
 
 Your diag files are never modified or deleted.

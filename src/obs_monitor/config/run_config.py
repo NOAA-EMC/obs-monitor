@@ -151,16 +151,20 @@ class RunConfig:
                    summary_template=summary_template)
 
 
-def load_run_config(path: str | Path) -> RunConfig:
-    """Load and validate a run YAML (see module docstring)."""
+def read_run_yaml(path: str | Path) -> Any:
+    """The parsed run YAML, not yet validated (see :meth:`RunConfig.from_dict`)."""
     path = Path(path)
     if not path.is_file():
         raise ConfigError(f"Run config not found: {path}")
     try:
-        cfg = yaml.safe_load(path.read_text())
+        return yaml.safe_load(path.read_text())
     except yaml.YAMLError as exc:
         raise ConfigError(f"{path}: invalid YAML: {exc}") from exc
-    return RunConfig.from_dict(cfg, source_name=str(path))
+
+
+def load_run_config(path: str | Path) -> RunConfig:
+    """Load and validate a run YAML (see module docstring)."""
+    return RunConfig.from_dict(read_run_yaml(path), source_name=str(path))
 
 
 # ---------------------------------------------------------------------------
