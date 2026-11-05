@@ -162,11 +162,14 @@ class TestRunWindow:
                                 ("ombg", "oman")] + [f"snocvr_totalSnowDepth_assimilated_mean_{f}_map.png"
                                                      for f in ("ombg", "oman")])
 
-    def test_only_extracted_diags_removed_from_work_dir(self, tmp_path):
-        (tmp_path / "work" / "diags").mkdir(parents=True)
+    def test_glob_run_never_deletes_files_in_work_dir(self, tmp_path):
+        """Glob inputs are the user's files: nothing under work_dir is removed, even work_dir/diags."""
+        user = tmp_path / "work" / "diags" / "mine.nc"
+        user.parent.mkdir(parents=True)
+        user.write_text("x")
         (tmp_path / "work" / "keep.txt").write_text("x")
         run_window(run_config(tmp_path))
-        assert not (tmp_path / "work" / "diags").exists() and (tmp_path / "work" / "keep.txt").exists()
+        assert user.is_file() and (tmp_path / "work" / "keep.txt").exists()
 
 
 # ---------------------------------------------------------------------------

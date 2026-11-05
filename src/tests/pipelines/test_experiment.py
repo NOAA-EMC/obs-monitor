@@ -39,6 +39,17 @@ def write_diags(folder: Path, obs_space="prepbufr_adpsfc", skip=(), subdirs=Fals
         write_adpsfc(p, cycle=c, n=300)
 
 
+def write_yaml(tmp_path, input_folder, out="out") -> Path:
+    cfg = tmp_path / f"run_{input_folder}.yaml"
+    cfg.write_text(
+        f"cycles: {{start: {START}, end: {END}, interval_hours: 6}}\n"
+        f"source: {{type: glob, template: '{tmp_path}/{input_folder}/diag_{{obs_space}}_{{cycle:%Y%m%d%H}}.nc'}}\n"
+        f"obs_spaces: [prepbufr_adpsfc]\n"
+        f"output_dir: {tmp_path}/{out}\n"
+        f"work_dir: {tmp_path}/work\n")
+    return cfg
+
+
 def exp(*args) -> int:
     return experiment.main([str(a) for a in args])
 
@@ -60,7 +71,8 @@ class TestRuns:
         assert [s["obs_space"] for s in st] == ["prepbufr_adpsfc"]          # only what was found
         assert st[0]["status"] == "partial" and st[0]["missing_cycles"] == [f"{CYCLES[1]:%Y%m%d%H}"]
         assert (out / "summaries").is_dir()
-        assert json.loads((out / experiment.RUN_RECORD).read_text())["input"].endswith(experiment.DEFAULT_PATTERN)
+        record = json.loads((out / "summaries" / experiment.RUN_RECORD).read_text())
+        assert record["input"] == "glob:" + str(tmp_path / "diags" / experiment.DEFAULT_PATTERN)
 
     def test_subfolder_pattern(self, tmp_path):
         write_diags(tmp_path / "diags", subdirs=True)
@@ -89,15 +101,25 @@ class TestRuns:
 
     def test_config_yaml(self, tmp_path):
         write_diags(tmp_path / "diags")
-        cfg = tmp_path / "run.yaml"
-        cfg.write_text(
-            f"cycles: {{start: {START}, end: {END}, interval_hours: 6}}\n"
-            f"source: {{type: glob, template: '{tmp_path}/diags/diag_{{obs_space}}_{{cycle:%Y%m%d%H}}.nc'}}\n"
-            f"obs_spaces: [prepbufr_adpsfc]\n"
-            f"output_dir: {tmp_path}/out\n"
-            f"work_dir: {tmp_path}/work\n")
-        assert exp("--config", cfg) == 0
+        assert exp("--config", write_yaml(tmp_path, "diags")) == 0
         assert (tmp_path / "out" / TS_PNG).is_file()
+        assert (tmp_path / "out" / "summaries" / experiment.RUN_RECORD).is_file()     # YAML runs record too
+
+    @pytest.mark.parametrize("value", ["prepbufr_adpsfc,prepbufr_sfcshp", "prepbufr_adpsfc prepbufr_sfcshp"])
+    def test_obs_space_list(self, tmp_path, value):
+        for o in ("prepbufr_adpsfc", "prepbufr_sfcshp", "prepbufr_adpupa"):
+            write_diags(tmp_path / "diags", obs_space=o)
+        assert basic(tmp_path, "--obs-space", *value.split(" ")) == 0
+        status = json.loads((tmp_path / "out" / STATUS_FILE).read_text())
+        assert [s["obs_space"] for s in status["obs_spaces"]] == ["prepbufr_adpsfc", "prepbufr_sfcshp"]
+
+    def test_input_under_output_work_is_never_deleted(self, tmp_path):
+        """--input <out>/work/diags --output <out>: the user's diag files must survive the run."""
+        inp = tmp_path / "expt" / "work" / "diags"
+        write_diags(inp)
+        before = sorted(p.name for p in inp.iterdir())
+        assert basic(tmp_path, inp=inp, out=tmp_path / "expt") == 0
+        assert sorted(p.name for p in inp.iterdir()) == before
 
 
 class TestObsSpaceDiscovery:
@@ -145,6 +167,10 @@ class TestErrors:
         ["--start", START, "--end", END, "--input", "{d}/nope", "--output", "{o}"],
         ["--start", START, "--end", END, "--input", "{d}", "--output", "{o}", "--pattern", "/abs/{obs_space}.nc"],
         ["--start", START, "--end", END, "--input", "{d}", "--output", "{o}", "--pattern", "diag_{obs_space}.nc"],
+        ["--start", START, "--end", END, "--input", "{d}", "--output", "{o}",
+         "--pattern", "diag_{obs_space}_{cycle:%Y%m%d%H}_{member}.nc"],              # unknown field
+        ["--start", START, "--end", END, "--input", "{d}", "--output", "{o}",
+         "--pattern", "diag_{obs_space}_{cycle:%Y%m%d%H}}.nc"],                      # unbalanced brace
         ["--start", START, "--end", END, "--input", "{d}", "--output", "{o}", "--obs-space", "not_a_real_one"],
         ["--config", "{d}/run.yaml", "--start", START],                       # --config plus other options
         ["--config", "{d}/missing.yaml"],
@@ -160,3 +186,25 @@ class TestErrors:
         shutil.copytree(tmp_path / "diags", tmp_path / "other")
         assert basic(tmp_path, inp=tmp_path / "other") == 2
         assert basic(tmp_path, inp=tmp_path / "other", out=tmp_path / "out2") == 0
+
+    def test_yaml_run_reusing_output_refused(self, tmp_path):
+        """A --config run for experiment B can't reuse experiment A's cache (command line or YAML)."""
+        write_diags(tmp_path / "diags")
+        shutil.copytree(tmp_path / "diags", tmp_path / "other")
+        assert basic(tmp_path) == 0
+        with patch.object(experiment, "run_window", side_effect=AssertionError("ran anyway")):
+            assert exp("--config", write_yaml(tmp_path, "other")) == 2
+        assert exp("--config", write_yaml(tmp_path, "diags")) == 0                # same input: fine
+
+    @pytest.mark.parametrize("content", ["", "{trunc", "{}", '{"input": ""}', '{"input": 5}', "[1, 2]"])
+    def test_unreadable_record_refused(self, tmp_path, content):
+        write_diags(tmp_path / "diags")
+        assert basic(tmp_path) == 0
+        (tmp_path / "out" / "summaries" / experiment.RUN_RECORD).write_text(content)
+        with patch.object(experiment, "run_window", side_effect=AssertionError("ran anyway")):
+            assert basic(tmp_path) == 2
+
+    def test_record_written_atomically(self, tmp_path):
+        write_diags(tmp_path / "diags")
+        assert basic(tmp_path) == 0
+        assert not list((tmp_path / "out" / "summaries").glob("*.tmp"))

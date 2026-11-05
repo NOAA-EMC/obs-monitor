@@ -53,6 +53,7 @@ import yaml
 from obs_monitor.io.catalog import (
     DEFAULT_MEMBER_TEMPLATE,
     DEFAULT_TARBALL_TEMPLATE,
+    CatalogError,
     ComTarballLocator,
     GlobLocator,
     Locator,
@@ -116,7 +117,10 @@ class RunConfig:
         known = load_obs_spaces(config_paths)
         obs_spaces = _select_obs_spaces(cfg["obs_spaces"], known, source_name)
 
-        locators = _build_locators(cfg["source"], obs_spaces, work_dir, source_name)
+        try:
+            locators = _build_locators(cfg["source"], obs_spaces, work_dir, source_name)
+        except CatalogError as exc:
+            raise ConfigError(f"{source_name}: source: {exc}") from exc
 
         summary_template = ""
         if cfg.get("summary_template") is not None:
