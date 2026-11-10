@@ -23,7 +23,7 @@
 #                             oman, hofx_bg, hofx_an, qc_bg, qc_an, err_bg, err_an,
 #                             bias_bg, bias_an.
 #     figures: [...]          Optional. Replaces the default figure list for this obs
-#                             space. Each item is {type, field, stat, qc} plus options
+#                             space. Each item is a figure spec: {type, ...} plus options
 #                             (see config/yaml/figures.yaml).
 #
 # Any other key is an error, so a typo fails at startup instead of being ignored.
@@ -35,6 +35,9 @@
 _aod_figures: &aod_figures
   - {type: time_series, field: oman, stat: mean, qc: assimilated, domains: [Global]}
   - {type: map_gridded, field: oman, stat: mean, qc: assimilated, cmap: viridis}
+  - {type: count_series, field: oman}
+  - {type: coverage_map, field: oman}
+  - {type: scatter_map, field: oman, qc: assimilated}
 
 obs_spaces:
 
@@ -53,5 +56,5 @@ obs_spaces:
   retrieval_aod_viirs_n21:
     component: chem
     variables: [aerosolOpticalDepth]
-    web_name: viirs_n21           # new: not on the website yet
+    web_name: viirs_n21
     figures: *aod_figures

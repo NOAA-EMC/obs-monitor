@@ -50,3 +50,13 @@ def test_snow_names(field):
 def test_stat_name_matches_old_stat_file_variables():
     assert stat_name("assimilated", "mean") == "assimilated_mean"
     assert stat_name("rejected", "rms") == "rejected_rms"
+
+
+def test_new_figure_names():
+    """Names for the figures added in Phase C (count series, latest-cycle maps)."""
+    assert build_timeseries_filename("prepbufr_adpsfc", "stationPressure", "count", "Global", label="ombg") == \
+        "prepbufr_adpsfc_stationPressure_count_ombg_Global_timeseries.png"
+    assert build_map_filename("prepbufr_adpsfc", "stationPressure", "coverage") == \
+        "prepbufr_adpsfc_stationPressure_coverage_map.png"
+    assert build_map_filename("prepbufr_adpsfc", "stationPressure", "assimilated_scatter", label="ombg") == \
+        "prepbufr_adpsfc_stationPressure_assimilated_scatter_ombg_map.png"

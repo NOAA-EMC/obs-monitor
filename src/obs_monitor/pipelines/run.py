@@ -93,7 +93,8 @@ class RunResult:
 
 
 def _summaries_for_variable(rc: RunConfig, obs: ObsSpaceConfig, variable: str, inv: Inventory,
-                            domains, grid, status: ObsSpaceStatus) -> dict[datetime, object]:
+                            domains, grid, status: ObsSpaceStatus,
+                            keep_read: dict | None = None) -> dict[datetime, object]:
     """Cached or freshly computed summary per cycle; unreadable cycles recorded and left out."""
     out = {}
     for cycle in rc.cycles:
@@ -105,6 +106,9 @@ def _summaries_for_variable(rc: RunConfig, obs: ObsSpaceConfig, variable: str, i
                 continue
             try:
                 ds = read_ioda(path, variable, obs_space=obs.name, channels=obs.channels, group_map=obs.group_map)
+                if keep_read is not None:                   # cycles go oldest -> newest: keep only the newest
+                    keep_read.clear()
+                    keep_read[cycle] = ds                   # reused by the latest-cycle maps
                 s = reduce_cycle(ds, cycle, domains, grid)
             except Exception as exc:  # noqa: BLE001 - a bad file is a gap, not a crash
                 logger.warning("%s %s %s: could not read/reduce %s: %s", obs.name, variable,
@@ -117,6 +121,27 @@ def _summaries_for_variable(rc: RunConfig, obs: ObsSpaceConfig, variable: str, i
                 logger.warning("Could not cache summary %s: %s", cache, exc)
         out[cycle] = s
     return out
+
+
+def _latest_diag(rc: RunConfig, obs: ObsSpaceConfig, variable: str, inv: Inventory, already_read: dict):
+    """
+    ``(cycle, read_ioda output)`` for the newest cycle in the window with a
+    readable diag file, or None. Reuses the file if this run just read it for
+    its summary.
+    """
+    for cycle in reversed(rc.cycles):
+        if cycle in already_read:
+            return cycle, already_read[cycle]
+        path = inv.path(obs.name, cycle)
+        if path is None:
+            continue
+        try:
+            return cycle, read_ioda(path, variable, obs_space=obs.name, channels=obs.channels,
+                                    group_map=obs.group_map)
+        except Exception as exc:  # noqa: BLE001 - fall back to the next newest cycle
+            logger.warning("%s %s %s: latest-cycle maps can't read %s: %s", obs.name, variable,
+                           format_cycle(cycle), path, exc)
+    return None
 
 
 def _run_obs_space(rc: RunConfig, obs: ObsSpaceConfig, inv: Inventory, domains, grid,
@@ -132,12 +157,19 @@ def _run_obs_space(rc: RunConfig, obs: ObsSpaceConfig, inv: Inventory, domains, 
         variables = list_simulated_variables(first)
     status.variables = variables
 
+    specs = obs.figures or default_figures
+    wants_latest = any(s.latest for s in specs)
     have: set[datetime] = set()
     for variable in variables:
-        summaries = _summaries_for_variable(rc, obs, variable, inv, domains, grid, status)
+        newest_read: dict = {}
+        summaries = _summaries_for_variable(rc, obs, variable, inv, domains, grid, status,
+                                            keep_read=newest_read if wants_latest else None)
         have |= set(summaries)
-        result = plot_obs_space(stack_cycles(summaries, rc.cycles), obs.label,
-                                obs.figures or default_figures, rc.output_dir)
+        stacked = stack_cycles(summaries, rc.cycles)
+        latest = None
+        if wants_latest and stacked is not None and stacked.sizes.get("channel", 1) == 1:
+            latest = _latest_diag(rc, obs, variable, inv, newest_read)
+        result = plot_obs_space(stacked, obs.label, specs, rc.output_dir, latest=latest)
         status.figures_written += len(result.written)
         status.figures_failed += [f"{variable}: {d}: {e}" for d, e in result.failed]
         status.figures_skipped += [f"{variable}: {d}: {e}" for d, e in result.skipped]

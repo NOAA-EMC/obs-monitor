@@ -1,18 +1,35 @@
 # Figures made for every obs space, unless the obs space lists its own
 # `figures:` in its obs-space YAML (which then replaces this list).
 #
-# Each entry:
-#   type:    time_series | map_gridded
-#   field:   ombg (O-F) | oman (O-A) | obs
-#   stat:    time_series: count | mean | rms | std    map_gridded: mean | count
-#   qc:      all | assimilated | monitored | rejected  (map_gridded: assimilated)
-#   domains: time_series only; one PNG per domain     (default: all domains)
-# Optional: title, y_label, colorbar_label, cmap, vmin, vmax, projection, map_domain.
+# field is ombg (O-F) | oman (O-A) | obs.  qc classes: all | assimilated | monitored | rejected.
 #
-# This set reproduces the figures on the website today.
+# From the cycle summaries (whole window):
+#   time_series   {field, stat, qc}   one statistic over time; one PNG per domain
+#                 stat: count | mean | rms | std.  Optional: domains (default all), title, y_label
+#   map_gridded   {field, stat, qc}   2.5 deg map, count-weighted over the window
+#                 stat: mean | count, qc: assimilated.  Optional: title, colorbar_label, cmap,
+#                 vmin, vmax, projection, map_domain
+#   count_series  {field}             number of obs over time, one line per QC class; one PNG per domain
+#                 Optional: qc (list, default all four), domains (default [Global]), title, y_label,
+#                 log_scale
+#
+# From the newest diag file in the window (every observation, one cycle):
+#   coverage_map  {}                  where the obs are (default: assimilated obs only)
+#                 Optional: field (whose QC flag, default ombg), qc (list of classes to show,
+#                 default [assimilated]; the first one listed is drawn on top), marker_size,
+#                 title, projection, map_domain
+#   scatter_map   {field, qc}         each observation's value, e.g. O-F of assimilated obs.
+#                 Default colour limits for O-F/O-A: symmetric at the 98th percentile of |value|.
+#                 Optional: title, colorbar_label, cmap, vmin, vmax, marker_size, projection, map_domain
+#
+# The first four entries reproduce the figures on the website today; the rest are new.
  
 defaults:
   - {type: time_series, field: ombg, stat: mean, qc: assimilated, domains: [Global, NH, SH, CONUS]}
   - {type: time_series, field: oman, stat: mean, qc: assimilated, domains: [Global, NH, SH, CONUS]}
   - {type: map_gridded, field: ombg, stat: mean, qc: assimilated}
   - {type: map_gridded, field: oman, stat: mean, qc: assimilated}
+  - {type: count_series, field: ombg}
+  - {type: coverage_map}
+  - {type: scatter_map, field: ombg, qc: assimilated}
+  - {type: scatter_map, field: oman, qc: assimilated}
