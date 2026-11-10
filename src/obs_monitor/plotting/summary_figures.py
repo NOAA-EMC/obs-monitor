@@ -300,7 +300,11 @@ def plot_obs_space(
                     fig_spec.setdefault("colorbar_label", f"{FIELD_LABELS[spec.field]} ({units})" if units
                                         else FIELD_LABELS[spec.field])
                 else:
-                    fig_spec.setdefault("title", f"{{ob_type}} coverage by QC ({FIELD_LABELS[spec.field]}), {{cycle}}")
+                    if len(spec.qcs) == 1:
+                        default_title = f"{{ob_type}} coverage, {spec.qcs[0]} obs, {{cycle}}"
+                    else:
+                        default_title = f"{{ob_type}} coverage by QC ({FIELD_LABELS[spec.field]}), {{cycle}}"
+                    fig_spec.setdefault("title", default_title)
             elif spec.type == "count_series":
                 ds = count_series_dataset(stacked, spec.field, spec.qcs)
                 stat = "count"

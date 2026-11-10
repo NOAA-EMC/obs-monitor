@@ -84,7 +84,7 @@ class TestFigureSpecs:
         assert specs[0].domains == ("Global", "NH", "SH", "CONUS")
         assert [(s.type, s.field, s.qc, s.qcs, s.domains) for s in specs[4:]] == [
             ("count_series", "ombg", "", ("all", "assimilated", "monitored", "rejected"), ("Global",)),
-            ("coverage_map", "ombg", "", ("assimilated", "monitored", "rejected"), None),
+            ("coverage_map", "ombg", "", ("assimilated",), None),
             ("scatter_map", "ombg", "assimilated", (), None),
             ("scatter_map", "oman", "assimilated", (), None),
         ]
@@ -195,7 +195,7 @@ class TestPlotObsSpace:
     def test_latest_maps_skipped_without_a_diag_file(self, stacked, tmp_path, no_coastlines):
         r = plot_obs_space(stacked, "x", load_default_figures(), tmp_path)
         assert len(r.written) == 11
-        assert [d for d, why in r.skipped] == ["coverage_map ombg assimilated,monitored,rejected",
+        assert [d for d, why in r.skipped] == ["coverage_map ombg assimilated",
                                                "scatter_map ombg assimilated", "scatter_map oman assimilated"]
         assert all("no diag file" in why for d, why in r.skipped)
         assert all(p.stat().st_size > 1000 for p in r.written)
@@ -326,7 +326,7 @@ class TestNewFigureRendering:
             "adpsfc_stationPressure_count_ombg_NH_timeseries.png"]
 
     def test_coverage_map_qc_colours(self, stacked, tmp_path, no_coastlines):
-        spec = parse_figure_spec({"type": "coverage_map"}, "t")
+        spec = parse_figure_spec({"type": "coverage_map", "qc": ["assimilated", "monitored", "rejected"]}, "t")
         captured = {}
         real_save = sf.build_figure
 
@@ -345,6 +345,19 @@ class TestNewFigureRendering:
         colours = {c.get_label().split(" ")[0]: to_hex(c.get_facecolor()[0])
                    for ax in mpl_fig.axes for c in ax.collections if c.get_label()}
         assert colours == {qc: QC_COLORS[qc].lower() for qc in ("assimilated", "monitored", "rejected")}
+        ax = next(a for a in mpl_fig.axes if a.collections)
+        drawn = [c.get_label().split(" ")[0] for c in ax.collections if c.get_label()]
+        assert drawn == ["rejected", "monitored", "assimilated"]                 # first listed drawn last = on top
+        legend = [t.get_text().split(" ")[0] for t in ax.get_legend().get_texts()]
+        assert legend == ["assimilated", "monitored", "rejected"]               # legend in the order listed
+
+    def test_coverage_map_default_is_assimilated_only(self, stacked, tmp_path, no_coastlines):
+        spec = parse_figure_spec({"type": "coverage_map"}, "t")
+        assert spec.qcs == ("assimilated",)
+        with patch.object(sf, "build_figure", wraps=sf.build_figure) as bf:
+            r = plot_obs_space(stacked, "adpsfc", [spec], tmp_path, latest=latest_points())
+        assert len(r.written) == 1
+        assert bf.call_args.args[2]["title"] == "{ob_type} coverage, assimilated obs, {cycle}"
 
     def test_scatter_map_limits_value(self):
         from obs_monitor.plotting.figures import ScatterMapFigure

@@ -53,7 +53,7 @@ FIGURE_TYPES: dict[str, _TypeRules] = {
                                qc_list=True, defaults=(("qc", list(QC_CLASSES)), ("domains", ["Global"]))),
     "coverage_map": _TypeRules(frozenset(), frozenset({"field", "qc", "marker_size"} | _MAP_OPTIONS),
                                qc_list=True,
-                               defaults=(("field", "ombg"), ("qc", ["assimilated", "monitored", "rejected"]))),
+                               defaults=(("field", "ombg"), ("qc", ["assimilated"]))),
     "scatter_map": _TypeRules(frozenset({"field", "qc"}),
                               frozenset({"colorbar_label", "cmap", "vmin", "vmax", "marker_size"} | _MAP_OPTIONS)),
 }

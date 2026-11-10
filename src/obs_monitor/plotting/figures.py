@@ -458,7 +458,7 @@ def _map_figure(layers: list, spec: dict, title: str, colorbar_label: str | None
     return fig_obj.fig
 
 
-def _apply_layer_colors(fig: "plt.Figure", colors: dict[str, str]) -> None:
+def _apply_layer_colors(fig: "plt.Figure", colors: dict[str, str], legend_order: list[str] | None = None) -> None:
     """
     Colour solid-colour MapScatter layers by label, then redraw the legend.
 
@@ -476,7 +476,9 @@ def _apply_layer_colors(fig: "plt.Figure", colors: dict[str, str]) -> None:
                 coll.set_edgecolor(color)
                 recolored = True
         if recolored and ax.get_legend() is not None:
-            ax.legend(loc="lower left", fontsize=9, markerscale=3)
+            handles = {c.get_label(): c for c in ax.collections if c.get_label() in colors}
+            order = [lab for lab in (legend_order or handles) if lab in handles]
+            ax.legend([handles[lab] for lab in order], order, loc="lower left", fontsize=9, markerscale=3)
 
 
 class CountSeriesFigure(FigureBase):
@@ -535,7 +537,9 @@ class CountSeriesFigure(FigureBase):
 
 class CoverageMapFigure(FigureBase):
     """
-    Where the observations of the newest cycle are, coloured by QC class.
+    Where the observations of the newest cycle are, coloured by QC class
+    (by default only the assimilated ones). The first class in ``qcs`` is
+    drawn on top and listed first in the legend.
 
     ``ds`` (from :func:`~obs_monitor.plotting.summary_figures.latest_points_dataset`)
     has ``latitude``/``longitude`` on ``Location`` and one boolean variable per
@@ -546,7 +550,9 @@ class CoverageMapFigure(FigureBase):
     def _render(self) -> list[tuple["plt.Figure", Path]]:
         lat, lon = self.ds["latitude"].values, self.ds["longitude"].values
         layers, counts = [], []
-        for qc in self.spec["qcs"]:
+        # Drawn last-listed first, so the first class listed ends up on top: with
+        # [assimilated, rejected], rejected obs at the same station don't hide the assimilated ones.
+        for qc in reversed(self.spec["qcs"]):
             mask = self.ds[qc].values.astype(bool)
             counts.append(f"{qc} {int(mask.sum()):,}")
             if not mask.any():
@@ -563,7 +569,8 @@ class CoverageMapFigure(FigureBase):
         title = self.spec.get("title", "{ob_type} {variable} coverage {cycle}").format(
             ob_type=self.ob_type, variable=self.variable, stat=self.stat, cycle=self.ds.attrs.get("cycle", ""))
         fig = _map_figure(layers, self.spec, title)
-        _apply_layer_colors(fig, {layer.label: layer.color for layer in layers})
+        _apply_layer_colors(fig, {layer.label: layer.color for layer in layers}, legend_order=[
+            layer.label for layer in reversed(layers)])
         return [(fig, self.output_dir / build_map_filename(self.ob_type, self.variable, "coverage"))]
 
 

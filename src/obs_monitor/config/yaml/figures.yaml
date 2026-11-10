@@ -14,9 +14,10 @@
 #                 log_scale
 #
 # From the newest diag file in the window (every observation, one cycle):
-#   coverage_map  {}                  where the obs are, coloured by QC class
-#                 Optional: field (whose QC flag, default ombg), qc (list, default
-#                 assimilated/monitored/rejected), marker_size, title, projection, map_domain
+#   coverage_map  {}                  where the obs are (default: assimilated obs only)
+#                 Optional: field (whose QC flag, default ombg), qc (list of classes to show,
+#                 default [assimilated]; the first one listed is drawn on top), marker_size,
+#                 title, projection, map_domain
 #   scatter_map   {field, qc}         each observation's value, e.g. O-F of assimilated obs.
 #                 Default colour limits for O-F/O-A: symmetric at the 98th percentile of |value|.
 #                 Optional: title, colorbar_label, cmap, vmin, vmax, marker_size, projection, map_domain
