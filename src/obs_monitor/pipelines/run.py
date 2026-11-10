@@ -25,7 +25,6 @@ from __future__ import annotations
 
 import json
 import logging
-import shutil
 import traceback
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
@@ -34,7 +33,7 @@ from typing import Sequence
 
 from obs_monitor.config import FigureSpec, ObsSpaceConfig, RunConfig, load_default_figures
 from obs_monitor.io import list_simulated_variables, read_ioda
-from obs_monitor.io.catalog import Inventory, build_inventory
+from obs_monitor.io.catalog import ComTarballLocator, Inventory, build_inventory
 from obs_monitor.io.timewindow import format_cycle
 from obs_monitor.plotting.summary_figures import plot_obs_space
 from obs_monitor.stats import load_regions, read_summary, reduce_cycle, stack_cycles, write_summary
@@ -184,7 +183,11 @@ def run_window(rc: RunConfig, *, default_figures: Sequence[FigureSpec] | None = 
         path = rc.output_dir / STATUS_FILE
         path.write_text(json.dumps(result.to_dict(), indent=2))
         logger.info("Status written to %s", path)
-    extracted = rc.work_dir / "diags"           # what ComTarballLocator writes; never the user's work_dir itself
-    if not rc.keep_work and extracted.exists():
-        shutil.rmtree(extracted, ignore_errors=True)
+    if not rc.keep_work:
+        # Only files a tarball locator extracted in this run are removed; never whole folders,
+        # and never glob inputs (they are the user's files).
+        tar_locators = {id(loc): loc for loc in rc.locators.values() if isinstance(loc, ComTarballLocator)}
+        removed = sum(loc.cleanup() for loc in tar_locators.values())
+        if removed:
+            logger.info("Removed %d extracted diag file(s)", removed)
     return result

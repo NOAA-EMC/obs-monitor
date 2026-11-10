@@ -67,10 +67,17 @@ class Locator(Protocol):
         spaces are simply absent from the result."""
 
 
-def _check_template(template: str, required: Iterable[str]) -> None:
+def _check_template(template: str, required: Iterable[str], **fields) -> None:
+    """``template`` contains every field in ``required`` and formats with ``fields`` (+ obs_space, cycle)."""
     for name in required:
         if "{" + name not in template:
             raise CatalogError(f"Template '{template}' must contain '{{{name}...}}'.")
+    try:
+        template.format(obs_space="probe", cycle=datetime(2000, 1, 1), **fields)
+    except (AttributeError, IndexError, KeyError, TypeError, ValueError) as exc:
+        raise CatalogError(f"Template '{template}' is not valid ({type(exc).__name__}: {exc}). "
+                           "Allowed fields: {obs_space}, {cycle:<strftime>}"
+                           + "".join(f", {{{k}}}" for k in fields) + ".") from exc
 
 
 def _template_regex(template: str, cycle: datetime, **fixed) -> re.Pattern:
@@ -159,7 +166,7 @@ class ComTarballLocator:
         for label, p in (("comroot", self.comroot), ("work_dir", self.work_dir)):
             if not p.is_absolute():
                 raise CatalogError(f"{label} must be an absolute path, got '{p}'.")
-        _check_template(tarball_template, ["cycle"])
+        _check_template(tarball_template, ["cycle"], comroot="x", run="x", component="x")
         _check_template(member_template, ["obs_space", "cycle"])
         if "/" in member_template:
             raise CatalogError("member_template is a file name inside the tarball and must not contain '/'.")
@@ -167,8 +174,9 @@ class ComTarballLocator:
         self.run = run
         self.tarball_template = tarball_template
         self.member_template = member_template
-        _check_template(extract_dir_template, ["cycle"])
+        _check_template(extract_dir_template, ["cycle"], work_dir="x", run="x", component="x")
         self.extract_dir_template = extract_dir_template
+        self.extracted: set[Path] = set()       # files this locator wrote; the only ones cleanup() removes
 
     def extract_dir(self, cycle: datetime) -> Path:
         return Path(self.extract_dir_template.format(
@@ -219,6 +227,7 @@ class ComTarballLocator:
                         with src, open(tmp, "wb") as fh:
                             shutil.copyfileobj(src, fh, length=8 << 20)
                         tmp.replace(dest)
+                        self.extracted.add(dest)
                     found[obs_space] = dest
                     if wanted is not None and len(found) == len(wanted):
                         break                                # everything requested is out; stop reading
@@ -227,6 +236,32 @@ class ComTarballLocator:
             return {}
 
         return found
+
+    def cleanup(self) -> int:
+        """
+        Delete the files this locator extracted, then any folders that are left
+        empty, up to (not including) ``work_dir``. Nothing else is touched:
+        files that were already there, files it reused and anything outside
+        ``work_dir`` stay. Returns the number of files removed.
+        """
+        root = self.work_dir.resolve()
+        removed = 0
+        dirs: set[Path] = set()
+        for path in sorted(self.extracted):
+            real = path.resolve()
+            if root not in real.parents or path.is_symlink() or not real.is_file():
+                logger.warning("Not removing %s: not a file this run extracted under %s", path, root)
+                continue
+            real.unlink()
+            removed += 1
+            dirs.update(p for p in real.parents if root in p.parents)
+        for d in sorted(dirs, key=lambda p: len(p.parts), reverse=True):      # deepest first
+            try:
+                d.rmdir()                                                     # only succeeds if empty
+            except OSError:
+                pass
+        self.extracted.clear()
+        return removed
 
 
 # ---------------------------------------------------------------------------

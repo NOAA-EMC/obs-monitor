@@ -9,6 +9,9 @@ Entry points that tie io -> stats -> plotting together.
 ``workflow``
     Workflow jobs (Rocoto, later global-workflow): environment variables ->
     RunConfig per component -> run_window.
+``experiment``
+    Experiment runs: a folder of diag files + a time range (command line or
+    run YAML) -> RunConfig -> run_window.
 ``stage``
     The copy step: extract the monitored diag files from global-workflow
     tarballs into DATAROOT.
