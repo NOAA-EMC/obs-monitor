@@ -74,9 +74,13 @@ class TestRunWindow:
         assert st.status == "partial"
         assert st.missing_cycles == [f"{CYCLES[1]:%Y%m%d%H}"]
         assert st.cycles_with_data == 3 and st.variables == ["stationPressure"]
-        assert st.figures_written == 10 and not st.figures_failed
+        assert st.figures_written == 14 and not st.figures_failed                # 10 website + 4 new
         names = {p.name for p in (tmp_path / "out").glob("*.png")}
         assert "prepbufr_adpsfc_stationPressure_assimilated_mean_ombg_Global_timeseries.png" in names
+        assert {"prepbufr_adpsfc_stationPressure_count_ombg_Global_timeseries.png",
+                "prepbufr_adpsfc_stationPressure_coverage_map.png",
+                "prepbufr_adpsfc_stationPressure_assimilated_scatter_ombg_map.png",
+                "prepbufr_adpsfc_stationPressure_assimilated_scatter_oman_map.png"} <= names
         status = json.loads((tmp_path / "out" / STATUS_FILE).read_text())
         assert status["obs_spaces"][0]["status"] == "partial" and status["cycles"][0] == f"{CYCLES[0]:%Y%m%d%H}"
         assert "1 partial" in status["summary"]
@@ -91,9 +95,33 @@ class TestRunWindow:
     def test_second_run_reads_cache_not_diags(self, tmp_path):
         stage_diags(tmp_path / "data")
         run_window(run_config(tmp_path))
-        with patch.object(runmod, "read_ioda", side_effect=AssertionError("diag file re-read")) as m:
+        with patch.object(runmod, "reduce_cycle", side_effect=AssertionError("summary recomputed")) as reduce, \
+                patch.object(runmod, "read_ioda", wraps=runmod.read_ioda) as reads:
             res = run_window(run_config(tmp_path))
-        assert m.call_count == 0 and res.obs_spaces[0].status == "ok"
+        assert reduce.call_count == 0 and res.obs_spaces[0].status == "ok"
+        assert reads.call_count == 1                        # only the newest file, for the latest-cycle maps
+        assert res.obs_spaces[0].figures_written == 14
+
+    def test_first_run_reads_each_diag_once(self, tmp_path):
+        """The newest file read for its summary is reused by the latest-cycle maps."""
+        stage_diags(tmp_path / "data")
+        with patch.object(runmod, "read_ioda", wraps=runmod.read_ioda) as reads:
+            run_window(run_config(tmp_path))
+        assert reads.call_count == len(CYCLES)
+
+    def test_latest_maps_use_newest_cycle_with_a_file(self, tmp_path):
+        stage_diags(tmp_path / "data", skip=[CYCLES[-1]])
+        with patch.object(runmod, "plot_obs_space", wraps=runmod.plot_obs_space) as plot:
+            st = run_window(run_config(tmp_path)).obs_spaces[0]
+        assert st.figures_written == 14
+        latest_cycle, latest_ds = plot.call_args.kwargs["latest"]
+        assert latest_cycle == CYCLES[-2] and latest_ds.sizes["Location"] == 300
+
+    def test_unreadable_newest_file_falls_back(self, tmp_path):
+        stage_diags(tmp_path / "data")
+        Path(DIAG.format(root=tmp_path / "data", c=CYCLES[-1], o="prepbufr_adpsfc")).write_text("not netcdf")
+        st = run_window(run_config(tmp_path)).obs_spaces[0]
+        assert st.figures_written == 14 and not st.figures_failed
 
     def test_cached_cycle_survives_diag_cleanup(self, tmp_path):
         stage_diags(tmp_path / "data")
@@ -106,7 +134,7 @@ class TestRunWindow:
         Path(DIAG.format(root=tmp_path / "data", c=CYCLES[2], o="prepbufr_adpsfc")).write_text("not netcdf")
         st = run_window(run_config(tmp_path)).obs_spaces[0]
         assert st.status == "partial" and list(st.unreadable_cycles) == [f"{CYCLES[2]:%Y%m%d%H}"]
-        assert st.figures_written == 10
+        assert st.figures_written == 14
 
     def test_obs_space_failures_isolated(self, tmp_path):
         stage_diags(tmp_path / "data", "prepbufr_adpsfc")
@@ -160,7 +188,11 @@ class TestRunWindow:
         names = sorted(p.name for p in (tmp_path / "out").glob("*.png"))
         assert names == sorted([f"snocvr_totalSnowDepth_assimilated_mean_{f}_Global_timeseries.png" for f in
                                 ("ombg", "oman")] + [f"snocvr_totalSnowDepth_assimilated_mean_{f}_map.png"
-                                                     for f in ("ombg", "oman")])
+                                                     for f in ("ombg", "oman")]
+                               + ["snocvr_totalSnowDepth_count_ombg_Global_timeseries.png",
+                                  "snocvr_totalSnowDepth_coverage_map.png",
+                                  "snocvr_totalSnowDepth_assimilated_scatter_ombg_map.png",
+                                  "snocvr_totalSnowDepth_assimilated_scatter_oman_map.png"])
 
     def test_glob_run_never_deletes_files_in_work_dir(self, tmp_path):
         """Glob inputs are the user's files: nothing under work_dir is removed, even work_dir/diags."""

@@ -13,7 +13,7 @@ warning), since the domain list comes from ``regions.yaml``.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field as dc_field
 from pathlib import Path
 from typing import Any
 
@@ -28,57 +28,104 @@ FIELDS = ("ombg", "oman", "obs")
 STATS = ("count", "mean", "rms", "std")
 QC_CLASSES = ("all", "assimilated", "monitored", "rejected")
 
-FIGURE_TYPES = {
-    # type: (allowed stats, allowed qc classes)
-    "time_series": (STATS, QC_CLASSES),
-    "map_gridded": (("mean", "count"), ("assimilated",)),
-}
 
-_REQUIRED = {"type", "field", "stat", "qc"}
-_OPTIONAL = {
-    "time_series": {"domains", "title", "y_label"},
-    "map_gridded": {"title", "colorbar_label", "cmap", "vmin", "vmax", "projection", "map_domain"},
+@dataclass(frozen=True)
+class _TypeRules:
+    required: frozenset            # keys besides "type"
+    optional: frozenset
+    stats: tuple = ()              # allowed values of "stat" (if it's a key for this type)
+    qcs: tuple = QC_CLASSES        # allowed QC classes
+    qc_list: bool = False          # "qc" is a list of classes (one line / colour each)
+    defaults: tuple = ()           # (key, value) filled in when absent
+
+
+_MAP_OPTIONS = {"title", "projection", "map_domain"}
+
+#: Every figure type and its keys. ``latest`` types are drawn from the newest
+#: diag file in the window (raw points), the rest from the cycle summaries.
+FIGURE_TYPES: dict[str, _TypeRules] = {
+    "time_series": _TypeRules(frozenset({"field", "stat", "qc"}), frozenset({"domains", "title", "y_label"}),
+                              stats=STATS),
+    "map_gridded": _TypeRules(frozenset({"field", "stat", "qc"}),
+                              frozenset({"colorbar_label", "cmap", "vmin", "vmax"} | _MAP_OPTIONS),
+                              stats=("mean", "count"), qcs=("assimilated",)),
+    "count_series": _TypeRules(frozenset({"field"}), frozenset({"qc", "domains", "title", "y_label", "log_scale"}),
+                               qc_list=True, defaults=(("qc", list(QC_CLASSES)), ("domains", ["Global"]))),
+    "coverage_map": _TypeRules(frozenset(), frozenset({"field", "qc", "marker_size"} | _MAP_OPTIONS),
+                               qc_list=True,
+                               defaults=(("field", "ombg"), ("qc", ["assimilated", "monitored", "rejected"]))),
+    "scatter_map": _TypeRules(frozenset({"field", "qc"}),
+                              frozenset({"colorbar_label", "cmap", "vmin", "vmax", "marker_size"} | _MAP_OPTIONS)),
 }
+LATEST_TYPES = frozenset({"coverage_map", "scatter_map"})
 
 
 @dataclass(frozen=True)
 class FigureSpec:
     type: str
-    field: str
-    stat: str
-    qc: str
-    domains: tuple[str, ...] | None = None          # time_series; None = all
-    options: dict[str, Any] = field(default_factory=dict)   # title, y_label, cmap, ...
+    field: str = ""
+    stat: str = ""
+    qc: str = ""                                    # one class (time_series, map_gridded, scatter_map)
+    domains: tuple[str, ...] | None = None          # time_series, count_series; None = all
+    options: dict[str, Any] = dc_field(default_factory=dict)   # title, y_label, cmap, ...
+    qcs: tuple[str, ...] = ()                       # several classes (count_series, coverage_map)
+
+    @property
+    def latest(self) -> bool:
+        """Drawn from the newest diag file in the window rather than the summaries."""
+        return self.type in LATEST_TYPES
 
 
 def parse_figure_spec(spec: Any, where: str) -> FigureSpec:
     if not isinstance(spec, dict):
         raise ConfigError(f"{where} must be a mapping.")
-    missing = _REQUIRED - set(spec)
-    if missing:
-        raise ConfigError(f"{where} is missing {sorted(missing)}.")
+    if "type" not in spec:
+        raise ConfigError(f"{where} is missing ['type'].")
     ftype = spec["type"]
     if ftype not in FIGURE_TYPES:
         raise ConfigError(f"{where} type must be one of {sorted(FIGURE_TYPES)}, got {ftype!r}.")
-    allowed_stats, allowed_qc = FIGURE_TYPES[ftype]
-    unknown = set(spec) - _REQUIRED - _OPTIONAL[ftype]
+    rules = FIGURE_TYPES[ftype]
+    missing = rules.required - set(spec)
+    if missing:
+        raise ConfigError(f"{where} ({ftype}) is missing {sorted(missing)}.")
+    unknown = set(spec) - {"type"} - rules.required - rules.optional
     if unknown:
         raise ConfigError(f"{where} ({ftype}) has unknown key(s) {sorted(unknown)}. "
-                          f"Allowed: {sorted(_REQUIRED | _OPTIONAL[ftype])}")
-    if spec["field"] not in FIELDS:
-        raise ConfigError(f"{where} field must be one of {list(FIELDS)}, got {spec['field']!r}.")
-    if spec["stat"] not in allowed_stats:
-        raise ConfigError(f"{where} stat for {ftype} must be one of {list(allowed_stats)}, got {spec['stat']!r}.")
-    if spec["qc"] not in allowed_qc:
-        raise ConfigError(f"{where} qc for {ftype} must be one of {list(allowed_qc)}, got {spec['qc']!r}.")
+                          f"Allowed: {sorted({'type'} | rules.required | rules.optional)}")
+    spec = {**dict(rules.defaults), **spec}
+
+    fld = spec.get("field", "")
+    if fld and fld not in FIELDS:
+        raise ConfigError(f"{where} field must be one of {list(FIELDS)}, got {fld!r}.")
+    stat = spec.get("stat", "count" if ftype == "count_series" else "")
+    if rules.stats and stat not in rules.stats:
+        raise ConfigError(f"{where} stat for {ftype} must be one of {list(rules.stats)}, got {stat!r}.")
+
+    qc, qcs = "", ()
+    if rules.qc_list:
+        value = spec["qc"]
+        value = [value] if isinstance(value, str) else value
+        if not isinstance(value, list) or not value or any(v not in rules.qcs for v in value) \
+                or len(set(value)) != len(value):
+            raise ConfigError(f"{where} qc for {ftype} must be a list of distinct classes from "
+                              f"{list(rules.qcs)}, got {spec['qc']!r}.")
+        qcs = tuple(value)
+    elif "qc" in spec:
+        qc = spec["qc"]
+        if qc not in rules.qcs:
+            raise ConfigError(f"{where} qc for {ftype} must be one of {list(rules.qcs)}, got {qc!r}.")
 
     domains = spec.get("domains")
     if domains is not None:
         if not isinstance(domains, list) or not domains or not all(isinstance(d, str) for d in domains):
             raise ConfigError(f"{where} domains must be a non-empty list of domain names.")
         domains = tuple(domains)
-    options = {k: v for k, v in spec.items() if k not in _REQUIRED | {"domains"}}
-    return FigureSpec(ftype, spec["field"], spec["stat"], spec["qc"], domains, options)
+    if "marker_size" in spec and not (isinstance(spec["marker_size"], (int, float)) and spec["marker_size"] > 0):
+        raise ConfigError(f"{where} marker_size must be a positive number.")
+    if "log_scale" in spec and not isinstance(spec["log_scale"], bool):
+        raise ConfigError(f"{where} log_scale must be true or false.")
+    options = {k: v for k, v in spec.items() if k not in {"type", "field", "stat", "qc", "domains"}}
+    return FigureSpec(ftype, fld, stat, qc, domains, options, qcs)
 
 
 def parse_figure_specs(specs: Any, where: str) -> tuple[FigureSpec, ...]:

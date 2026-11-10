@@ -18,7 +18,7 @@
 #                             oman, hofx_bg, hofx_an, qc_bg, qc_an, err_bg, err_an,
 #                             bias_bg, bias_an.
 #     figures: [...]          Optional. Replaces the default figure list for this obs
-#                             space. Each item is {type, field, stat, qc} plus options
+#                             space. Each item is a figure spec: {type, ...} plus options
 #                             (see config/yaml/figures.yaml).
 #
 # Any other key is an error, so a typo fails at startup instead of being ignored.

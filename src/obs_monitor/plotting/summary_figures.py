@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
+from datetime import datetime
 from pathlib import Path
 from typing import Sequence
 
@@ -41,6 +42,7 @@ import pandas as pd
 import xarray as xr
 
 from obs_monitor.config.figures import FigureSpec
+from obs_monitor.stats.summary import FIELD_QC, QC_CLASSES, _class_masks
 
 from obs_monitor.plotting.figures import build_figure
 from obs_monitor.plotting.naming import stat_name
@@ -142,12 +144,59 @@ def gridded_dataset(stacked: xr.Dataset, field: str, stat: str, qc: str,
     )
 
 
+def count_series_dataset(stacked: xr.Dataset, field: str, qcs: Sequence[str],
+                         channel: int | None = None) -> xr.Dataset:
+    """
+    ``<field>_count`` for several QC classes, shaped for ``CountSeriesFigure``:
+    one variable per class on ``(analysisCycle, dim_0)`` with a
+    ``statisticDomain`` coordinate. Missing cycles stay NaN (gaps).
+    """
+    var = f"{field}_count"
+    if var not in stacked:
+        raise KeyError(f"summary has no '{var}'")
+    da = _select_channel(stacked[var], channel)
+    return xr.Dataset(
+        {qc: (("analysisCycle", "dim_0"), da.sel(qc_class=qc).transpose("cycle", "domain").values.astype(float))
+         for qc in qcs},
+        coords={"analysisCycle": stacked["cycle"].values,
+                "statisticDomain": ("dim_0", stacked["domain"].values.astype(str))},
+        attrs=dict(stacked.attrs),
+    )
+
+
+def latest_points_dataset(ds: xr.Dataset, field: str, cycle: datetime) -> xr.Dataset:
+    """
+    The newest cycle's observations, shaped for the latest-cycle maps:
+    ``latitude``/``longitude`` on ``Location``, one boolean variable per QC
+    class (same rules as the summaries, see :mod:`obs_monitor.stats.summary`),
+    and ``<qc>_<field>`` with the field's value where the observation is in
+    that class (NaN elsewhere). ``ds`` is :func:`obs_monitor.io.read_ioda`
+    output; a single-channel file is squeezed.
+    """
+    if "channel" in ds.dims:
+        if ds.sizes["channel"] != 1:
+            raise ValueError("latest-cycle maps for multi-channel obs spaces are not implemented yet")
+        ds = ds.isel(channel=0, drop=True)
+    if field not in ds:
+        raise KeyError(f"diag file has no '{field}'")
+    values = ds[field].values.astype(float)
+    qc_name = next((q for q in FIELD_QC[field] if q in ds), None)
+    masks = _class_masks(values, ds[qc_name].values if qc_name else None)
+    data = {}
+    for i, qc in enumerate(QC_CLASSES):
+        data[qc] = (("Location",), masks[i])
+        data[f"{qc}_{field}"] = (("Location",), np.where(masks[i], values, np.nan))
+    return xr.Dataset(data, coords={"latitude": ("Location", ds["latitude"].values),
+                                    "longitude": ("Location", ds["longitude"].values)},
+                      attrs={**ds.attrs, "cycle": f"{cycle:%Y%m%d%H}"})
+
+
 # ---------------------------------------------------------------------------
 # Specs -> PNGs
 # ---------------------------------------------------------------------------
 
 def _describe(spec: FigureSpec) -> str:
-    return f"{spec.type} {spec.field} {spec.qc} {spec.stat}"
+    return " ".join(p for p in (spec.type, spec.field, spec.qc or ",".join(spec.qcs), spec.stat) if p)
 
 
 def _cycle_span(stacked: xr.Dataset) -> str:
@@ -197,6 +246,7 @@ def plot_obs_space(
     ob_type: str,
     specs: Sequence[FigureSpec],
     output_dir: str | Path,
+    latest: tuple[datetime, xr.Dataset] | None = None,
 ) -> PlotResult:
     """
     Make every figure in ``specs`` for one obs space and variable.
@@ -212,6 +262,10 @@ def plot_obs_space(
         ``obs_space.figures`` or :func:`obs_monitor.config.load_default_figures`.
     output_dir
         Where the PNGs go.
+    latest
+        ``(cycle, read_ioda output)`` for the newest cycle in the window with a
+        diag file, for the latest-cycle maps (``spec.latest``). ``None``: those
+        figures are skipped.
     """
     result = PlotResult()
     if stacked is None:
@@ -226,10 +280,35 @@ def plot_obs_space(
         return result
 
     variable = stacked.attrs.get("variable", "")
+    points: dict[str, xr.Dataset] = {}
     for spec in specs:
         desc = _describe(spec)
+        if spec.latest and latest is None:
+            result.skipped.append((desc, "no diag file in the window for the latest-cycle maps"))
+            continue
         try:
-            if spec.type == "time_series":
+            if spec.latest:
+                if spec.field not in points:
+                    points[spec.field] = latest_points_dataset(latest[1], spec.field, latest[0])
+                ds = points[spec.field]
+                stat = f"{spec.qc}_{spec.field}" if spec.type == "scatter_map" else spec.type
+                fig_spec = {"field": spec.field, "qcs": list(spec.qcs), **spec.options}
+                if spec.type == "scatter_map":
+                    fig_spec.setdefault("title", f"{{ob_type}} {spec.qc.title()} {FIELD_LABELS[spec.field]}, "
+                                                 "{cycle} ({n:,} obs)")
+                    units = stacked.attrs.get("units", "")
+                    fig_spec.setdefault("colorbar_label", f"{FIELD_LABELS[spec.field]} ({units})" if units
+                                        else FIELD_LABELS[spec.field])
+                else:
+                    fig_spec.setdefault("title", f"{{ob_type}} coverage by QC ({FIELD_LABELS[spec.field]}), {{cycle}}")
+            elif spec.type == "count_series":
+                ds = count_series_dataset(stacked, spec.field, spec.qcs)
+                stat = "count"
+                fig_spec = {"field": spec.field, "qcs": list(spec.qcs), "domains": list(spec.domains or ()) or None,
+                            **spec.options}
+                fig_spec["title"] = spec.options.get(
+                    "title", f"{{ob_type}} {{domain}} — {FIELD_LABELS[spec.field]} observation count")
+            elif spec.type == "time_series":
                 ds = time_series_dataset(stacked, spec.field, spec.stat, spec.qc)
                 fig_spec, unknown = _time_series_figure_spec(spec, stacked)
                 result.skipped += [(f"{desc} {d}", "domain not in regions.yaml") for d in unknown]
@@ -240,9 +319,13 @@ def plot_obs_space(
             # e.g. oman figures for a file with no oman group
             result.skipped.append((desc, str(exc)))
             continue
+        except ValueError as exc:
+            result.skipped.append((desc, str(exc)))
+            continue
+        if spec.type in ("time_series", "map_gridded"):
+            stat = stat_name(spec.qc, spec.stat)
         try:
-            fig = build_figure(spec.type, ds, fig_spec, ob_type, variable,
-                               stat_name(spec.qc, spec.stat), Path(output_dir))
+            fig = build_figure(spec.type, ds, fig_spec, ob_type, variable, stat, Path(output_dir))
             result.written += fig.save()
             result.failed += [(f"{desc} -> {path.name}", err) for path, err in fig.failed]
         except Exception as exc:  # noqa: BLE001 - one bad figure must not stop the rest
