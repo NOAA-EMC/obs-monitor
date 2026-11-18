@@ -30,6 +30,7 @@ found, what is missing and why.
 from __future__ import annotations
 
 import logging
+import os
 import re
 import shutil
 import tarfile
@@ -139,12 +140,22 @@ class GlobLocator:
 # ComTarballLocator: global-workflow COM tarballs
 # ---------------------------------------------------------------------------
 
+def _same_as_member(dest: Path, member: tarfile.TarInfo) -> bool:
+    """An extracted file can be reused if it has the member's size and modification time."""
+    try:
+        st = dest.stat()
+    except OSError:
+        return False
+    return dest.is_file() and st.st_size == member.size and int(st.st_mtime) == int(member.mtime)
+
+
 class ComTarballLocator:
     """
     Diag files inside per-cycle COM tarballs. Requested members are extracted
-    to ``extract_dir_template`` (default ``{work_dir}/{YYYYMMDDHH}/``); an
-    already-extracted file of the same size is reused, so re-running a cycle
-    does not re-extract. ``extract_dir_template`` may use ``{work_dir}``,
+    to ``extract_dir_template`` (default ``{work_dir}/{YYYYMMDDHH}/``) with
+    the member's modification time; an already-extracted file with the same
+    size and time is reused, so re-running a cycle does not re-extract, and a
+    re-made tarball is noticed. ``extract_dir_template`` may use ``{work_dir}``,
     ``{run}``, ``{component}`` and ``{cycle:...}``.
 
     The tarball is read as a stream (gzip can't seek), so all members needed
@@ -220,12 +231,13 @@ class ComTarballLocator:
                     if obs_space is None:
                         continue
                     dest = out_dir / name
-                    if not (dest.is_file() and dest.stat().st_size == member.size):
+                    if not _same_as_member(dest, member):
                         out_dir.mkdir(parents=True, exist_ok=True)
                         src = tar.extractfile(member)
                         tmp = dest.with_suffix(dest.suffix + ".part")
                         with src, open(tmp, "wb") as fh:
                             shutil.copyfileobj(src, fh, length=8 << 20)
+                        os.utime(tmp, (member.mtime, member.mtime))   # same file -> same fingerprint every run
                         tmp.replace(dest)
                         self.extracted.add(dest)
                     found[obs_space] = dest

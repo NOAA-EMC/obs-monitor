@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import dataclasses
 import json
 import os
 import subprocess
@@ -21,6 +22,7 @@ from obs_monitor.config import RunConfig, load_obs_spaces
 from obs_monitor.pipelines import run as runmod
 from obs_monitor.pipelines import stage, workflow
 from obs_monitor.pipelines.run import STATUS_FILE, run_window
+from obs_monitor.stats import cache_check, read_summary, stack_cycles, write_summary
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "ioda"))
 from ioda_fixtures import write_adpsfc, write_snow  # noqa: E402
@@ -193,6 +195,96 @@ class TestRunWindow:
                                   "snocvr_totalSnowDepth_coverage_map.png",
                                   "snocvr_totalSnowDepth_assimilated_scatter_ombg_map.png",
                                   "snocvr_totalSnowDepth_assimilated_scatter_oman_map.png"])
+
+
+class TestCacheCheck:
+    """A cached summary is reused only while it still applies (obs_monitor.stats.cache_check)."""
+
+    def reads(self, rc):
+        """(summaries recomputed, status). Counts reduce_cycle, not file reads: the latest-cycle
+        maps always read the newest diag file, whether or not its summary is cached."""
+        with patch.object(runmod, "reduce_cycle", wraps=runmod.reduce_cycle) as m:
+            res = run_window(rc)
+        return m.call_count, res.obs_spaces[0]
+
+    def test_version_bump_recomputes_once(self, tmp_path, monkeypatch):
+        stage_diags(tmp_path / "data")
+        run_window(run_config(tmp_path))
+        monkeypatch.setattr(cache_check, "SUMMARY_VERSION", cache_check.SUMMARY_VERSION + 1)
+        assert self.reads(run_config(tmp_path))[0] == len(CYCLES)
+        assert self.reads(run_config(tmp_path))[0] == 0                   # re-stamped with the new version
+
+    def test_stale_summary_without_diag_is_a_gap(self, tmp_path, monkeypatch):
+        stage_diags(tmp_path / "data")
+        run_window(run_config(tmp_path))
+        Path(DIAG.format(root=tmp_path / "data", c=CYCLES[0], o="prepbufr_adpsfc")).unlink()
+        monkeypatch.setattr(cache_check, "SUMMARY_VERSION", cache_check.SUMMARY_VERSION + 1)
+        n, st = self.reads(run_config(tmp_path))
+        c0 = f"{CYCLES[0]:%Y%m%d%H}"
+        assert n == len(CYCLES) - 1
+        assert st.status == "partial" and st.missing_cycles == [c0]
+        assert st.stale_cycles == {c0: f"summary version {cache_check.SUMMARY_VERSION - 1}, "
+                                       f"current {cache_check.SUMMARY_VERSION}"}
+        assert st.figures_written == 14
+        status = json.loads((tmp_path / "out" / STATUS_FILE).read_text())
+        assert status["obs_spaces"][0]["stale_cycles"] == st.stale_cycles
+
+    def test_matching_summary_survives_diag_cleanup(self, tmp_path):
+        stage_diags(tmp_path / "data")
+        run_window(run_config(tmp_path))
+        for c in CYCLES:
+            Path(DIAG.format(root=tmp_path / "data", c=c, o="prepbufr_adpsfc")).unlink()
+        n, st = self.reads(run_config(tmp_path))
+        assert n == 0 and st.status == "ok" and not st.stale_cycles
+
+    def test_summary_from_older_obs_monitor(self, tmp_path):
+        stage_diags(tmp_path / "data")
+        rc = run_config(tmp_path)
+        run_window(rc)
+        obs = rc.obs_spaces[0]
+        for c in CYCLES[:2]:                                               # strip the cache key from two summaries
+            path = rc.summary_path(obs, "stationPressure", c)
+            ds = read_summary(path)
+            ds.attrs = {k: v for k, v in ds.attrs.items() if not k.startswith("obsmon_")}
+            write_summary(ds, path)
+        Path(DIAG.format(root=tmp_path / "data", c=CYCLES[1], o="prepbufr_adpsfc")).unlink()
+        n, st = self.reads(run_config(tmp_path))
+        assert n == 1                                                      # CYCLES[0] recomputed from its diag
+        assert st.stale_cycles == {f"{CYCLES[1]:%Y%m%d%H}": "made by an older obs-monitor (no cache key)"}
+
+    def test_rewritten_diag_file_recomputes(self, tmp_path):
+        stage_diags(tmp_path / "data")
+        run_window(run_config(tmp_path))
+        p = Path(DIAG.format(root=tmp_path / "data", c=CYCLES[2], o="prepbufr_adpsfc"))
+        write_adpsfc(p, cycle=CYCLES[2], n=300, seed=99)                  # re-run analysis, new numbers
+        os.utime(p, (p.stat().st_atime, p.stat().st_mtime + 60))
+        assert self.reads(run_config(tmp_path))[0] == 1
+
+    def test_region_change_recomputes(self, tmp_path, monkeypatch):
+        stage_diags(tmp_path / "data")
+        run_window(run_config(tmp_path))
+        domains, grid = runmod.load_regions()
+        moved = [dataclasses.replace(d, lat_max=d.lat_max - 1) if d.name == "NH" else d for d in domains]
+        monkeypatch.setattr(runmod, "load_regions", lambda: (moved, grid))
+        assert self.reads(run_config(tmp_path))[0] == len(CYCLES)
+
+    def test_figure_only_change_reuses_cache(self, tmp_path):
+        stage_diags(tmp_path / "data")
+        rc = run_config(tmp_path)
+        run_window(rc)
+        renamed = dataclasses.replace(rc.obs_spaces[0], web_name="adpsfc_renamed")
+        assert self.reads(dataclasses.replace(rc, obs_spaces=(renamed,)))[0] == 0
+
+    def test_stacked_summary_has_no_per_cycle_cache_key(self, tmp_path):
+        stage_diags(tmp_path / "data")
+        rc = run_config(tmp_path)
+        run_window(rc)
+        summaries = {c: read_summary(rc.summary_path(rc.obs_spaces[0], "stationPressure", c)) for c in CYCLES}
+        assert all(cache_check.VERSION_ATTR in s.attrs for s in summaries.values())
+        assert not [k for k in stack_cycles(summaries, CYCLES).attrs if k.startswith("obsmon_")]
+
+
+class TestRunWindowCleanup:
 
     def test_glob_run_never_deletes_files_in_work_dir(self, tmp_path):
         """Glob inputs are the user's files: nothing under work_dir is removed, even work_dir/diags."""

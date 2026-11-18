@@ -3,7 +3,7 @@ obs_monitor.stats.summary
 =========================
 
 Turn one cycle of one simulated variable (the Dataset from
-:func:`obs_monitor.io.read_ioda`) into a small **CycleSummary**: statistics by
+:func:`obs_monitor.io.read_ioda`) into a small CycleSummary: statistics by
 domain and QC class, plus gridded means for maps. Every figure reads
 summaries, never raw diag files.
 
@@ -40,6 +40,16 @@ single iteration. These definitions live only here.
 
 Several cycles are stacked with :func:`stack_cycles`, which builds the time
 axis from the *expected* cycle list so missing cycles are NaN gaps.
+
+Summary version
+---------------
+:data:`SUMMARY_VERSION` is stamped on every cached summary
+(:mod:`obs_monitor.stats.cache_check`). **Bump it whenever a summary would
+come out different for the same diag file**: a new or renamed field, a QC
+class rule, the binning, how domains are applied. Cached summaries from
+another version are then recomputed instead of being mixed in with new ones.
+``tests/stats/test_cache_check.py`` pins the version next to a fingerprint of
+:func:`reduce_cycle`'s output, so a change without a bump fails CI.
 """
 
 from __future__ import annotations
@@ -51,6 +61,9 @@ import numpy as np
 import xarray as xr
 
 from obs_monitor.stats.regions import Domain, Grid
+
+#: Version of the summary contents and definitions. See "Summary version" above.
+SUMMARY_VERSION = 1
 
 #: QC classes, in output order.
 QC_CLASSES: tuple[str, ...] = ("all", "assimilated", "monitored", "rejected")
@@ -194,5 +207,6 @@ def stack_cycles(summaries: Mapping[datetime, xr.Dataset], cycles: Sequence[date
     stacked = xr.concat(parts, dim="cycle", combine_attrs="override")
     expected = np.array([np.datetime64(c, "ns") for c in cycles])
     stacked = stacked.reindex(cycle=expected)
-    stacked.attrs.pop("source_path", None)
+    for key in [k for k in stacked.attrs if k == "source_path" or k.startswith("obsmon_")]:
+        stacked.attrs.pop(key)                      # per-cycle details, not true of the stack
     return stacked

@@ -185,6 +185,35 @@ class TestGlobLocator:
             GlobLocator(str(tmp_path / name))
 
 
+class TestExtractionTimes:
+
+    def _tar(self, comroot: Path, cycle: datetime, data: bytes, mtime: int) -> None:
+        d = comroot / f"gdas.{cycle:%Y%m%d}" / f"{cycle:%H}" / "analysis" / "atmos"
+        d.mkdir(parents=True, exist_ok=True)
+        with tarfile.open(d / f"gdas.t{cycle:%H}z.atmos_analysis.ioda_hofx.tar.gz", "w:gz") as tar:
+            info = tarfile.TarInfo(f"diag_prepbufr_adpsfc_{cycle:%Y%m%d%H}.nc")
+            info.size, info.mtime = len(data), mtime
+            tar.addfile(info, io.BytesIO(data))
+
+    def test_extracted_file_keeps_member_time_and_is_reused(self, tmp_path):
+        self._tar(tmp_path / "com", CYCLES[0], b"a" * 100, mtime=1_700_000_000)
+        loc = ComTarballLocator(tmp_path / "com", tmp_path / "work", "atmos")
+        path = loc.locate(CYCLES[0], ["prepbufr_adpsfc"])["prepbufr_adpsfc"]
+        assert int(path.stat().st_mtime) == 1_700_000_000
+        loc2 = ComTarballLocator(tmp_path / "com", tmp_path / "work", "atmos")
+        loc2.locate(CYCLES[0], ["prepbufr_adpsfc"])
+        assert not loc2.extracted                                         # reused, not written again
+
+    def test_remade_tarball_same_size_is_re_extracted(self, tmp_path):
+        self._tar(tmp_path / "com", CYCLES[0], b"a" * 100, mtime=1_700_000_000)
+        loc = ComTarballLocator(tmp_path / "com", tmp_path / "work", "atmos")
+        path = loc.locate(CYCLES[0], ["prepbufr_adpsfc"])["prepbufr_adpsfc"]
+        self._tar(tmp_path / "com", CYCLES[0], b"b" * 100, mtime=1_700_003_600)   # analysis re-run
+        loc2 = ComTarballLocator(tmp_path / "com", tmp_path / "work", "atmos")
+        loc2.locate(CYCLES[0], ["prepbufr_adpsfc"])
+        assert path.read_bytes() == b"b" * 100 and int(path.stat().st_mtime) == 1_700_003_600
+
+
 class TestCleanup:
 
     def test_removes_only_what_it_extracted(self, com, tmp_path):
