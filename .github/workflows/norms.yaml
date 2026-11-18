@@ -7,15 +7,22 @@ jobs:
     name: Check python coding norms with pycodestyle
 
     steps:
-
-    - name: Install dependencies
-      run: |
-        pip install --upgrade pip
-        pip install pycodestyle
     - name: Checkout
       uses: actions/checkout@v4
       with:
         path: obs-monitor
+
+    # Own Python rather than the runner's system one, which newer Ubuntu images
+    # protect from pip installs (PEP 668 "externally-managed-environment").
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.11"
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install pycodestyle
 
     - name: Run pycodestyle
       run: |

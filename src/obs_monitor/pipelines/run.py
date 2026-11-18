@@ -9,10 +9,16 @@ differ only in how they build the RunConfig.
 For each obs space and simulated variable::
 
     for each expected cycle:
-        cached summary?  -> use it
-        diag file found? -> read_ioda -> reduce_cycle -> cache it
-        neither          -> gap
+        cached summary that still applies?  -> use it
+        diag file found?                    -> read_ioda -> reduce_cycle -> cache it (stamped)
+        stale cached summary, no diag file  -> gap, listed in stale_cycles
+        nothing                             -> gap
     stack_cycles -> plot_obs_space
+
+"Still applies" means the summary's cache key matches this run: same summary
+version, same obs-space/region config, and (when the diag file is here) the
+same diag file. See :mod:`obs_monitor.stats.cache_check`. A stale number is
+never plotted.
 
 Failure policy (docs/driver-redesign-plan.md): missing or unreadable data
 never stops the run. A cycle that can't be read is a gap; an obs space that
@@ -36,7 +42,7 @@ from obs_monitor.io import list_simulated_variables, read_ioda
 from obs_monitor.io.catalog import ComTarballLocator, Inventory, build_inventory
 from obs_monitor.io.timewindow import format_cycle
 from obs_monitor.plotting.summary_figures import plot_obs_space
-from obs_monitor.stats import load_regions, read_summary, reduce_cycle, stack_cycles, write_summary
+from obs_monitor.stats import cache_check, load_regions, read_summary, reduce_cycle, stack_cycles, write_summary
 
 logger = logging.getLogger(__name__)
 
@@ -47,6 +53,10 @@ STATUS_FILE = "obsmon_status.json"
 class ObsSpaceStatus:
     """
     Outcome for one obs space. ``status``:
+
+    ``missing_cycles`` lists every cycle with no data in the figures;
+    ``stale_cycles`` says why for the ones that had only an out-of-date cached
+    summary and no diag file to recompute it from.
 
     * ``ok``: data for every cycle, no figure failed (figures may be *skipped*,
       e.g. per-channel figures not implemented yet; see ``figures_skipped``)
@@ -62,6 +72,7 @@ class ObsSpaceStatus:
     cycles_expected: int = 0
     missing_cycles: list[str] = field(default_factory=list)
     unreadable_cycles: dict[str, str] = field(default_factory=dict)     # cycle -> error
+    stale_cycles: dict[str, str] = field(default_factory=dict)          # cycle -> why the cache didn't apply
     figures_written: int = 0
     figures_failed: list[str] = field(default_factory=list)
     figures_skipped: list[str] = field(default_factory=list)
@@ -95,30 +106,52 @@ class RunResult:
 def _summaries_for_variable(rc: RunConfig, obs: ObsSpaceConfig, variable: str, inv: Inventory,
                             domains, grid, status: ObsSpaceStatus,
                             keep_read: dict | None = None) -> dict[datetime, object]:
-    """Cached or freshly computed summary per cycle; unreadable cycles recorded and left out."""
+    """
+    Summary per cycle: the cached one if it still applies, else computed from
+    the diag file. Unreadable and stale cycles are recorded and left out. If
+    ``keep_read`` is given, the newest diag file read is left in it (for the
+    latest-cycle maps).
+    """
     out = {}
     for cycle in rc.cycles:
+        label = format_cycle(cycle)
         cache = rc.summary_path(obs, variable, cycle)
-        s = read_summary(cache)
-        if s is None:
-            path = inv.path(obs.name, cycle)
+        path = inv.path(obs.name, cycle)
+        try:
+            want = cache_check.expected(obs, variable, domains, grid, path)
+        except OSError as exc:                      # diag file vanished between inventory and now
+            logger.warning("%s %s %s: cannot stat %s: %s", obs.name, variable, label, path, exc)
+            path, want = None, cache_check.expected(obs, variable, domains, grid, None)
+
+        cached = read_summary(cache)
+        if cached is not None:
+            why = cache_check.check(cached, want)
+            if why is None:
+                out[cycle] = cached
+                continue
             if path is None:
+                logger.warning("%s %s %s: cached summary not used (%s) and no diag file to recompute it",
+                               obs.name, variable, label, why)
+                status.stale_cycles[label] = why
                 continue
-            try:
-                ds = read_ioda(path, variable, obs_space=obs.name, channels=obs.channels, group_map=obs.group_map)
-                if keep_read is not None:                   # cycles go oldest -> newest: keep only the newest
-                    keep_read.clear()
-                    keep_read[cycle] = ds                   # reused by the latest-cycle maps
-                s = reduce_cycle(ds, cycle, domains, grid)
-            except Exception as exc:  # noqa: BLE001 - a bad file is a gap, not a crash
-                logger.warning("%s %s %s: could not read/reduce %s: %s", obs.name, variable,
-                               format_cycle(cycle), path, exc)
-                status.unreadable_cycles[format_cycle(cycle)] = f"{type(exc).__name__}: {exc}"
-                continue
-            try:
-                write_summary(s, cache)
-            except OSError as exc:
-                logger.warning("Could not cache summary %s: %s", cache, exc)
+            logger.info("%s %s %s: recomputing (%s)", obs.name, variable, label, why)
+
+        if path is None:
+            continue
+        try:
+            ds = read_ioda(path, variable, obs_space=obs.name, channels=obs.channels, group_map=obs.group_map)
+            if keep_read is not None:                   # cycles go oldest -> newest: keep only the newest
+                keep_read.clear()
+                keep_read[cycle] = ds                   # reused by the latest-cycle maps
+            s = reduce_cycle(ds, cycle, domains, grid)
+        except Exception as exc:  # noqa: BLE001 - a bad file is a gap, not a crash
+            logger.warning("%s %s %s: could not read/reduce %s: %s", obs.name, variable, label, path, exc)
+            status.unreadable_cycles[label] = f"{type(exc).__name__}: {exc}"
+            continue
+        try:
+            write_summary(s, cache, want)
+        except OSError as exc:
+            logger.warning("Could not cache summary %s: %s", cache, exc)
         out[cycle] = s
     return out
 

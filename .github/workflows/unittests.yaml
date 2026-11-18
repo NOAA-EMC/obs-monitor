@@ -1,75 +1,42 @@
 name: Unit Tests
 on: [push, pull_request]
 
+# Plain Python + pip, no conda: the Ubuntu 26.04 runner images
+# (ubuntu-latest from Nov 2026) no longer ship Miniconda. Every dependency,
+# cartopy and EMCPy included, installs from requirements.txt.
+# Python 3.11 matches stack-python on ursa.
+
 jobs:
-  ctests:
+  unit-tests:
     runs-on: ubuntu-latest
-    name: Run Unit Tests with ctest
+    name: Run unit tests
 
     steps:
-
-    # Update conda
-    - name: Update conda
-      run: conda update -n base -c defaults conda
-
-    # Install pip
-    - name: Install pip
-      run: conda install pip
-
     - name: Checkout
       uses: actions/checkout@v4
       with:
         path: obs-monitor
 
-    # Install dependencies from obs-monitor
-    - name: Install obs-monitor dependencies
-      run: $CONDA/bin/pip3 install -r obs-monitor/requirements.txt --user
-
-    - name: Checkout wxflow
-      uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
       with:
-        repository: NOAA-EMC/wxflow
-        ref: develop
-        path: wxflow
+        python-version: "3.11"
+        cache: pip
+        cache-dependency-path: obs-monitor/requirements.txt
 
-    - name: Install wxflow
+    - name: Install dependencies
       run: |
-        cd wxflow
-        $CONDA/bin/pip3 install .
+        python -m pip install --upgrade pip
+        python -m pip install -r obs-monitor/requirements.txt
 
-    # Install cartopy (required by EMCPy)
-    - name: Install cartopy
-      run: conda install -c conda-forge cartopy
-
-    # Install EMCPy (replaces EVA)
-    - name: Clone EMCPy
-      uses: actions/checkout@v4
-      with:
-        repository: NOAA-EMC/emcpy
-        ref: develop
-        path: emcpy
-
-    - name: Install EMCPy
-      run: |
-        cd emcpy
-        $CONDA/bin/pip3 install .
-
-    # Install pytest
-    - name: Install pytest
-      run: $CONDA/bin/pip3 install pytest pytest-cov
-
-    # Install obs-monitor itself so plotting subpackage is importable
     - name: Install obs-monitor
-      run: |
-        cd obs-monitor
-        $CONDA/bin/pip3 install -e .
+      run: python -m pip install -e obs-monitor
 
-    # Run unit tests
     - name: Run unit tests
       env:
         MPLBACKEND: Agg  # non-interactive matplotlib backend; required in CI
       run: |
         cd obs-monitor
-        $CONDA/bin/python -m pytest src/tests/ -v --tb=short \
+        python -m pytest src/tests/ -v --tb=short \
           --cov=obs_monitor \
           --cov-report=term-missing

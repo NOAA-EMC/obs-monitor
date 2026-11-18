@@ -9,6 +9,10 @@ came from is much larger).
 Layout::
 
     <root>/<obs_space>/<variable>/summary_<obs_space>_<variable>_YYYYMMDDHH.nc
+
+Each file carries a cache key saying how it was made
+(:mod:`obs_monitor.stats.cache_check`); the pipeline only reuses a summary
+whose key matches the current run.
 """
 
 from __future__ import annotations
@@ -19,16 +23,26 @@ from pathlib import Path
 
 import xarray as xr
 
+from obs_monitor.stats.cache_check import CacheKey
+
 
 def summary_path(root: str | Path, obs_space: str, variable: str, cycle: datetime) -> Path:
     return Path(root) / obs_space / variable / f"summary_{obs_space}_{variable}_{cycle:%Y%m%d%H}.nc"
 
 
-def write_summary(ds: xr.Dataset, path: str | Path) -> Path:
-    """Write atomically (temp file + rename) so a killed job never leaves a half-written summary."""
+def write_summary(ds: xr.Dataset, path: str | Path, key: CacheKey | None = None) -> Path:
+    """
+    Write atomically (temp file + rename) so a killed job never leaves a
+    half-written summary. ``key`` is written into the file's attributes
+    (see :mod:`obs_monitor.stats.cache_check`); a summary without one is never
+    reused by the pipeline.
+    """
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    if key is not None:
+        ds = ds.copy()
+        ds.attrs.update(key.attrs())
     try:
         ds.to_netcdf(tmp)
         os.replace(tmp, path)

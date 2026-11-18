@@ -135,6 +135,8 @@ class TestRuns:
         assert (tmp_path / "out" / TS_PNG).is_file()
         assert not [p for p in (tmp_path / "work").rglob("*") if p.is_file()]     # extracted files removed
         assert len(list(com.rglob("*.tar.gz"))) == len(CYCLES)                     # tarballs untouched
+        with patch.object(runmod, "read_ioda", side_effect=AssertionError("re-read")):
+            assert exp("--config", cfg) == 0                               # re-extracted files match: cache used
         (cache,) = cache_folders(tmp_path / "out")
         info = json.loads((cache / experiment.INPUT_INFO).read_text())
         assert info["type"] == "com" and info["comroot"] == str(com) and info["run"] == "gdas"

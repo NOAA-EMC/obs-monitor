@@ -27,7 +27,10 @@ Layout
 ------
 * diag files (input):  ``$DATAROOT/$RUN.YYYYMMDD/HH/analysis/<component>/diag_<obs_space>_YYYYMMDDHH.nc``
 * summaries (cache):   ``$DATAROOT/$RUN.YYYYMMDD/HH/products/<component>/anlmon/``
-  ``summary_<obs_space>_<variable>_YYYYMMDDHH.nc``
+  ``summary_<obs_space>_<variable>_YYYYMMDDHH.nc``. Reused only while they still
+  apply (:mod:`obs_monitor.stats.cache_check`). After a summary-version bump or a
+  config change, cycles whose staged diag files are gone become gaps listed under
+  ``stale_cycles`` in ``obsmon_status.json``.
   (where the old stat files lived; not pushed to the web server)
 * figures + status:    ``$COMROOT/$RUN.$PDY/$CYC/<component>/`` (same folder as the old driver's plots)
 
