@@ -98,7 +98,7 @@ class TestRuns:
     def test_rerun_uses_cache(self, tmp_path):
         write_diags(tmp_path / "diags")
         assert basic(tmp_path) == 0
-        with patch.object(runmod, "read_ioda", side_effect=AssertionError("diag file re-read")):
+        with patch.object(runmod, "reduce_cycle", side_effect=AssertionError("summary recomputed")):
             assert basic(tmp_path) == 0
 
     def test_explicit_obs_space(self, tmp_path):
@@ -226,13 +226,13 @@ class TestInputKeyedCache:
         write_diags(tmp_path / "diags")
         write_diags(tmp_path / "other", skip=[CYCLES[0]])                  # B differs: no first cycle
         assert basic(tmp_path) == 0
-        with patch.object(runmod, "read_ioda", wraps=runmod.read_ioda) as reads:
+        with patch.object(runmod, "reduce_cycle", wraps=runmod.reduce_cycle) as reduced:
             assert basic(tmp_path, inp=tmp_path / "other") == 0
-        assert reads.call_count == len(CYCLES) - 1                         # nothing taken from A's cache
+        assert reduced.call_count == len(CYCLES) - 1                       # nothing taken from A's cache
         status = json.loads((tmp_path / "out" / STATUS_FILE).read_text())["obs_spaces"][0]
         assert status["missing_cycles"] == [f"{CYCLES[0]:%Y%m%d%H}"]      # A's first cycle not borrowed
         assert len(cache_folders(tmp_path / "out")) == 2
-        with patch.object(runmod, "read_ioda", side_effect=AssertionError("re-read")):
+        with patch.object(runmod, "reduce_cycle", side_effect=AssertionError("recomputed")):
             assert basic(tmp_path) == 0                                    # A's cache still intact
 
     def test_unrecorded_old_cache_is_never_read(self, tmp_path):
@@ -247,9 +247,9 @@ class TestInputKeyedCache:
             "obs_spaces": ["prepbufr_adpsfc"], "output_dir": str(tmp_path / "out"),
             "work_dir": str(tmp_path / "work")}))
         assert (tmp_path / "out" / "summaries" / "prepbufr_adpsfc").is_dir()
-        with patch.object(runmod, "read_ioda", wraps=runmod.read_ioda) as reads:
+        with patch.object(runmod, "reduce_cycle", wraps=runmod.reduce_cycle) as reduced:
             assert basic(tmp_path, inp=tmp_path / "other") == 0
-        assert reads.call_count == len(CYCLES)
+        assert reduced.call_count == len(CYCLES)
 
     def test_two_inputs_never_share_a_path(self, tmp_path):
         """No shared state between different inputs, so two first runs at once can't collide."""

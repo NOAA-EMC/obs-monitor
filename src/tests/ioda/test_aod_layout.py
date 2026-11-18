@@ -35,11 +35,16 @@ def test_aod_figures_keep_website_names(tmp_path):
         write_aod(p, cycle=c)
         sums[c] = reduce_cycle(read_ioda(p, "aerosolOpticalDepth"), c, domains, grid)
     obs = load_obs_spaces()["retrieval_aod_viirs_npp"]
+    newest = read_ioda(tmp_path / f"diag_{CYCLES[-1]:%Y%m%d%H}.nc", "aerosolOpticalDepth")
     with patch("emcpy.plots.create_plots.CreatePlot.add_map_features", lambda self, *a, **k: None):
-        r = plot_obs_space(stack_cycles(sums, CYCLES), obs.label, obs.figures, tmp_path / "out")
+        r = plot_obs_space(stack_cycles(sums, CYCLES), obs.label, obs.figures, tmp_path / "out",
+                           latest=(CYCLES[-1], newest))
     assert sorted(p.name for p in r.written) == [
         "viirs_npp_aerosolOpticalDepth_assimilated_mean_oman_Global_timeseries.png",
         "viirs_npp_aerosolOpticalDepth_assimilated_mean_oman_map.png",
+        "viirs_npp_aerosolOpticalDepth_assimilated_scatter_oman_map.png",
+        "viirs_npp_aerosolOpticalDepth_count_oman_Global_timeseries.png",
+        "viirs_npp_aerosolOpticalDepth_coverage_map.png",
     ]
     assert not r.failed and not r.skipped
 

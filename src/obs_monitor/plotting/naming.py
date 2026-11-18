@@ -18,6 +18,18 @@ Gridded map::
     {ob_type}_{variable}_{stat}_{label}_map.png
     prepbufr_adpsfc_stationPressure_assimilated_mean_ombg_map.png
 
+Count series (number of obs by QC class), one PNG per domain::
+
+    {ob_type}_{variable}_count_{field}_{domain}_timeseries.png
+    prepbufr_adpsfc_stationPressure_count_ombg_Global_timeseries.png
+
+Latest-cycle maps (newest diag file in the window)::
+
+    {ob_type}_{variable}_coverage_map.png
+    prepbufr_adpsfc_stationPressure_coverage_map.png
+    {ob_type}_{variable}_{qc}_scatter_{field}_map.png
+    prepbufr_adpsfc_stationPressure_assimilated_scatter_ombg_map.png
+
 ``ob_type`` is the obs space's ``label`` (its ``web_name`` if set, else its name),
 ``stat`` is ``<qc_class>_<statistic>`` as in the old stat files, and ``label`` is
 the field (``ombg``, ``oman``, ``obs``).
