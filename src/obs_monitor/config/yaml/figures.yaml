@@ -22,6 +22,18 @@
 #                 Default colour limits for O-F/O-A: symmetric at the 98th percentile of |value|.
 #                 Optional: title, colorbar_label, cmap, vmin, vmax, marker_size, projection, map_domain
 #
+# Radiances (multi-channel obs spaces): every type above is made once per channel
+# (channels: [1, 2, ...] picks which; default all), plus these three, the images the
+# website's sensor pages show (see config/yaml/obs_spaces/radiance.yaml):
+#   channel_summary {}                one number per channel over the window: obs count (bars)
+#                                     and count-weighted mean O-F / O-A. Optional: qc (default
+#                                     assimilated), domain (default Global), title
+#   channel_heatmap {field, stat, qc} channel x cycle heatmap of one statistic; O-F/O-A means
+#                                     are centred on zero. Optional: domain (Global), title,
+#                                     cmap, vmin, vmax, annotate (cell values, default false)
+#   channel_series  {}                one PNG per channel: counts by QC class, mean O-F/O-A,
+#                                     O-F std over time. Optional: qc, domain, title, channels
+#
 # The first four entries reproduce the figures on the website today; the rest are new.
  
 defaults:

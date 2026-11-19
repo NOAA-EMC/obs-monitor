@@ -13,6 +13,11 @@
 #                             (positive integers). Omitted = all channels.
 #     web_name: name          Optional. Name used in figure file names, which the website
 #                             links to. Omitted = the obs-space name.
+#     web_path: a/b/c         Optional. Sub-folder of the output folder for this obs space's
+#                             figures, where the website looks for them. Radiances:
+#                             rad/<instrument>/<satellite> as the site names them (e.g.
+#                             rad/atms/noaa-20); the sensor-page images are then named
+#                             <instrument>_<satellite>_... Omitted = the output folder.
 #     group_map:              Optional. Read a field from a non-standard IODA group, for
 #       obs: ObsValue         files that don't follow the usual layout. Fields: obs, ombg,
 #                             oman, hofx_bg, hofx_an, qc_bg, qc_an, err_bg, err_an,
@@ -27,8 +32,22 @@
 # Every *.yaml file in this folder is read. The split by category is only for people.
 # ---------------------------------------------------------------------------
 
+# Radiances get each figure once per channel, plus the three images the website's
+# sensor pages show (channel_summary, channel_heatmap, channel_series).
+_radiance_figures: &radiance_figures
+  - {type: channel_summary}                                               # <inst>_<sat>_summary_<cycle>.png
+  - {type: channel_heatmap, field: ombg, stat: mean, qc: assimilated}     # <inst>_<sat>_time_<cycle>.png
+  - {type: channel_series}                                                # <inst>_<sat>_chan_<N>_<cycle>.png
+  - {type: count_series, field: ombg}
+  - {type: map_gridded, field: ombg, stat: mean, qc: assimilated}
+  - {type: map_gridded, field: oman, stat: mean, qc: assimilated}
+  - {type: coverage_map}
+  - {type: scatter_map, field: ombg, qc: assimilated}
+
 obs_spaces:
 
   radiance_atms_n20:
     component: atmos
     web_name: atms_n20
+    web_path: rad/atms/noaa-20      # the website's /rad/noaa-20/ATMS pages
+    figures: *radiance_figures

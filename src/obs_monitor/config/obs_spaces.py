@@ -50,6 +50,7 @@ class ObsSpaceConfig:
     variables: tuple[str, ...] | None = None
     channels: tuple[int, ...] | None = None
     web_name: str | None = None
+    web_path: str | None = None                     # website sub-folder for this obs space's figures
     group_map: Mapping[str, str] = field(default_factory=dict)
     figures: tuple[FigureSpec, ...] | None = None    # None = config/yaml/figures.yaml defaults
 
@@ -59,7 +60,7 @@ class ObsSpaceConfig:
         return self.web_name or self.name
 
 
-_ALLOWED_KEYS = {"component", "variables", "channels", "web_name", "group_map", "figures"}
+_ALLOWED_KEYS = {"component", "variables", "channels", "web_name", "web_path", "group_map", "figures"}
 
 
 def _str_list(value: Any, where: str) -> tuple[str, ...]:
@@ -93,6 +94,13 @@ def _parse_obs_space(name: str, spec: Any, source: str) -> ObsSpaceConfig:
     web_name = spec.get("web_name")
     if web_name is not None and (not isinstance(web_name, str) or not web_name):
         raise ConfigError(f"{where} 'web_name' must be a non-empty string.")
+    web_path = spec.get("web_path")
+    if web_path is not None:
+        parts = web_path.split("/") if isinstance(web_path, str) else []
+        if not parts or web_path.startswith("/") or any(p in ("", ".", "..") for p in parts) \
+                or any(not p.replace("_", "").replace("-", "").isalnum() for p in parts):
+            raise ConfigError(f"{where} 'web_path' must be a relative folder like 'microwave/atms/n20' "
+                              f"(letters, digits, '_' and '-'), got {web_path!r}.")
 
     group_map = spec.get("group_map") or {}
     if not isinstance(group_map, dict) or not all(
@@ -105,7 +113,7 @@ def _parse_obs_space(name: str, spec: Any, source: str) -> ObsSpaceConfig:
     figures = None if spec.get("figures") is None else parse_figure_specs(spec["figures"], f"{where} 'figures'")
 
     return ObsSpaceConfig(name=name, component=component, variables=variables, channels=channels,
-                          web_name=web_name, group_map=dict(group_map), figures=figures)
+                          web_name=web_name, web_path=web_path, group_map=dict(group_map), figures=figures)
 
 
 def load_obs_spaces(paths: str | Path | Iterable[str | Path] = DEFAULT_OBS_SPACE_DIR) -> dict[str, ObsSpaceConfig]:

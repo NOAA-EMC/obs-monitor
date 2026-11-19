@@ -56,8 +56,20 @@ FIGURE_TYPES: dict[str, _TypeRules] = {
                                defaults=(("field", "ombg"), ("qc", ["assimilated"]))),
     "scatter_map": _TypeRules(frozenset({"field", "qc"}),
                               frozenset({"colorbar_label", "cmap", "vmin", "vmax", "marker_size"} | _MAP_OPTIONS)),
+    # Radiances (multi-channel obs spaces only); these three are the website's sensor pages.
+    "channel_heatmap": _TypeRules(frozenset({"field", "stat", "qc"}),
+                                  frozenset({"domain", "title", "cmap", "vmin", "vmax", "annotate"}), stats=STATS,
+                                  defaults=(("domain", "Global"),)),
+    "channel_summary": _TypeRules(frozenset(), frozenset({"qc", "domain", "title"}),
+                                  defaults=(("qc", "assimilated"), ("domain", "Global"))),
+    "channel_series": _TypeRules(frozenset(), frozenset({"qc", "domain", "title"}),
+                                 defaults=(("qc", "assimilated"), ("domain", "Global"))),
 }
 LATEST_TYPES = frozenset({"coverage_map", "scatter_map"})
+#: Made once per obs space from all its channels; skipped for single-channel obs spaces.
+CHANNEL_TYPES = frozenset({"channel_heatmap", "channel_summary", "channel_series"})
+#: Made once per channel for multi-channel obs spaces (``channels:`` picks which).
+PER_CHANNEL_TYPES = frozenset({"time_series", "map_gridded", "count_series", "coverage_map", "scatter_map"})
 
 
 @dataclass(frozen=True)
@@ -75,6 +87,12 @@ class FigureSpec:
         """Drawn from the newest diag file in the window rather than the summaries."""
         return self.type in LATEST_TYPES
 
+    @property
+    def channels(self) -> tuple[int, ...] | None:
+        """Channels to plot (``channels:`` option), or None for all of them."""
+        value = self.options.get("channels")
+        return tuple(value) if value is not None else None
+
 
 def parse_figure_spec(spec: Any, where: str) -> FigureSpec:
     if not isinstance(spec, dict):
@@ -88,10 +106,11 @@ def parse_figure_spec(spec: Any, where: str) -> FigureSpec:
     missing = rules.required - set(spec)
     if missing:
         raise ConfigError(f"{where} ({ftype}) is missing {sorted(missing)}.")
-    unknown = set(spec) - {"type"} - rules.required - rules.optional
+    optional = rules.optional | ({"channels"} if ftype in PER_CHANNEL_TYPES | {"channel_series"} else set())
+    unknown = set(spec) - {"type"} - rules.required - optional
     if unknown:
         raise ConfigError(f"{where} ({ftype}) has unknown key(s) {sorted(unknown)}. "
-                          f"Allowed: {sorted({'type'} | rules.required | rules.optional)}")
+                          f"Allowed: {sorted({'type'} | rules.required | optional)}")
     spec = {**dict(rules.defaults), **spec}
 
     fld = spec.get("field", "")
@@ -124,6 +143,15 @@ def parse_figure_spec(spec: Any, where: str) -> FigureSpec:
         raise ConfigError(f"{where} marker_size must be a positive number.")
     if "log_scale" in spec and not isinstance(spec["log_scale"], bool):
         raise ConfigError(f"{where} log_scale must be true or false.")
+    if "annotate" in spec and not isinstance(spec["annotate"], bool):
+        raise ConfigError(f"{where} annotate must be true or false.")
+    if "domain" in spec and not (isinstance(spec["domain"], str) and spec["domain"]):
+        raise ConfigError(f"{where} domain must be one domain name.")
+    if "channels" in spec:
+        ch = spec["channels"]
+        if not isinstance(ch, list) or not ch or not all(isinstance(c, int) and not isinstance(c, bool) and c > 0
+                                                         for c in ch) or len(set(ch)) != len(ch):
+            raise ConfigError(f"{where} channels must be a list of distinct positive channel numbers.")
     options = {k: v for k, v in spec.items() if k not in {"type", "field", "stat", "qc", "domains"}}
     return FigureSpec(ftype, fld, stat, qc, domains, options, qcs)
 

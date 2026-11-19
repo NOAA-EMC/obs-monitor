@@ -242,14 +242,17 @@ class TestPlotObsSpace:
         assert not r.written and len(r.failed) == 1 and "disk full" in r.failed[0][1]
 
 
-def test_single_channel_plotted_multi_channel_skipped(stacked, tmp_path):
+def test_single_channel_plotted_like_conventional_multi_channel_per_channel(stacked, tmp_path):
     spec = parse_figure_spec({"type": "time_series", "field": "ombg", "stat": "mean", "qc": "assimilated",
                               "domains": ["Global"]}, "t")
     one = stacked.expand_dims(channel=[4]).transpose("cycle", "channel", ...)
-    assert len(plot_obs_space(one, "x", [spec], tmp_path / "one").written) == 1
+    assert [p.name for p in plot_obs_space(one, "x", [spec], tmp_path / "one").written] == \
+        ["x_stationPressure_assimilated_mean_ombg_Global_timeseries.png"]          # no channel in the name
     two = xr.concat([stacked, stacked], dim=xr.DataArray([1, 2], dims="channel", name="channel"))
     r = plot_obs_space(two, "x", [spec], tmp_path / "two")
-    assert not r.written and r.skipped and "not implemented" in r.skipped[0][1]
+    assert sorted(p.name for p in r.written) == [
+        "x_ch1_stationPressure_assimilated_mean_ombg_Global_timeseries.png",
+        "x_ch2_stationPressure_assimilated_mean_ombg_Global_timeseries.png"]
 
 
 # ---------------------------------------------------------------------------
