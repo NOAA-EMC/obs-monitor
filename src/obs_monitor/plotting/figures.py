@@ -43,7 +43,7 @@ import matplotlib.dates as mdates  # noqa: E402
 
 # Hard EMCPy requirement — fail loudly at import time if missing.
 try:
-    from emcpy.plots.plots import LinePlot, HorizontalLine
+    from emcpy.plots.plots import BarPlot, HeatMap, HorizontalLine, LinePlot
     from emcpy.plots.create_plots import CreatePlot, CreateFigure
     from emcpy.plots.map_plots import MapGridded, MapScatter
 except ImportError as _emcpy_err:
@@ -612,6 +612,160 @@ class ScatterMapFigure(FigureBase):
 
 
 # ---------------------------------------------------------------------------
+# Radiance (multi-channel) figures: the website's sensor pages
+# ---------------------------------------------------------------------------
+# Each takes its output file name in ``spec["filename"]`` (see naming.SITE_RADIANCE_NAMES).
+
+_FIELD_COLORS = {"ombg": "#0072B2", "oman": "#D55E00", "obs": "#000000"}
+_FIELD_LABELS = {"ombg": "O-F", "oman": "O-A", "obs": "Obs"}
+
+
+def _format_time_axes(fig: "plt.Figure") -> None:
+    for ax in fig.axes:
+        ax.xaxis.set_major_formatter(mdates.DateFormatter("%Y%m%d\n%Hz"))
+        ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+        plt.setp(ax.get_xticklabels(), rotation=30, ha="right", fontsize=8)
+
+
+def _line(x, y, label, color, marker="o"):
+    lp = LinePlot(x, np.asarray(y, dtype=float))
+    lp.label, lp.color, lp.linewidth, lp.marker, lp.markersize = label, color, 1.5, marker, 4
+    return lp
+
+
+def _zero_line():
+    z = HorizontalLine(0)
+    z.color, z.linewidth, z.linestyle = "black", 0.8, "--"
+    return z
+
+
+class ChannelHeatmapFigure(FigureBase):
+    """
+    Channel x cycle heatmap of one statistic (e.g. mean O-F of assimilated obs):
+    every channel of a sensor over the window at a glance. Missing values are grey.
+
+    ``ds``: variable ``value`` on ``(channel, cycle)``. Spec keys: ``filename``,
+    ``title``, ``cmap``, ``vmin``, ``vmax``, ``annotate``, ``colorbar_label``,
+    ``diverging`` (centre the colours on zero; default for O-F/O-A means).
+    """
+
+    def _render(self) -> list[tuple["plt.Figure", Path]]:
+        data = self.ds["value"].values.astype(float)
+        if not np.isfinite(data).any():
+            logger.warning("%s: no values for the channel heatmap; skipped.", self.ob_type)
+            return []
+        cycles = [f"{datetime.fromtimestamp(int(t) / 1e9, tz=timezone.utc):%m%d %Hz}"
+                  for t in self.ds["cycle"].values.astype("int64")]
+        channels = [str(c) for c in self.ds["channel"].values]
+        hm = HeatMap(cycles, channels, data)
+        diverging = self.spec.get("diverging", False)
+        hm.cmap = self.spec.get("cmap") or ("coolwarm" if diverging else "viridis")
+        hm.vmin, hm.vmax = self.spec.get("vmin"), self.spec.get("vmax")
+        if diverging and hm.vmin is None and hm.vmax is None:
+            lim = float(np.nanpercentile(np.abs(data), 98)) or float(np.nanmax(np.abs(data)))
+            hm.vmin, hm.vmax = -lim, lim
+        hm.annotate = bool(self.spec.get("annotate", False))
+        hm.colorbar_label = self.spec.get("colorbar_label")
+
+        plot1 = CreatePlot()
+        plot1.plot_layers = [hm]
+        plot1.add_title(label=self.spec.get("title", self.ob_type), loc="center", fontsize=12)
+        plot1.add_xlabel(xlabel="Analysis Cycle (UTC)", fontsize=10)
+        plot1.add_ylabel(ylabel="Channel", fontsize=10)
+        plot1.add_colorbar(label=hm.colorbar_label or "", fontsize=10, extend="both")
+        fig_obj = CreateFigure(figsize=(max(8, 0.35 * len(cycles) + 4), max(4, 0.28 * len(channels) + 2)))
+        fig_obj.plot_list = [plot1]
+        fig_obj.create_figure()
+        return [(fig_obj.fig, self.output_dir / self.spec["filename"])]
+
+
+class ChannelSummaryFigure(FigureBase):
+    """
+    One number per channel over the whole window: obs count (bars) and the
+    count-weighted mean O-F / O-A (lines), for one QC class and domain.
+
+    ``ds``: ``count`` and ``mean_<field>`` on ``channel``. Spec keys: ``filename``,
+    ``title``, ``qc``, ``units``.
+    """
+
+    def _render(self) -> list[tuple["plt.Figure", Path]]:
+        ch = self.ds["channel"].values.astype(float)
+        count = self.ds["count"].values.astype(float)
+        if not np.nansum(count):
+            logger.warning("%s: no obs in any channel; summary skipped.", self.ob_type)
+            return []
+        bars = BarPlot(ch, np.nan_to_num(count))
+        bars.color = QC_COLORS.get(self.spec.get("qc", "assimilated"), "gray")
+        top = CreatePlot()
+        top.plot_layers = [bars]
+        top.add_title(label=self.spec.get("title", self.ob_type), loc="center", fontsize=12)
+        top.add_ylabel(ylabel=f"{self.spec.get('qc', 'assimilated')} count", fontsize=10)
+        top.add_grid(linestyle=":", linewidth=0.6, color="gray", alpha=0.7)
+
+        layers = [_line(ch, self.ds[v].values, _FIELD_LABELS[v.split("_", 1)[1]], _FIELD_COLORS[v.split("_", 1)[1]])
+                  for v in ("mean_ombg", "mean_oman") if v in self.ds]
+        bottom = CreatePlot()
+        bottom.plot_layers = layers + [_zero_line()]
+        units = self.spec.get("units", "")
+        bottom.add_ylabel(ylabel=f"mean ({units})" if units else "mean", fontsize=10)
+        bottom.add_xlabel(xlabel="Channel", fontsize=10)
+        bottom.add_legend(loc="best", fontsize=9)
+        bottom.add_grid(linestyle=":", linewidth=0.6, color="gray", alpha=0.7)
+
+        fig_obj = CreateFigure(nrows=2, ncols=1, figsize=(10, 6), sharex=True)
+        fig_obj.plot_list = [top, bottom]
+        fig_obj.create_figure()
+        for ax in fig_obj.fig.axes:
+            ax.set_xticks(ch)
+            ax.set_xticklabels([str(int(c)) for c in ch], fontsize=8)
+        return [(fig_obj.fig, self.output_dir / self.spec["filename"])]
+
+
+class ChannelSeriesFigure(FigureBase):
+    """
+    One channel over the window, three panels sharing the time axis: obs count
+    by QC class; mean O-F and O-A; O-F standard deviation. Gaps are missing cycles.
+
+    ``ds`` (one channel): ``count_<qc>`` for each QC class, ``mean_ombg``,
+    ``mean_oman``, ``std_ombg`` on ``analysisCycle``. Spec keys: ``filename``,
+    ``title``, ``qc``, ``units``.
+    """
+
+    def _render(self) -> list[tuple["plt.Figure", Path]]:
+        x = _cycle_times(self.ds)
+        qc = self.spec.get("qc", "assimilated")
+        counts = CreatePlot()
+        counts.plot_layers = [_line(x, self.ds[f"count_{q}"].values, q, QC_COLORS[q])
+                              for q in ("all", "assimilated", "monitored", "rejected") if f"count_{q}" in self.ds]
+        counts.add_title(label=self.spec.get("title", self.ob_type), loc="center", fontsize=12)
+        counts.add_ylabel(ylabel="count", fontsize=10)
+        counts.add_legend(loc="best", fontsize=8)
+        counts.add_grid(linestyle=":", linewidth=0.6, color="gray", alpha=0.7)
+
+        units = self.spec.get("units", "")
+        means = CreatePlot()
+        means.plot_layers = [_line(x, self.ds[f"mean_{f}"].values, f"{qc} {_FIELD_LABELS[f]}", _FIELD_COLORS[f])
+                             for f in ("ombg", "oman") if f"mean_{f}" in self.ds] + [_zero_line()]
+        means.add_ylabel(ylabel=f"mean ({units})" if units else "mean", fontsize=10)
+        means.add_legend(loc="best", fontsize=8)
+        means.add_grid(linestyle=":", linewidth=0.6, color="gray", alpha=0.7)
+
+        spread = CreatePlot()
+        spread.plot_layers = [_line(x, self.ds["std_ombg"].values, f"{qc} O-F std", "#009E73")] \
+            if "std_ombg" in self.ds else []
+        spread.add_ylabel(ylabel=f"std ({units})" if units else "std", fontsize=10)
+        spread.add_xlabel(xlabel="Analysis Cycle (UTC)", fontsize=10)
+        spread.add_legend(loc="best", fontsize=8)
+        spread.add_grid(linestyle=":", linewidth=0.6, color="gray", alpha=0.7)
+
+        fig_obj = CreateFigure(nrows=3, ncols=1, figsize=(10, 8), sharex=True)
+        fig_obj.plot_list = [counts, means, spread]
+        fig_obj.create_figure()
+        _format_time_axes(fig_obj.fig)
+        return [(fig_obj.fig, self.output_dir / self.spec["filename"])]
+
+
+# ---------------------------------------------------------------------------
 # Registry — maps config ``type`` strings to classes
 # ---------------------------------------------------------------------------
 
@@ -623,6 +777,9 @@ FIGURE_REGISTRY: dict[str, type[FigureBase]] = {
     "count_series": CountSeriesFigure,
     "coverage_map": CoverageMapFigure,
     "scatter_map": ScatterMapFigure,
+    "channel_heatmap": ChannelHeatmapFigure,
+    "channel_summary": ChannelSummaryFigure,
+    "channel_series": ChannelSeriesFigure,
 }
 
 

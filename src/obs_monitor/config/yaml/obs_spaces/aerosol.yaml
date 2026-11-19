@@ -18,6 +18,11 @@
 #                             (positive integers). Omitted = all channels.
 #     web_name: name          Optional. Name used in figure file names, which the website
 #                             links to. Omitted = the obs-space name.
+#     web_path: a/b/c         Optional. Sub-folder of the output folder for this obs space's
+#                             figures, where the website looks for them. Radiances:
+#                             rad/<instrument>/<satellite> as the site names them (e.g.
+#                             rad/atms/noaa-20); the sensor-page images are then named
+#                             <instrument>_<satellite>_... Omitted = the output folder.
 #     group_map:              Optional. Read a field from a non-standard IODA group, for
 #       obs: ObsValue         files that don't follow the usual layout. Fields: obs, ombg,
 #                             oman, hofx_bg, hofx_an, qc_bg, qc_an, err_bg, err_an,
